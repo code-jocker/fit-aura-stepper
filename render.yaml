@@ -1,0 +1,34 @@
+services:
+  # Backend Service
+  - type: web
+    name: fit-aura-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false # You will set this in Render Dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false # You will set this after frontend is deployed
+
+  # Frontend Service (Static Site)
+  - type: web
+    name: fit-aura-frontend
+    env: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishDir: build
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: max-age=0, no-cache, no-store, must-revalidate
+    envVars:
+      - key: REACT_APP_API_URL
+        sync: false # You will set this to your Render Backend URL
