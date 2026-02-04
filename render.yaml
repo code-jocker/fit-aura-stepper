@@ -18,7 +18,7 @@ services:
         sync: false # You will set this after frontend is deployed
 
   # Frontend Service (Static Site)
-  - type: static
+  - type: static_site
     name: fit-aura-frontend
     plan: free
     rootDir: frontend
