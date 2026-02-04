@@ -84,12 +84,15 @@ app.get('/api/health', (req, res) => {
 });
 
 // Serve static assets in production
+const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'build');
+console.log('Static assets path:', frontendBuildPath);
+
 if (process.env.NODE_ENV === 'production' || true) {
-  app.use(express.static(path.join(__dirname, '../frontend/build')));
+  app.use(express.static(frontendBuildPath));
 
   app.get('*', (req, res) => {
     if (!req.path.startsWith('/api')) {
-      res.sendFile(path.resolve(__dirname, '../frontend', 'build', 'index.html'));
+      res.sendFile(path.join(frontendBuildPath, 'index.html'));
     }
   });
 }
