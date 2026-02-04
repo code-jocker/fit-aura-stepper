@@ -18,9 +18,8 @@ services:
         sync: false # You will set this after frontend is deployed
 
   # Frontend Service (Static Site)
-  - type: web
+  - type: static
     name: fit-aura-frontend
-    env: static
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
