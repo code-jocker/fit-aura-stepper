@@ -73,6 +73,7 @@ export default function Home() {
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
+          aria-label="Fit Aura & Steppers Hero Image - Premium Sneakers in Rwanda"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
         <div className="relative container px-4">
