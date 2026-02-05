@@ -79,9 +79,9 @@ try {
   // Catch-all for unmatched /api routes
   app.use('/api/*', (req, res) => {
     console.warn(`⚠️ Unmatched API request: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({
-      message: `API endpoint not found: ${req.method} ${req.originalUrl}`,
-      error: 'Not Found'
+    res.status(400).json({
+      message: 'Invalid API endpoint',
+      error: 'Bad Request'
     });
   });
 } catch (err) {

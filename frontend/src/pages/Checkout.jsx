@@ -144,7 +144,7 @@ export default function Checkout() {
       navigate(`/order-confirmation/${orderId}`);
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Error processing order: ' + (error.response?.data?.message || error.message));
+      alert('We encountered an issue processing your order. Please check your connection or try again. If the problem persists, contact our support.');
       setPaymentStep('checkout');
     } finally {
       setLoading(false);
