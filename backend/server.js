@@ -35,7 +35,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Database connection
-connectDB();
+// Removed redundant call - handled by server.listen wrapper below
 
 // Database connection check middleware for API routes
 const dbCheckMiddleware = (req, res, next) => {
@@ -130,9 +130,19 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
-  console.log(`\n🚀 Server running on port ${PORT}`);
-  console.log(`📊 API Health: http://localhost:${PORT}/api/health\n`);
+// Connect to Database BEFORE starting server
+connectDB().then(() => {
+  server.listen(PORT, () => {
+    console.log(`\n🚀 Server running on port ${PORT}`);
+    console.log(`📊 API Health: http://localhost:${PORT}/api/health\n`);
+  });
+}).catch(err => {
+  console.error('❌ Critical Error: Failed to connect to database on startup');
+  console.error(err);
+  // Still start the server so the frontend can show a meaningful error message
+  server.listen(PORT, () => {
+    console.log(`\n⚠️  Server running in degraded mode (No Database) on port ${PORT}`);
+  });
 });
 
 module.exports = app;
