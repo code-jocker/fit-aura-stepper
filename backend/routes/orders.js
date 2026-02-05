@@ -7,23 +7,38 @@ const User = require('../models/User');
 // Create order
 router.post('/', optionalAuth, async (req, res) => {
   try {
+    console.log('📦 Creating new order:', req.body);
     const { items, deliveryAddress, phone, paymentMethod, notes, customerName, email, paymentStatus, transactionId, location } = req.body;
     
-    // Calculate totals
-    let subtotal = 0;
-    for (let item of items) {
-      subtotal += item.price * item.quantity;
+    if (!items || !items.length) {
+      return res.status(400).json({ message: 'Cart is empty' });
     }
+
+    // Calculate totals and format items
+    let subtotal = 0;
+    const formattedItems = items.map(item => {
+      const price = Number(item.price);
+      const quantity = Number(item.quantity);
+      subtotal += price * quantity;
+      
+      return {
+        productId: item.productId,
+        quantity: quantity,
+        price: price,
+        size: item.size || 'N/A',
+        color: item.color || 'N/A'
+      };
+    });
     
     // Check if Kigali for free delivery
-    const isFreeDelivery = deliveryAddress.toLowerCase().includes('kigali');
+    const isFreeDelivery = deliveryAddress?.toLowerCase().includes('kigali');
     const deliveryFee = isFreeDelivery ? 0 : 5000;
     const total = subtotal + deliveryFee;
     
     const orderData = {
       customerName,
       email,
-      items,
+      items: formattedItems,
       subtotal,
       deliveryFee,
       total,
@@ -33,7 +48,8 @@ router.post('/', optionalAuth, async (req, res) => {
       paymentStatus: paymentStatus || 'pending',
       transactionId,
       location,
-      notes
+      notes,
+      status: 'pending'
     };
 
     if (req.user) {
@@ -42,18 +58,25 @@ router.post('/', optionalAuth, async (req, res) => {
     
     const order = new Order(orderData);
     await order.save();
+    console.log('✅ Order saved:', order._id);
     
     // Clear cart if user is logged in
     if (req.user) {
-      const user = await User.findById(req.user.id);
-      if (user) {
-        user.cart = [];
-        await user.save();
+      try {
+        const user = await User.findById(req.user.id);
+        if (user) {
+          user.cart = [];
+          await user.save();
+        }
+      } catch (userErr) {
+        console.error('Error clearing user cart:', userErr);
+        // Don't fail the order if cart clearing fails
       }
     }
     
     res.status(201).json(order);
   } catch (error) {
+    console.error('❌ Order creation error:', error);
     res.status(500).json({ message: error.message });
   }
 });

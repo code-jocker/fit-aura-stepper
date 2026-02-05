@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
-const { auth } = require('../middleware/auth');
+const { auth, adminAuth } = require('../middleware/auth');
 
 // Get all products with filtering and search
 router.get('/', async (req, res) => {
@@ -72,13 +72,8 @@ router.get('/categories', async (req, res) => {
 });
 
 // Create product (ADMIN)
-router.post('/', auth, async (req, res) => {
+router.post('/', adminAuth, async (req, res) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'Not authorized - Admin only' });
-    }
-    
     const { name, brand, category, price, salePrice, description, images, sizes, colors, stock, isFeatured, isNew, isPublished } = req.body;
 
     // Validation
@@ -98,64 +93,39 @@ router.post('/', auth, async (req, res) => {
       colors: colors || [],
       stock: stock || 0,
       isFeatured: isFeatured || false,
-      isNew: isNew !== undefined ? isNew : true,
+      isNew: isNew || false,
       isPublished: isPublished !== undefined ? isPublished : true
     });
 
-    const savedProduct = await product.save();
-    res.status(201).json(savedProduct);
+    await product.save();
+    res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
 // Update product (ADMIN)
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', adminAuth, async (req, res) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'Not authorized - Admin only' });
-    }
-
-    const { name, brand, category, price, salePrice, description, images, sizes, colors, stock, rating, reviewsCount, isFeatured, isNew, isPublished } = req.body;
-
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+    
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
-
-    // Update fields
-    if (name) product.name = name;
-    if (brand) product.brand = brand;
-    if (category) product.category = category;
-    if (price) product.price = price;
-    if (salePrice !== undefined) product.salePrice = salePrice;
-    if (description) product.description = description;
-    if (images) product.images = images;
-    if (sizes) product.sizes = sizes;
-    if (colors) product.colors = colors;
-    if (stock !== undefined) product.stock = stock;
-    if (rating !== undefined) product.rating = rating;
-    if (reviewsCount !== undefined) product.reviewsCount = reviewsCount;
-    if (isFeatured !== undefined) product.isFeatured = isFeatured;
-    if (isNew !== undefined) product.isNew = isNew;
-    if (isPublished !== undefined) product.isPublished = isPublished;
-
-    const updatedProduct = await product.save();
-    res.json(updatedProduct);
+    
+    res.json(product);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
 // Delete product (ADMIN)
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', adminAuth, async (req, res) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'Not authorized - Admin only' });
-    }
-
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });

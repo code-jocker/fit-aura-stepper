@@ -20,7 +20,7 @@ export default function Checkout() {
   const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
-  const [paymentStep, setPaymentStep] = useState('checkout'); // 'checkout', 'verifying', 'processing', 'success'
+  const [paymentStep, setPaymentStep] = useState('checkout'); // 'checkout', 'processing', 'success'
 
   const validateRwandaPhone = (phone) => {
     // Basic Rwanda phone validation: starts with 078, 079, 072, 073 and is 10 digits
@@ -94,21 +94,12 @@ export default function Checkout() {
     }
 
     setLoading(true);
-    setPaymentStep('verifying');
+    setPaymentStep('processing');
 
     try {
       const formattedPhone = formatPhone(formData.phone);
 
-      // Simulate Phone Verification/STK Push initiation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      if (formData.paymentMethod !== 'cash') {
-        setPaymentStep('processing');
-        // Simulate User entering PIN on their phone
-        await new Promise(resolve => setTimeout(resolve, 4000));
-      }
-
-      // Create order with payment confirmation
+      // Create order immediately
       const orderData = {
         customerName: formData.fullName,
         email: formData.email,
@@ -145,9 +136,10 @@ export default function Checkout() {
       }
 
       setPaymentStep('success');
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Proceed to confirmation
+      
+      // Brief delay to show success state
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       clearCart();
       navigate(`/order-confirmation/${orderId}`);
     } catch (error) {
@@ -172,46 +164,21 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-16 relative">
-      {/* Payment Processing Overlay - Redesigned */}
+      {/* Payment Processing Overlay */}
       {paymentStep !== 'checkout' && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-md transition-all duration-500">
           <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full text-center space-y-8 shadow-2xl border border-white/20 transform animate-in fade-in zoom-in duration-500">
-            {paymentStep === 'verifying' && (
+            {paymentStep === 'processing' && (
               <>
                 <div className="relative">
                   <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mx-auto">
                     <div className="w-16 h-16 border-[5px] border-amber-500 border-t-transparent rounded-full animate-spin"></div>
                   </div>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl">📱</div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl">👟</div>
                 </div>
                 <div>
-                  <h3 className="text-3xl font-black uppercase tracking-tight mb-2">Verifying</h3>
-                  <p className="text-gray-500 font-medium">Checking <span className="text-black font-bold">{formData.phone}</span> on the network...</p>
-                </div>
-              </>
-            )}
-
-            {paymentStep === 'processing' && (
-              <>
-                <div className="relative">
-                  <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto">
-                    <div className="w-16 h-16 border-[5px] border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl">🔐</div>
-                </div>
-                <div className="space-y-4">
-                  <h3 className="text-3xl font-black uppercase tracking-tight">Confirm PIN</h3>
-                  <p className="text-gray-500 font-medium leading-relaxed">
-                    Check your phone and enter your <b>Mobile Money PIN</b> to authorize 
-                    <span className="block text-2xl text-black font-black mt-2">{total.toLocaleString()} RWF</span>
-                  </p>
-                  <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100">
-                    <p className="text-[10px] text-blue-400 uppercase font-black tracking-[0.2em] mb-2">Network Status</p>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></span>
-                      <p className="font-black text-xs text-blue-600 uppercase tracking-widest">Awaiting Secure Response...</p>
-                    </div>
-                  </div>
+                  <h3 className="text-3xl font-black uppercase tracking-tight mb-2">Processing</h3>
+                  <p className="text-gray-500 font-medium">Finalizing your order...</p>
                 </div>
               </>
             )}

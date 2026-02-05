@@ -1,23 +1,34 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { orderService } from '../api';
 
 export default function OrderConfirmation() {
   const { orderId } = useParams();
   const [order, setOrder] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const API_URL = process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api';
-        const res = await fetch(`${API_URL}/orders/${orderId}`);
-        const data = await res.json();
-        setOrder(data);
+        const res = await orderService.getById(orderId);
+        setOrder(res.data);
       } catch (err) {
-        console.error(err);
+        console.error('Error fetching order:', err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchOrder();
   }, [orderId]);
+
+  if (loading) {
+    return (
+      <div className="container py-32 text-center">
+        <div className="animate-spin text-4xl mb-4">👟</div>
+        <p className="text-gray-500 font-bold uppercase tracking-widest">Loading your order details...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-16">

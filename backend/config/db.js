@@ -26,11 +26,7 @@ const connectDB = async () => {
   } catch (error) {
     console.error(`❌ MongoDB Connection Error: ${error.message}`);
     console.log('ℹ️  ACTION REQUIRED: Ensure your IP is whitelisted in MongoDB Atlas (0.0.0.0/0 for Render).');
-    // Don't exit process in production to allow the server to stay alive and serve the static frontend
-    if (process.env.NODE_ENV !== 'production') {
-      // In development, it's often better to exit so the developer notices the error
-      // process.exit(1); 
-    }
+    throw error; // Rethrow to let server.js handle it
   }
 };
 

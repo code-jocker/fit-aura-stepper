@@ -75,6 +75,15 @@ try {
   app.use('/api/chatbot', require('./routes/chatbot'));
   app.use('/api/contact', require('./routes/contact'));
   console.log('✅ All routes loaded successfully');
+
+  // Catch-all for unmatched /api routes
+  app.use('/api/*', (req, res) => {
+    console.warn(`⚠️ Unmatched API request: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({
+      message: `API endpoint not found: ${req.method} ${req.originalUrl}`,
+      error: 'Not Found'
+    });
+  });
 } catch (err) {
   console.error('❌ Error loading routes:', err.message);
 }
