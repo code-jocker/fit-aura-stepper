@@ -10,7 +10,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI
-        value: mongodb+srv://princeshyakaclever_db_user:rfa3CabGkUIzn92X@cluster0.2o9virm.mongodb.net/fit_aura_db?retryWrites=true&w=majority
+                value: mongodb+srv://princeshyakaclever_db_user:rfa3CabGkUIzn92X@cluster0.akflul6.mongodb.net/fit_aura_db?retryWrites=true&w=majority
       - key: JWT_SECRET
         value: rfa3CabGkUIzn92X_secret_key_fit_aura
       - key: FRONTEND_URL
