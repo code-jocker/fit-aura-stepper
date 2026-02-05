@@ -10,13 +10,6 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // Google Login
 router.post('/google-login', async (req, res) => {
   try {
-    // Check database connection
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ 
-        message: 'Database connection is not established. Please ensure your IP is whitelisted in MongoDB Atlas (0.0.0.0/0).' 
-      });
-    }
-
     const { tokenId } = req.body;
     
     if (!tokenId) {
@@ -76,13 +69,6 @@ router.post('/google-login', async (req, res) => {
 // Register
 router.post('/register', async (req, res) => {
   try {
-    // Check database connection
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ 
-        message: 'Database connection is not established. Please ensure your IP is whitelisted in MongoDB Atlas (0.0.0.0/0).' 
-      });
-    }
-
     const { email, password, name } = req.body;
     
     if (!email || !password || !name) {
@@ -110,13 +96,6 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   try {
-    // Check database connection
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ 
-        message: 'Database connection is not established. Please ensure your IP is whitelisted in MongoDB Atlas (0.0.0.0/0).' 
-      });
-    }
-
     const { email, password } = req.body;
     
     if (!email || !password) {

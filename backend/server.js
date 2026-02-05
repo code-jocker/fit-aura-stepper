@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const connectDB = require('./config/db');
 
 dotenv.config();
 
@@ -33,37 +34,36 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Database connection with improved error handling
-const connectDB = async () => {
-  try {
-    const mongoUri = process.env.MONGODB_URI;
-    
-    if (!mongoUri) {
-      throw new Error('MONGODB_URI is not defined in environment variables');
-    }
-    
-    // Disable buffering so that we get immediate errors instead of timeouts
-    mongoose.set('bufferCommands', false);
-    
-    console.log('⏳ Connecting to MongoDB Atlas...');
-    await mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 10000, // Increase timeout for slower connections
-      socketTimeoutMS: 45000,
-      autoIndex: true,
+// Database connection
+connectDB();
+
+// Database connection check middleware for API routes
+const dbCheckMiddleware = (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      message: 'Database connection is not established. Please ensure your IP is whitelisted in MongoDB Atlas (0.0.0.0/0).',
+      status: 'error',
+      dbStatus: mongoose.connection.readyState
     });
-    console.log('✅ MongoDB connected successfully');
-  } catch (err) {
-    console.error('❌ MongoDB connection error:', err.message);
-    console.log('ℹ️  Make sure you have whitelisted 0.0.0.0/0 in MongoDB Atlas Network Access');
   }
+  next();
 };
 
-connectDB();
+// Health check (before middleware so it's always accessible)
+app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  res.json({ 
+    status: 'Server is running',
+    database: dbStatus,
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Routes
 try {
+  // Apply dbCheckMiddleware to all /api routes except health check
+  app.use('/api', dbCheckMiddleware);
+  
   app.use('/api/products', require('./routes/products'));
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/user', require('./routes/user'));
@@ -77,16 +77,6 @@ try {
 } catch (err) {
   console.error('❌ Error loading routes:', err.message);
 }
-
-// Health check
-app.get('/api/health', (req, res) => {
-  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-  res.json({ 
-    status: 'Server is running',
-    database: dbStatus,
-    timestamp: new Date().toISOString()
-  });
-});
 
 // Serve static assets in production
 const frontendBuildPath = path.resolve(__dirname, '..', 'frontend', 'build');
