@@ -135,8 +135,14 @@ export default function Checkout() {
         transactionId: formData.paymentMethod === 'cash' ? null : 'MOMO-' + Math.floor(100000000 + Math.random() * 900000000)
       };
 
+      console.log('Sending order data:', orderData);
       const orderResponse = await orderService.create(orderData);
+      console.log('Order response:', orderResponse);
       const orderId = orderResponse.data._id;
+
+      if (!orderId) {
+        throw new Error('Order was created but no ID was returned');
+      }
 
       setPaymentStep('success');
       await new Promise(resolve => setTimeout(resolve, 1500));
