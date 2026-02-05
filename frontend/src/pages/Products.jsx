@@ -40,6 +40,7 @@ export default function Products() {
       
       let url = `${API_URL}/products`;
       const params = new URLSearchParams();
+      params.append('limit', 'all');
       
       if (isAdmin) {
         params.append('adminView', 'true');
@@ -49,10 +50,15 @@ export default function Products() {
       }
       
       const queryString = params.toString();
-      const res = await axios.get(`${url}${queryString ? `?${queryString}` : ''}`).catch(() => ({ data: [] }));
-      setProducts(res?.data || []);
+      const res = await axios.get(`${url}${queryString ? `?${queryString}` : ''}`);
+      if (res.data) {
+        setProducts(res.data);
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
+      // Don't clear products on error if we already have some, 
+      // just show the error in console. 
+      // If it's the first load and it fails, products will stay [] which is correct.
     } finally {
       setLoading(false);
     }

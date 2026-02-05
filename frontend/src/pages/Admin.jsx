@@ -45,13 +45,15 @@ export default function Admin() {
     try {
       setLoading(true);
       const url = searchTerm 
-        ? `${API_URL}/products?search=${encodeURIComponent(searchTerm)}&limit=100&adminView=true`
-        : `${API_URL}/products?category=${selectedCategory}&limit=100&adminView=true`;
+        ? `${API_URL}/products?search=${encodeURIComponent(searchTerm)}&limit=all&adminView=true`
+        : `${API_URL}/products?category=${selectedCategory}&limit=all&adminView=true`;
       const res = await axios.get(url);
-      setProducts(res.data);
+      if (res.data) {
+        setProducts(res.data);
+      }
     } catch (error) {
       console.error('Failed to fetch products:', error);
-      setProducts([]);
+      // Keep existing products if fetch fails
     } finally {
       setLoading(false);
     }

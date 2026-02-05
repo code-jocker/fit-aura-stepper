@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /delivery
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://fit-aura-steppers.onrender.com/sitemap.xml
