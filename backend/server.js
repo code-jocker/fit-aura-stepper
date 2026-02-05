@@ -29,8 +29,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 2000, // Increase to 2000 requests per window
+  message: 'Too many requests from this IP, please try again after 15 minutes'
 });
 app.use(limiter);
 

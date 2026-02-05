@@ -29,8 +29,10 @@ router.get('/', async (req, res) => {
       ];
     }
     
+    const limitValue = limit === 'all' ? 0 : parseInt(limit);
+    
     const products = await Product.find(filter)
-      .limit(parseInt(limit))
+      .limit(limitValue)
       .sort(sort);
     
     res.json(products);

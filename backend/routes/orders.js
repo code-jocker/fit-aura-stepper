@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { auth, optionalAuth } = require('../middleware/auth');
+const { auth, optionalAuth, adminAuth } = require('../middleware/auth');
 const Order = require('../models/Order');
 const User = require('../models/User');
 
@@ -114,13 +114,8 @@ router.get('/:orderId', optionalAuth, async (req, res) => {
 });
 
 // Update order (ADMIN)
-router.put('/:orderId', optionalAuth, async (req, res) => {
+router.put('/:orderId', adminAuth, async (req, res) => {
   try {
-    // Check if user is admin
-    if (!req.user || req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'Not authorized - Admin only' });
-    }
-
     const { status, paymentStatus, deliveryAddress, phone, notes, deliveryPerson, assignedAt, adminNote } = req.body;
     
     const order = await Order.findById(req.params.orderId);
