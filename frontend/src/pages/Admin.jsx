@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DeliveryMap from '../components/DeliveryMap';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('products'); // 'products', 'orders', 'deliveries'

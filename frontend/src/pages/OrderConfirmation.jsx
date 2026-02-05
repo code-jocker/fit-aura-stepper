@@ -8,7 +8,8 @@ export default function OrderConfirmation() {
   React.useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/orders/${orderId}`);
+        const API_URL = process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api';
+        const res = await fetch(`${API_URL}/orders/${orderId}`);
         const data = await res.json();
         setOrder(data);
       } catch (err) {
