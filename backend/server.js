@@ -36,22 +36,27 @@ app.use(limiter);
 // Database connection with improved error handling
 const connectDB = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/fit-aura-steppers';
+    const mongoUri = process.env.MONGODB_URI;
+    
+    if (!mongoUri) {
+      throw new Error('MONGODB_URI is not defined in environment variables');
+    }
     
     // Disable buffering so that we get immediate errors instead of timeouts
     mongoose.set('bufferCommands', false);
     
+    console.log('⏳ Connecting to MongoDB Atlas...');
     await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000, // Increase timeout for slower connections
+      socketTimeoutMS: 45000,
       autoIndex: true,
     });
     console.log('✅ MongoDB connected successfully');
   } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
-    console.log('ℹ️  Make sure MongoDB is running or MongoDB Atlas is accessible');
-    // Don't crash - allow server to run without DB initially
+    console.log('ℹ️  Make sure you have whitelisted 0.0.0.0/0 in MongoDB Atlas Network Access');
   }
 };
 

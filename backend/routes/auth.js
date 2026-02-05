@@ -13,7 +13,7 @@ router.post('/google-login', async (req, res) => {
     // Check database connection
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ 
-        message: 'Database connection is not established. Please ensure MongoDB is running.' 
+        message: 'Database connection is not established. Please ensure your IP is whitelisted in MongoDB Atlas (0.0.0.0/0).' 
       });
     }
 
@@ -79,7 +79,7 @@ router.post('/register', async (req, res) => {
     // Check database connection
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ 
-        message: 'Database connection is not established. Please ensure MongoDB is running.' 
+        message: 'Database connection is not established. Please ensure your IP is whitelisted in MongoDB Atlas (0.0.0.0/0).' 
       });
     }
 
@@ -113,7 +113,7 @@ router.post('/login', async (req, res) => {
     // Check database connection
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ 
-        message: 'Database connection is not established. Please ensure MongoDB is running.' 
+        message: 'Database connection is not established. Please ensure your IP is whitelisted in MongoDB Atlas (0.0.0.0/0).' 
       });
     }
 
