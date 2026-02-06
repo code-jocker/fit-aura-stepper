@@ -20,6 +20,10 @@ export default function ProductCard({ product, onQuickAdd }) {
             src={product.images?.[0] || 'https://via.placeholder.com/300x400?text=Product'}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'https://via.placeholder.com/300x400?text=Image+Not+Found';
+            }}
           />
         </Link>
         

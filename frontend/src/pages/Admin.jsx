@@ -190,7 +190,16 @@ export default function Admin() {
       reader.onloadend = () => {
         const result = reader.result;
         setFormData(prev => {
-          const currentImages = prev.images ? prev.images.split(',').map(s => s.trim()).filter(s => s) : [];
+          // Normalize images into array first
+          let currentImages = [];
+          if (prev.images) {
+            if (Array.isArray(prev.images)) {
+              currentImages = [...prev.images];
+            } else {
+              currentImages = prev.images.split(',').map(s => s.trim()).filter(s => s);
+            }
+          }
+          
           if (!currentImages.includes(result)) {
             currentImages.push(result);
           }
@@ -210,8 +219,13 @@ export default function Admin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.brand || !formData.price || !formData.description || !formData.images) {
-      alert('Please fill in all required fields');
+    // Improved validation for images
+    const imageList = typeof formData.images === 'string' 
+      ? formData.images.split(',').map(img => img.trim()).filter(img => img)
+      : (Array.isArray(formData.images) ? formData.images : []);
+
+    if (!formData.name || !formData.brand || !formData.price || !formData.description || imageList.length === 0) {
+      alert('Please fill in all required fields including at least one image');
       return;
     }
 
@@ -227,12 +241,12 @@ export default function Admin() {
         price: parseFloat(formData.price),
         salePrice: formData.salePrice ? parseFloat(formData.salePrice) : null,
         stock: parseInt(formData.stock) || 0,
-        images: formData.images.split(',').map(img => img.trim()).filter(img => img),
-        sizes: formData.sizes ? formData.sizes.split(',').map(s => s.trim()).filter(s => s) : [],
-        colors: formData.colors ? formData.colors.split(',').map(c => c.trim()).filter(c => c) : [],
-        isFeatured: formData.isFeatured,
-        isNew: formData.isNew,
-        isPublished: formData.isPublished
+        images: imageList,
+        sizes: typeof formData.sizes === 'string' ? formData.sizes.split(',').map(s => s.trim()).filter(s => s) : (Array.isArray(formData.sizes) ? formData.sizes : []),
+        colors: typeof formData.colors === 'string' ? formData.colors.split(',').map(c => c.trim()).filter(c => c) : (Array.isArray(formData.colors) ? formData.colors : []),
+        isFeatured: !!formData.isFeatured,
+        isNew: !!formData.isNew,
+        isPublished: formData.isPublished !== undefined ? !!formData.isPublished : true
       };
 
       if (editingId) {
