@@ -79,11 +79,11 @@ export default function ProductDetail() {
           <div className="lg:col-span-7">
             <div className="flex flex-col md:flex-row-reverse gap-6">
               {/* Main Image Container */}
-              <div className="flex-grow aspect-[4/5] bg-gray-50 rounded-[2rem] overflow-hidden group cursor-zoom-in shadow-2xl">
+              <div className="flex-grow aspect-[4/5] bg-white rounded-[2rem] overflow-hidden group cursor-zoom-in shadow-2xl border border-gray-100">
                 <img
                   src={product.images?.[selectedImage] || 'https://via.placeholder.com/800x1000?text=Product+Image'}
                   alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-contain md:object-cover transition-transform duration-700 group-hover:scale-110"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = 'https://via.placeholder.com/800x1000?text=Image+Not+Available';
@@ -92,21 +92,21 @@ export default function ProductDetail() {
               </div>
 
               {/* Thumbnails Sidebar */}
-              <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-visible pb-4 md:pb-0 scrollbar-hide">
+              <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto md:max-h-[600px] pb-4 md:pb-0 scrollbar-hide">
                 {product.images?.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`relative w-20 h-24 md:w-24 md:h-28 rounded-2xl overflow-hidden flex-shrink-0 transition-all duration-300 ${
+                    className={`relative w-20 h-24 md:w-24 md:h-28 rounded-2xl overflow-hidden flex-shrink-0 transition-all duration-300 bg-white border ${
                       selectedImage === idx 
-                        ? 'ring-4 ring-amber-500 ring-offset-4 scale-95' 
-                        : 'opacity-40 hover:opacity-100 hover:scale-105'
+                        ? 'ring-4 ring-amber-500 ring-offset-4 scale-95 border-transparent shadow-lg' 
+                        : 'opacity-40 hover:opacity-100 hover:scale-105 border-gray-100'
                     }`}
                   >
                     <img 
                       src={img} 
                       alt="" 
-                      className="w-full h-full object-cover" 
+                      className="w-full h-full object-contain" 
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = 'https://via.placeholder.com/200?text=No+Img';

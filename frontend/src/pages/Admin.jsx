@@ -896,11 +896,11 @@ export default function Admin() {
                   </div>
                 </div>
                 
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center bg-gray-50">
-                  <label className="cursor-pointer flex flex-col items-center">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center bg-gray-50 min-h-[300px]">
+                  <label className="cursor-pointer flex flex-col items-center mb-6">
                     <span className="text-4xl mb-2">📤</span>
-                    <span className="font-bold text-gray-700">Upload Images</span>
-                    <span className="text-xs text-gray-500 mt-1">Supports JPG, PNG, WebP</span>
+                    <span className="font-bold text-gray-700">Upload Local Images</span>
+                    <span className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">Max 5MB each</span>
                     <input
                       type="file"
                       multiple
@@ -909,24 +909,41 @@ export default function Admin() {
                       className="hidden"
                     />
                   </label>
+                  
                   {formData.images && (
-                    <div className="mt-4 flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                      {formData.images.split(',').map((img, i) => img.trim() && (
-                        <div key={i} className="relative group">
-                          <img src={img.trim()} alt="preview" className="w-12 h-12 object-cover rounded border" />
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              const imgs = formData.images.split(',').map(s => s.trim()).filter(s => s);
-                              imgs.splice(i, 1);
-                              setFormData(prev => ({ ...prev, images: imgs.join(', ') }));
-                            }}
-                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
+                    <div className="w-full">
+                      <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 ml-1">Live Previews</h3>
+                      <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 max-h-48 overflow-y-auto p-1">
+                        {(typeof formData.images === 'string' 
+                          ? formData.images.split(',').map(s => s.trim()).filter(s => s)
+                          : (Array.isArray(formData.images) ? formData.images : [])
+                        ).map((img, i) => (
+                          <div key={i} className="relative group aspect-square">
+                            <img 
+                              src={img} 
+                              alt="preview" 
+                              className="w-full h-full object-cover rounded-xl border-2 border-white shadow-md group-hover:border-amber-500 transition-all" 
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://via.placeholder.com/100?text=Error';
+                              }}
+                            />
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                const imgs = (typeof formData.images === 'string' 
+                                  ? formData.images.split(',').map(s => s.trim()).filter(s => s)
+                                  : (Array.isArray(formData.images) ? formData.images : []));
+                                imgs.splice(i, 1);
+                                setFormData(prev => ({ ...prev, images: imgs.join(', ') }));
+                              }}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-10"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

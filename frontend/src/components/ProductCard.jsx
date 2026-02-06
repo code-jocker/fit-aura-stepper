@@ -14,12 +14,12 @@ export default function ProductCard({ product, onQuickAdd }) {
   return (
     <div className="bg-white rounded-[2.5rem] shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-black/10 transition-all duration-500 overflow-hidden group border border-gray-100 flex flex-col h-full">
       {/* Image Container */}
-      <div className="relative bg-gray-50 aspect-[4/5] overflow-hidden">
+      <div className="relative bg-white aspect-[4/5] overflow-hidden">
         <Link to={`/product/${product._id}`}>
           <img
             src={product.images?.[0] || 'https://via.placeholder.com/300x400?text=Product'}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+            className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-700"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = 'https://via.placeholder.com/300x400?text=Image+Not+Found';
