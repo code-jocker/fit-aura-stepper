@@ -30,7 +30,7 @@ BEHAVIOR:
 - Encourage customers to complete their purchase and explain how easy the MoMo payment process is.`;
 
 router.post('/chat', async (req, res) => {
-  try {
+    try {
     const { message } = req.body;
 
     if (!message) {
