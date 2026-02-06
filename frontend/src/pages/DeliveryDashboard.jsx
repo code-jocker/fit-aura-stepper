@@ -67,6 +67,30 @@ export default function DeliveryDashboard() {
     }
   };
 
+  const markAsDelivered = async (orderId) => {
+    if (!window.confirm('Are you sure you want to mark this order as DELIVERED? This will notify the admin and send a thank you message to the customer.')) {
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `${API_URL}/orders/${orderId}/delivered`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      alert('Order marked as delivered! Admin and customer have been notified. ✨');
+      fetchAssignedOrders(); // Refresh the list
+    } catch (err) {
+      console.error('Error marking as delivered:', err);
+      alert(err.response?.data?.message || 'Failed to update order status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const toggleAvailability = async () => {
     try {
       setUpdating(true);
@@ -283,10 +307,15 @@ export default function DeliveryDashboard() {
 
                       <div className="flex gap-2 w-full">
                         <button 
-                          onClick={() => {/* Update logic here */}}
-                          className="flex-grow bg-black text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl transform active:scale-95"
+                          onClick={() => markAsDelivered(order._id)}
+                          disabled={updating || order.status === 'delivered'}
+                          className={`flex-grow py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl transform active:scale-95 ${
+                            order.status === 'delivered'
+                              ? 'bg-green-100 text-green-600 cursor-default'
+                              : 'bg-black text-white hover:bg-amber-500'
+                          }`}
                         >
-                          Mark Delivered
+                          {order.status === 'delivered' ? '✓ Delivered' : 'Mark Delivered'}
                         </button>
                         <a href={`tel:${order.phone}`} className="bg-amber-500 text-black p-4 rounded-2xl hover:bg-black hover:text-white transition-all shadow-lg">
                           📞

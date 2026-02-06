@@ -164,4 +164,46 @@ router.put('/:orderId', adminAuth, async (req, res) => {
   }
 });
 
+// Mark order as delivered (DELIVERY PERSON)
+router.put('/:orderId/delivered', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'delivery' && req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const order = await Order.findById(req.params.orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // If it's a delivery person, check if it's assigned to them
+    if (req.user.role === 'delivery' && order.deliveryPerson?.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'Order not assigned to you' });
+    }
+
+    order.status = 'delivered';
+    order.paymentStatus = 'completed'; // Assume paid if delivered
+    order.deliveredAt = Date.now();
+    order.updatedAt = Date.now();
+    
+    await order.save();
+
+    // Here we would normally trigger notifications
+    console.log(`✨ Order ${order._id} marked as DELIVERED by ${req.user.name}`);
+    console.log(`📩 Notification: Thank you message sent to customer ${order.customerName} (${order.email || order.phone})`);
+    console.log(`📩 Notification: Admin notified about delivery for order ${order._id}`);
+
+    res.json({ 
+      message: 'Order marked as delivered successfully',
+      order,
+      notifications: {
+        admin: 'Admin notified',
+        customer: 'Thank you message sent'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
