@@ -180,12 +180,28 @@ export default function Admin() {
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach(file => {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`File ${file.name} is too large. Max size is 5MB.`);
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({
-          ...prev,
-          images: prev.images ? `${prev.images}, ${reader.result}` : reader.result
-        }));
+        const result = reader.result;
+        setFormData(prev => {
+          const currentImages = prev.images ? prev.images.split(',').map(s => s.trim()).filter(s => s) : [];
+          if (!currentImages.includes(result)) {
+            currentImages.push(result);
+          }
+          return {
+            ...prev,
+            images: currentImages.join(', ')
+          };
+        });
+      };
+      reader.onerror = () => {
+        alert(`Failed to read file ${file.name}`);
       };
       reader.readAsDataURL(file);
     });
@@ -973,13 +989,16 @@ export default function Admin() {
                       {product.images && product.images.length > 0 ? (
                         <div className="space-y-2">
                           {product.images.slice(0, 3).map((image, idx) => (
-                            <div key={idx} className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                            <div key={idx} className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                               <img
                                 src={image}
                                 alt={`${product.name} ${idx + 1}`}
-                                className="w-full h-full object-cover hover:scale-110 transition"
+                                className="w-full h-full object-cover hover:scale-110 transition duration-500"
+                                loading="lazy"
                                 onError={(e) => {
-                                  e.target.src = 'https://via.placeholder.com/200?text=Image+Not+Found';
+                                  console.error(`Image failed to load: ${image}`);
+                                  e.target.src = 'https://via.placeholder.com/400x400?text=Image+Not+Found';
+                                  e.target.className = "w-full h-full object-contain p-4 opacity-50";
                                 }}
                               />
                             </div>
