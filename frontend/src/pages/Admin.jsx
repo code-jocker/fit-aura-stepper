@@ -527,10 +527,16 @@ export default function Admin() {
 
             <div className="bg-white rounded-[2rem] shadow-2xl p-8">
               <h2 className="text-2xl font-black mb-6 uppercase tracking-tight">Live Delivery Map</h2>
-              <DeliveryMap orders={orders} onMarkerClick={(order) => {
-                const element = document.getElementById(`order-${order._id}`);
-                if (element) element.scrollIntoView({ behavior: 'smooth' });
-              }} />
+              <DeliveryMap 
+                orders={orders} 
+                workers={deliveryStaff}
+                onMarkerClick={(item) => {
+                  if (item.type === 'order') {
+                    const element = document.getElementById(`order-${item.data._id}`);
+                    if (element) element.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }} 
+              />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

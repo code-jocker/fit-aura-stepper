@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'Kigali'
   },
+  currentLocation: {
+    lat: Number,
+    lng: Number
+  },
   phone: {
     type: String
   },
