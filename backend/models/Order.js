@@ -65,6 +65,7 @@ const orderSchema = new mongoose.Schema({
   phone: String,
   notes: String,
   adminNote: String,
+  deliveryNote: String,
   transactionId: String,
   createdAt: {
     type: Date,

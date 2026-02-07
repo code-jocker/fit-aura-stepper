@@ -67,7 +67,7 @@ export default function DeliveryDashboard() {
     }
   };
 
-  const markAsDelivered = async (orderId) => {
+  const markAsDelivered = async (orderId, note = '') => {
     if (!window.confirm('Are you sure you want to mark this order as DELIVERED? This will notify the admin and send a thank you message to the customer.')) {
       return;
     }
@@ -77,7 +77,7 @@ export default function DeliveryDashboard() {
       const token = localStorage.getItem('token');
       await axios.put(
         `${API_URL}/orders/${orderId}/delivered`,
-        {},
+        { deliveryNote: note },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -88,6 +88,21 @@ export default function DeliveryDashboard() {
       alert(err.response?.data?.message || 'Failed to update order status');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const updateDeliveryNote = async (orderId, note) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `${API_URL}/orders/${orderId}/note`,
+        { deliveryNote: note },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert('Note saved! Admin can see this now.');
+      fetchAssignedOrders();
+    } catch (err) {
+      alert('Failed to save note');
     }
   };
 
@@ -307,7 +322,7 @@ export default function DeliveryDashboard() {
 
                       <div className="flex gap-2 w-full">
                         <button 
-                          onClick={() => markAsDelivered(order._id)}
+                          onClick={() => markAsDelivered(order._id, order.deliveryNote)}
                           disabled={updating || order.status === 'delivered'}
                           className={`flex-grow py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl transform active:scale-95 ${
                             order.status === 'delivered'
@@ -324,14 +339,27 @@ export default function DeliveryDashboard() {
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-6 border-t border-gray-50">
-                    <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">Order Items</p>
-                    <div className="flex flex-wrap gap-2">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="bg-gray-50 px-3 py-1 rounded-lg text-xs font-bold">
-                          {item.name} x{item.quantity} ({item.size})
-                        </div>
-                      ))}
+                  <div className="mt-6 pt-6 border-t border-gray-50 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">Order Items</p>
+                      <div className="flex flex-wrap gap-2">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="bg-gray-50 px-3 py-1 rounded-lg text-xs font-bold border border-gray-100">
+                            {item.name} x{item.quantity} ({item.size})
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2">Message for Admin</p>
+                      <textarea
+                        placeholder="Add a delivery note (e.g. 'Customer paid extra', 'Left with neighbor')..."
+                        defaultValue={order.deliveryNote}
+                        onBlur={(e) => updateDeliveryNote(order._id, e.target.value)}
+                        className="w-full bg-white border border-blue-100 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:ring-2 ring-blue-500 min-h-[60px]"
+                      />
+                      <p className="text-[9px] text-blue-400 mt-1 italic font-bold">Auto-saves on blur.</p>
                     </div>
                   </div>
                 </div>

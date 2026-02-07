@@ -1014,36 +1014,37 @@ export default function Admin() {
             <div className="space-y-6 p-6">
               {products.map(product => (
                 <div key={product._id} className="border rounded-lg p-6 hover:shadow-lg transition">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    {/* Product Images Gallery */}
-                    <div className="md:col-span-1 space-y-2">
-                      {product.images && product.images.length > 0 ? (
-                        <div className="space-y-2">
-                          {product.images.slice(0, 3).map((image, idx) => (
-                            <div key={idx} className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                  <div className="flex flex-col gap-6">
+                    {/* Product Images Gallery - Now Full Width Above Details */}
+                    {product.images && product.images.length > 0 ? (
+                      <div className="w-full">
+                        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                          {product.images.map((image, idx) => (
+                            <div key={idx} className="relative flex-shrink-0 w-32 h-32 bg-gray-100 rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
                               <img
                                 src={image}
                                 alt={`${product.name} ${idx + 1}`}
-                                className="w-full h-full object-cover hover:scale-110 transition duration-500"
+                                className="w-full h-full object-cover group-hover:scale-110 transition duration-500 cursor-pointer"
                                 loading="lazy"
+                                onClick={() => window.open(image, '_blank')}
                                 onError={(e) => {
                                   console.error(`Image failed to load: ${image}`);
-                                  e.target.src = 'https://via.placeholder.com/400x400?text=Image+Not+Found';
-                                  e.target.className = "w-full h-full object-contain p-4 opacity-50";
+                                  e.target.src = 'https://via.placeholder.com/400x400?text=Error';
+                                  e.target.className = "w-full h-full object-contain p-2 opacity-50";
                                 }}
                               />
                             </div>
                           ))}
                         </div>
-                      ) : (
-                        <div className="w-full aspect-square bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
-                          No Images
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="w-full h-32 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 border border-dashed border-gray-300">
+                        No Images Available
+                      </div>
+                    )}
 
                     {/* Product Details */}
-                    <div className="md:col-span-3">
+                    <div className="w-full">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                           <h3 className="text-xl font-bold text-gray-900">{product.name}</h3>
@@ -1138,39 +1139,119 @@ export default function Admin() {
                 </thead>
                 <tbody className="divide-y">
                   {orders.map(order => (
-                    <tr key={order._id} className="hover:bg-gray-50">
-                      <td className="p-4 font-mono text-sm">{order._id.slice(-8)}</td>
-                      <td className="p-4">
-                        <div className="font-semibold">{order.deliveryAddress?.name || 'Guest'}</div>
-                        <div className="text-xs text-gray-500">{order.phone}</div>
-                      </td>
-                      <td className="p-4 font-bold">{order.total.toLocaleString()} RWF</td>
-                      <td className="p-4">
-                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
-                          order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                          order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                          'bg-blue-100 text-blue-800'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <span className="capitalize text-sm">{order.paymentMethod}</span>
-                      </td>
-                      <td className="p-4">
-                        <select 
-                          value={order.status}
-                          onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                          className="border rounded px-2 py-1 text-sm outline-none"
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="processing">Processing</option>
-                          <option value="shipped">Shipped</option>
-                          <option value="delivered">Delivered</option>
-                          <option value="cancelled">Cancelled</option>
-                        </select>
-                      </td>
-                    </tr>
+                    <React.Fragment key={order._id}>
+                      <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => order.showDetails = !order.showDetails}>
+                        <td className="p-4 font-mono text-sm">{order._id.slice(-8)}</td>
+                        <td className="p-4">
+                          <div className="font-semibold">{order.customerName || 'Guest'}</div>
+                          <div className="text-xs text-gray-500">{order.phone}</div>
+                        </td>
+                        <td className="p-4 font-bold">{order.total.toLocaleString()} RWF</td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
+                            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                            order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <span className="capitalize text-sm">{order.paymentMethod}</span>
+                          {order.paymentStatus === 'completed' && <span className="ml-2 text-green-600">✓</span>}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex gap-2">
+                            <select 
+                              value={order.status}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                              className="border rounded px-2 py-1 text-sm outline-none"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="confirmed">Confirmed</option>
+                              <option value="shipped">Shipped</option>
+                              <option value="delivered">Delivered</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOrders(orders.map(o => o._id === order._id ? {...o, showDetails: !o.showDetails} : o));
+                              }}
+                              className="text-gray-400 hover:text-black"
+                            >
+                              {order.showDetails ? '▲' : '▼'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {order.showDetails && (
+                        <tr className="bg-gray-50">
+                          <td colSpan="6" className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                              <div>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">Order Items</h3>
+                                <div className="space-y-3">
+                                  {order.items.map((item, idx) => (
+                                    <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                                      <div className="flex flex-col">
+                                        <span className="text-sm font-bold">Product ID: {item.productId.slice(-6)}</span>
+                                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                                          Size: {item.size} | Color: {item.color}
+                                        </span>
+                                      </div>
+                                      <div className="text-right">
+                                        <div className="text-sm font-black">{item.price.toLocaleString()} RWF</div>
+                                        <div className="text-[10px] text-gray-400 font-bold uppercase">Qty: {item.quantity}</div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">Customer Details</h3>
+                                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-2">
+                                  <p className="text-sm"><strong>Name:</strong> {order.customerName}</p>
+                                  <p className="text-sm"><strong>Phone:</strong> {order.phone}</p>
+                                  <p className="text-sm"><strong>Email:</strong> {order.email}</p>
+                                  <p className="text-sm"><strong>Address:</strong> {order.deliveryAddress}</p>
+                                  {order.notes && (
+                                    <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-100">
+                                      <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-1">Customer Note</p>
+                                      <p className="text-xs italic text-amber-800">{order.notes}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="space-y-4">
+                                <div>
+                                  <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">Delivery & Admin Notes</h3>
+                                  <div className="space-y-4">
+                                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Admin Message to Delivery</p>
+                                      <p className="text-xs font-bold text-gray-700">{order.adminNote || 'No message sent'}</p>
+                                    </div>
+                                    <div className="bg-blue-50 p-4 rounded-xl shadow-sm border border-blue-100">
+                                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2">Message from Delivery</p>
+                                      <p className="text-xs font-bold text-blue-800">{order.deliveryNote || 'No feedback yet'}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                                {order.status === 'pending' || order.status === 'confirmed' ? (
+                                  <div className="bg-amber-100 p-4 rounded-xl border border-amber-200">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-700 mb-2">Action Required</p>
+                                    <p className="text-xs font-bold">Please assign this order to a delivery person in the "Tracking & Deliveries" tab.</p>
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>

@@ -24,8 +24,8 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
   credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -72,6 +72,7 @@ try {
   app.use('/api/payments', require('./routes/payments'));
   app.use('/api/subscribe', require('./routes/subscribe'));
   app.use('/api/testimonials', require('./routes/testimonials'));
+  app.use('/api/reviews', require('./routes/reviews'));
   app.use('/api/chatbot', require('./routes/chatbot'));
   app.use('/api/contact', require('./routes/contact'));
   console.log('✅ All routes loaded successfully');

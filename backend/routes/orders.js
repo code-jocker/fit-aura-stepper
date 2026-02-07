@@ -167,6 +167,7 @@ router.put('/:orderId', adminAuth, async (req, res) => {
 // Mark order as delivered (DELIVERY PERSON)
 router.put('/:orderId/delivered', auth, async (req, res) => {
   try {
+    const { deliveryNote } = req.body;
     if (req.user.role !== 'delivery' && req.user.role !== 'admin') {
       return res.status(401).json({ message: 'Not authorized' });
     }
@@ -185,6 +186,7 @@ router.put('/:orderId/delivered', auth, async (req, res) => {
     order.paymentStatus = 'completed'; // Assume paid if delivered
     order.deliveredAt = Date.now();
     order.updatedAt = Date.now();
+    if (deliveryNote) order.deliveryNote = deliveryNote;
     
     await order.save();
 
@@ -198,9 +200,38 @@ router.put('/:orderId/delivered', auth, async (req, res) => {
       order,
       notifications: {
         admin: 'Admin notified',
-        customer: 'Thank you message sent'
+        customer: 'Confirmation sent'
       }
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update delivery note (DELIVERY PERSON)
+router.put('/:orderId/note', auth, async (req, res) => {
+  try {
+    const { deliveryNote } = req.body;
+    
+    if (req.user.role !== 'delivery' && req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const order = await Order.findById(req.params.orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // If it's a delivery person, check if it's assigned to them
+    if (req.user.role === 'delivery' && order.deliveryPerson?.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'Order not assigned to you' });
+    }
+
+    order.deliveryNote = deliveryNote;
+    order.updatedAt = Date.now();
+    await order.save();
+
+    res.json({ message: 'Delivery note updated successfully', order });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

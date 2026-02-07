@@ -18,7 +18,10 @@ export default function ProductDetail() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
   const [quantity, setQuantity] = useState(1);
-  const { addToCart } = useStore();
+  const [reviews, setReviews] = useState([]);
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '', userName: '' });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const { addToCart, user } = useStore();
 
   useEffect(() => {
     const fetchProductAndRelated = async () => {
@@ -33,8 +36,12 @@ export default function ProductDetail() {
           const relatedRes = await axios.get(`${API_URL}/products?category=${productData.category}&limit=4`);
           setRelatedProducts(relatedRes.data.filter(p => p._id !== id));
         }
+
+        // Fetch reviews
+        const reviewsRes = await axios.get(`${API_URL}/reviews/product/${id}`);
+        setReviews(reviewsRes.data);
       } catch (error) {
-        console.error('Error fetching product:', error);
+        console.error('Error fetching product details:', error);
         setProduct(null);
       } finally {
         setLoading(false);
@@ -42,6 +49,37 @@ export default function ProductDetail() {
     };
     fetchProductAndRelated();
   }, [id]);
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!newReview.comment) return;
+
+    try {
+      setSubmittingReview(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_URL}/reviews`,
+        {
+          productId: id,
+          rating: newReview.rating,
+          comment: newReview.comment,
+          userName: user ? user.name : newReview.userName
+        },
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }
+      );
+
+      setReviews([response.data, ...reviews]);
+      setNewReview({ rating: 5, comment: '', userName: '' });
+      alert('Review submitted successfully! ✨');
+    } catch (err) {
+      console.error('Error submitting review:', err);
+      alert('Failed to submit review');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -251,7 +289,7 @@ export default function ProductDetail() {
             {/* Details Tabs */}
             <div className="border-t">
               <div className="flex gap-8 mb-6 overflow-x-auto pt-8">
-                {['description', 'details', 'shipping'].map(tab => (
+                {['description', 'details', 'reviews', 'shipping'].map(tab => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -259,7 +297,7 @@ export default function ProductDetail() {
                       activeTab === tab ? 'border-black text-black' : 'border-transparent text-gray-400'
                     }`}
                   >
-                    {tab}
+                    {tab === 'reviews' ? `Reviews (${reviews.length})` : tab}
                   </button>
                 ))}
               </div>
@@ -277,6 +315,81 @@ export default function ProductDetail() {
                 )}
                 {activeTab === 'shipping' && (
                   <p>Fast delivery across Rwanda. Free shipping on orders over 50,000 RWF. 14-day easy returns policy.</p>
+                )}
+                {activeTab === 'reviews' && (
+                  <div className="space-y-8">
+                    {/* Review Form */}
+                    <form onSubmit={handleReviewSubmit} className="bg-gray-50 p-6 rounded-3xl border border-gray-100 mb-8">
+                      <h4 className="text-black font-black uppercase text-xs tracking-widest mb-4">Leave a Review</h4>
+                      <div className="space-y-4">
+                        {!user && (
+                          <input
+                            type="text"
+                            placeholder="Your Name"
+                            required
+                            value={newReview.userName}
+                            onChange={(e) => setNewReview({ ...newReview, userName: e.target.value })}
+                            className="w-full px-4 py-3 rounded-2xl border-2 border-gray-100 focus:border-amber-500 outline-none transition-all text-xs font-bold"
+                          />
+                        )}
+                        <div className="flex items-center gap-4">
+                          <span className="text-[10px] font-black uppercase tracking-widest">Rating:</span>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map(star => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setNewReview({ ...newReview, rating: star })}
+                                className={`text-xl transition-transform active:scale-125 ${star <= newReview.rating ? 'text-amber-500' : 'text-gray-300'}`}
+                              >
+                                ★
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <textarea
+                          placeholder="Share your experience with this product..."
+                          required
+                          value={newReview.comment}
+                          onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                          className="w-full px-4 py-3 rounded-2xl border-2 border-gray-100 focus:border-amber-500 outline-none transition-all text-xs font-bold min-h-[100px] resize-none"
+                        />
+                        <button
+                          type="submit"
+                          disabled={submittingReview}
+                          className="w-full bg-black text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-amber-500 transition-all disabled:opacity-50"
+                        >
+                          {submittingReview ? 'Submitting...' : 'Post Review'}
+                        </button>
+                      </div>
+                    </form>
+
+                    {/* Reviews List */}
+                    <div className="space-y-6">
+                      {reviews.length === 0 ? (
+                        <p className="text-center py-8 text-gray-400 font-bold uppercase text-[10px] tracking-widest">No reviews yet. Be the first!</p>
+                      ) : (
+                        reviews.map((review, idx) => (
+                          <div key={idx} className="border-b border-gray-100 pb-6 last:border-0">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-3">
+                                <span className="font-black text-black uppercase text-[10px] tracking-widest">{review.userName}</span>
+                                {review.isVerified && (
+                                  <span className="bg-green-100 text-green-600 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">Verified Purchase</span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-gray-400 font-bold">{new Date(review.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="text-amber-500 text-xs mb-2">
+                              {'★'.repeat(review.rating)}
+                              <span className="text-gray-200">{'★'.repeat(5 - review.rating)}</span>
+                            </div>
+                            <p className="text-gray-600 text-sm leading-relaxed">{review.comment}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
