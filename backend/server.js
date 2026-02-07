@@ -27,8 +27,17 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Validate critical environment variables
+const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET'];
+requiredEnvVars.forEach(varName => {
+  if (!process.env[varName] && process.env.NODE_ENV === 'production') {
+    console.warn(`⚠️ Warning: ${varName} is not defined in environment variables`);
+  }
+});
+
 // Flutterwave Webhook (Must be before dbCheckMiddleware if you want it to always work)
-app.post('/api/payments/webhook/flutterwave', express.json(), require('./routes/payments'));
+// Note: We use the router directly to handle the specific path
+app.use('/api/payments', require('./routes/payments'));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -38,16 +47,25 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Database connection
-// Removed redundant call - handled by server.listen wrapper below
-
 // Database connection check middleware for API routes
 const dbCheckMiddleware = (req, res, next) => {
-  if (mongoose.connection.readyState !== 1) {
+  // Allow health check and flutterwave webhook even if DB is down
+  if (req.path === '/health' || req.path === '/payments/webhook/flutterwave') {
+    return next();
+  }
+  
+  const state = mongoose.connection.readyState;
+  if (state !== 1) {
+    const states = {
+      0: 'disconnected',
+      1: 'connected',
+      2: 'connecting',
+      3: 'disconnecting',
+    };
     return res.status(503).json({
-      message: 'Database connection is not established. Please ensure your IP is whitelisted in MongoDB Atlas (0.0.0.0/0).',
+      message: `Database is ${states[state] || 'unknown'}. Please ensure your IP is whitelisted in MongoDB Atlas (0.0.0.0/0).`,
       status: 'error',
-      dbStatus: mongoose.connection.readyState
+      dbStatus: state
     });
   }
   next();
@@ -72,7 +90,6 @@ try {
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/user', require('./routes/user'));
   app.use('/api/orders', require('./routes/orders'));
-  app.use('/api/payments', require('./routes/payments'));
   app.use('/api/subscribe', require('./routes/subscribe'));
   app.use('/api/testimonials', require('./routes/testimonials'));
   app.use('/api/reviews', require('./routes/reviews'));
