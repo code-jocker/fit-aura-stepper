@@ -50,7 +50,7 @@ export default function Careers() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-bold mb-4">Join Our Team</h1>
-        <p className="text-gray-600 mb-12">We're always looking for passionate individuals to join Fit Aura & Steppers</p>
+        <p className="text-gray-600 mb-12">We're always looking for passionate individuals to join MBABAZI CLOSET</p>
 
         {/* Company Culture */}
         <div className="bg-white rounded-lg shadow p-8 mb-12">

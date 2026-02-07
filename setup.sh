@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Fit Aura & Steppers - Complete Setup Script
+# MBABAZI CLOSET - Complete Setup Script
 # This script helps you quickly set up the entire project
 
-echo "🇷🇼 Fit Aura & Steppers - Project Setup"
+echo "🇷🇼 MBABAZI CLOSET - Project Setup"
 echo "========================================"
 echo ""
 

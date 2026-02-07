@@ -34,9 +34,9 @@ router.post('/flutterwave/initialize', async (req, res) => {
           name: name,
         },
         customizations: {
-          title: 'Fit Aura & Steppers',
+          title: 'MBABAZI CLOSET',
           description: `Payment for Order #${orderId}`,
-          logo: 'https://fit-aura-steppers.vercel.app/logo.png',
+          logo: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/MBABAZI.JPG`,
         },
         payment_options: 'card,mobilemoneyrwanda,ussd',
       },

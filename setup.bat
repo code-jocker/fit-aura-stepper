@@ -1,8 +1,8 @@
 @echo off
-REM Fit Aura & Steppers - Complete Setup Script for Windows
+REM MBABAZI CLOSET - Complete Setup Script for Windows
 
 echo.
-echo 🇷🇼 Fit Aura ^& Steppers - Project Setup
+echo 🇷🇼 MBABAZI CLOSET - Project Setup
 echo ========================================
 echo.
 

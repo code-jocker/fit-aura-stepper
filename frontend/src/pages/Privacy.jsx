@@ -31,7 +31,7 @@ export default function Privacy() {
           <section id="introduction">
             <h2 className="text-3xl font-bold mb-4 text-gray-900">1. Introduction</h2>
             <p className="text-gray-700 mb-4">
-              At Fit Aura & Steppers, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.
+              At MBABAZI CLOSET, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.
             </p>
             <p className="text-gray-700">
               Please read this Privacy Policy carefully. If you do not agree with our policies and practices, please do not use our website.
@@ -142,8 +142,8 @@ export default function Privacy() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <h3 className="font-semibold text-gray-800 mb-2">Email</h3>
-                <a href="mailto:privacy@fitaurasteppers.com" className="text-amber-600 hover:underline">
-                  privacy@fitaurasteppers.com
+                <a href="mailto:privacy@mbabazicloset.rw" className="text-amber-600 hover:underline">
+                  privacy@mbabazicloset.rw
                 </a>
               </div>
               <div>
@@ -155,7 +155,7 @@ export default function Privacy() {
               <div>
                 <h3 className="font-semibold text-gray-800 mb-2">Mailing Address</h3>
                 <p className="text-gray-700">
-                  Fit Aura & Steppers<br />
+                  MBABAZI CLOSET<br />
                   Kigali, Rwanda<br />
                   East Africa
                 </p>

@@ -131,7 +131,7 @@ export default function Login() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-block mb-4">
-            <img src="/logo.png" alt="Fit Aura" className="h-16 w-auto object-contain brightness-0 invert mx-auto" />
+            <img src="/MBABAZI.JPG" alt="MBABAZI CLOSET" className="h-16 w-auto object-contain brightness-0 invert mx-auto" />
           </Link>
           <p className="text-gray-400">
             {loginType === 'user' ? 'Welcome back!' : loginType === 'admin' ? 'Admin Dashboard' : 'Delivery Access'}

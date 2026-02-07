@@ -144,7 +144,7 @@ Sample products to add to MongoDB:
 ```json
 {
   "name": "Classic Street Walker",
-  "brand": "Steppers",
+  "brand": "MBABAZI",
   "category": "shoes",
   "price": 75000,
   "salePrice": null,

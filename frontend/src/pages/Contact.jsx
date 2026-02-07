@@ -167,7 +167,7 @@ export default function Contact() {
               {/* Location */}
               <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-xl font-bold mb-3">📍 Location</h3>
-                <p className="text-gray-700 mb-2">Fit Aura & Steppers HQ</p>
+                <p className="text-gray-700 mb-2">MBABAZI CLOSET HQ</p>
                 <p className="text-gray-700">Kigali, Rwanda 🇷🇼</p>
               </div>
 
@@ -181,8 +181,8 @@ export default function Contact() {
               {/* Email */}
               <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-xl font-bold mb-3">✉️ Email</h3>
-                <p className="text-gray-700">hello@fitaurasteppers.rw</p>
-                <p className="text-gray-700">support@fitaurasteppers.rw</p>
+                <p className="text-gray-700">hello@mbabazicloset.rw</p>
+                <p className="text-gray-700">support@mbabazicloset.rw</p>
                 <p className="text-sm text-gray-600 mt-2">Typically respond within 24 hours</p>
               </div>
 

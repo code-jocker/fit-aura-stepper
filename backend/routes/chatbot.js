@@ -8,7 +8,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
 
-const SYSTEM_INSTRUCTIONS = `You are 'Aura', the premium AI shopping assistant for 'Fit Aura & Steppers' in Rwanda. 
+const SYSTEM_INSTRUCTIONS = `You are 'MBABAZI AI', the premium AI shopping assistant for 'MBABAZI CLOSET' in Rwanda. 
 Your goal is to provide comprehensive, expert assistance on ALL topics related to our store and products.
 
 CORE KNOWLEDGE:
@@ -67,7 +67,7 @@ router.post('/chat', async (req, res) => {
             },
             {
               role: "model",
-              parts: [{ text: "Understood. I am Aura, the Fit Aura & Steppers assistant. How can I help you today? 👟✨🇷🇼" }],
+              parts: [{ text: "Understood. I am MBABAZI AI, the MBABAZI CLOSET assistant. How can I help you today? 👟✨🇷🇼" }],
             },
           ],
         });
@@ -82,7 +82,7 @@ router.post('/chat', async (req, res) => {
 
     // Final Fallback: If no AI is configured, provide a helpful static response
     return res.json({
-      response: "Hello! I am Aura from Fit Aura & Steppers. 👟✨ My AI brain is currently being updated, but I can tell you that we are based in Kigali and offer FREE delivery within the city! For urgent help, please visit our contact page or reach out via WhatsApp. 🇷🇼"
+      response: "Hello! I am MBABAZI AI from MBABAZI CLOSET. 👟✨ My AI brain is currently being updated, but I can tell you that we are based in Kigali and offer FREE delivery within the city! For urgent help, please visit our contact page or reach out via WhatsApp. 🇷🇼"
     });
 
   } catch (error) {

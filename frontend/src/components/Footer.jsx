@@ -11,7 +11,7 @@ export default function Footer() {
           {/* Brand Identity */}
           <div className="max-w-xs">
             <Link to="/" className="mb-8 block">
-              <img src="/logo.png" alt="Fit Aura" className="h-12 w-auto object-contain brightness-0 invert" />
+              <img src="/MBABAZI.JPG" alt="MBABAZI CLOSET" className="h-12 w-auto object-contain brightness-0 invert" />
             </Link>
             <p className="text-gray-400 text-lg font-medium leading-relaxed mb-8">
               Rwanda's ultimate destination for premium sneakers and modern streetwear. Elevating your style, one step at a time.
@@ -93,7 +93,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-white/10 pt-12 flex flex-col md:flex-row justify-between items-center gap-8">
           <p className="text-gray-500 font-bold text-sm">
-            © 2026 Fit Aura & Steppers. Crafted for Rwanda 🇷🇼
+            © 2026 MBABAZI CLOSET. Crafted for Rwanda 🇷🇼
           </p>
           
           <div className="flex flex-wrap justify-center gap-6 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all">

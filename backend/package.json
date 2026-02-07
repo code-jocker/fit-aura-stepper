@@ -1,7 +1,7 @@
 {
-  "name": "fit-aura-steppers-backend",
+  "name": "mbabazi-closet-backend",
   "version": "1.0.0",
-  "description": "Backend API for Fit Aura & Steppers e-commerce platform",
+  "description": "Backend API for MBABAZI CLOSET e-commerce platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -13,7 +13,7 @@
     "sneakers",
     "rwanda"
   ],
-  "author": "Fit Aura Team",
+  "author": "MBABAZI Team",
   "license": "MIT",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

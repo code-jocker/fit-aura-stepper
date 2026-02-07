@@ -6,7 +6,7 @@ const API_URL = process.env.REACT_APP_API_URL || '/api';
 export default function SupportChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { id: 1, sender: 'support', text: '👋 Welcome! I am your Fit Aura AI assistant. How can I help you today?' }
+    { id: 1, sender: 'support', text: '👋 Welcome! I am your MBABAZI CLOSET AI assistant. How can I help you today?' }
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -59,7 +59,7 @@ export default function SupportChat() {
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-black font-bold">✨</div>
               <div>
-                <h3 className="font-black text-xs uppercase tracking-widest">Fit Aura AI</h3>
+                <h3 className="font-black text-xs uppercase tracking-widest">MBABAZI CLOSET AI</h3>
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
                   <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Online Support</span>
@@ -118,7 +118,7 @@ export default function SupportChat() {
                 </svg>
               </button>
             </div>
-            <p className="text-[8px] text-center text-gray-400 mt-3 font-bold uppercase tracking-widest">Powered by Fit Aura AI</p>
+            <p className="text-[8px] text-center text-gray-400 mt-3 font-bold uppercase tracking-widest">Powered by MBABAZI AI</p>
           </div>
         </div>
       )}

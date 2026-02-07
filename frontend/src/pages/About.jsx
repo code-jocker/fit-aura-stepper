@@ -8,7 +8,7 @@ export default function About() {
       <section className="bg-black text-white py-16 mb-16">
         <div className="container text-center">
           <div className="mb-8 flex flex-col items-center">
-            <img src="/logo.png" alt="Fit Aura" className="h-20 w-auto object-contain brightness-0 invert mb-6" />
+            <img src="/MBABAZI.JPG" alt="MBABAZI CLOSET" className="h-20 w-auto object-contain brightness-0 invert mb-6" />
             <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight">
               About Us
             </h1>
@@ -25,7 +25,7 @@ export default function About() {
           <div>
             <h2 className="text-4xl font-bold mb-6">Our Story</h2>
             <p className="text-gray-700 mb-4 text-lg">
-              Founded in 2020, Fit Aura & Steppers emerged from a passion for bringing world-class 
+              Founded in 2020, MBABAZI CLOSET emerged from a passion for bringing world-class 
               fashion to Rwanda. We believe that everyone deserves access to premium, authentic athletic 
               wear and sneakers that elevate their style and confidence.
             </p>
@@ -150,7 +150,7 @@ export default function About() {
       <section className="bg-amber-500 text-white py-16 mb-16">
         <div className="container text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to Transform Your Style?</h2>
-          <p className="text-xl mb-8">Join thousands of happy customers shopping at Fit Aura & Steppers</p>
+          <p className="text-xl mb-8">Join thousands of happy customers shopping at MBABAZI CLOSET</p>
           <Link to="/products" className="btn-primary bg-black hover:bg-gray-800 px-8 py-3">
             Shop Now →
           </Link>

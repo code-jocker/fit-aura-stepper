@@ -79,19 +79,19 @@ export default function Header() {
           <Link to="/" className="flex items-center group">
             <div className="relative overflow-hidden bg-black rounded-xl p-1.5 shadow-xl shadow-amber-500/10 border border-amber-500/20 group-hover:border-amber-500/50 transition-all duration-500">
               <img 
-                src="/logo.png" 
-                alt="Fit Aura" 
+                src="/MBABAZI.JPG" 
+                alt="MBABAZI CLOSET" 
                 className={`h-12 md:h-16 w-auto object-contain transition-transform duration-700 group-hover:scale-110 group-hover:rotate-2 ${scrolled ? 'scale-90 h-10 md:h-12' : ''}`} 
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = 'https://via.placeholder.com/150x50?text=FIT+AURA';
+                  e.target.src = 'https://via.placeholder.com/150x50?text=MBABAZI';
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-white/40 to-amber-500/0 -translate-x-full group-hover:animate-shimmer" />
             </div>
             <div className="ml-3 hidden sm:flex flex-col">
-              <span className="text-[14px] font-black uppercase tracking-tighter leading-none group-hover:text-amber-500 transition-colors">Fit Aura</span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 leading-none mt-1">Steppers</span>
+              <span className="text-[14px] font-black uppercase tracking-tighter leading-none group-hover:text-amber-500 transition-colors">MBABAZI</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 leading-none mt-1">CLOSET</span>
             </div>
           </Link>
 

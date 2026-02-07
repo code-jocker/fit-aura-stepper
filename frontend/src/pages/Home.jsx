@@ -73,7 +73,7 @@ export default function Home() {
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
-          aria-label="Fit Aura & Steppers Hero Image - Premium Sneakers in Rwanda"
+          aria-label="MBABAZI CLOSET Hero Image - Premium Sneakers in Rwanda"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
         <div className="relative container px-4">
@@ -376,7 +376,7 @@ export default function Home() {
       <section className="py-24 bg-white border-t border-gray-100">
         <div className="container">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-black uppercase tracking-tight mb-4">Why Choose Fit Aura & Steppers</h2>
+            <h2 className="text-4xl font-black uppercase tracking-tight mb-4">Why Choose MBABAZI CLOSET</h2>
             <p className="text-gray-500 font-medium">Providing the best shopping experience across Rwanda</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">

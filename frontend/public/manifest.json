@@ -1,16 +1,16 @@
 {
-  "short_name": "Fit Aura",
-  "name": "Fit Aura & Steppers - Premium Fashion Rwanda",
+  "short_name": "MBABAZI",
+  "name": "MBABAZI CLOSET - Premium Fashion Rwanda",
   "icons": [
     {
-      "src": "logo.png",
+      "src": "MBABAZI.JPG",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/jpeg"
     },
     {
-      "src": "logo.png",
+      "src": "MBABAZI.JPG",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/jpeg"
     }
   ],
   "start_url": ".",

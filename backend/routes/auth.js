@@ -137,12 +137,13 @@ router.post('/admin-login', async (req, res) => {
     }
     
     // Hardcoded admin credentials
-    const ADMIN_USERNAME = 'fitaura';
+    const ADMIN_USERNAME = 'mbabazi';
     const ADMIN_PASSWORD = '12345';
     
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       const token = jwt.sign(
-        { id: 'admin', role: 'admin', email: 'admin@fitaurasteppers.rw' },
+        { id: 'admin', role: 'admin',
+            email: 'admin@mbabazicloset.rw' },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRE || '7d' }
       );
@@ -151,10 +152,10 @@ router.post('/admin-login', async (req, res) => {
         token,
         user: {
           id: 'admin',
-          username: 'fitaura',
-          name: 'Fit Aura Admin',
+          username: 'mbabazi',
+          name: 'MBABAZI Admin',
           role: 'admin',
-          email: 'admin@fitaurasteppers.rw'
+          email: 'admin@mbabazicloset.rw'
         }
       });
     }

@@ -1,4 +1,4 @@
-# Fit Aura & Steppers - E-Commerce Platform
+# MBABAZI CLOSET - E-Commerce Platform
 
 🇷🇼 Rwanda's premium fashion destination for sneakers, athleisure wear, and accessories.
 
