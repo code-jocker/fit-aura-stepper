@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const connectDB = async () => {
+const connectDB = async (retryCount = 5) => {
   try {
     const mongoUri = process.env.MONGODB_URI;
     
@@ -12,11 +12,11 @@ const connectDB = async () => {
     // Disable buffering so that we get immediate errors instead of timeouts
     mongoose.set('bufferCommands', false);
     
-    console.log('⏳ Connecting to MongoDB Atlas...');
+    console.log(`⏳ Connecting to MongoDB Atlas (Attempt ${6 - retryCount}/5)...`);
     const conn = await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 10000, // 10 seconds timeout
+      serverSelectionTimeoutMS: 15000, // 15 seconds timeout
       socketTimeoutMS: 45000, // 45 seconds socket timeout
       autoIndex: true,
     });
@@ -25,7 +25,15 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    
+    if (retryCount > 0) {
+      console.log(`🔄 Retrying connection in 5 seconds... (${retryCount} retries left)`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      return connectDB(retryCount - 1);
+    }
+
     console.log('ℹ️  ACTION REQUIRED: Ensure your IP is whitelisted in MongoDB Atlas (0.0.0.0/0 for Render).');
+    console.log('🔗 Whitelist Guide: https://www.mongodb.com/docs/atlas/security-whitelist/');
     throw error; // Rethrow to let server.js handle it
   }
 };

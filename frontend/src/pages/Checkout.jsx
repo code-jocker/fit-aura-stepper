@@ -242,6 +242,7 @@ export default function Checkout() {
                   {[
                     { id: 'momo', label: 'MTN MoMo', icon: '💳', color: 'bg-amber-400' },
                     { id: 'airtel', label: 'Airtel Money', icon: '📱', color: 'bg-red-500' },
+                    { id: 'card', label: 'Card / Others', icon: '🌐', color: 'bg-blue-600' },
                     { id: 'cash', label: 'Cash on Delivery', icon: '💵', color: 'bg-green-500' }
                   ].map((method) => (
                     <button
