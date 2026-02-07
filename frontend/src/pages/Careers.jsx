@@ -125,7 +125,7 @@ export default function Careers() {
           <p className="text-gray-700 mb-4">
             We're always interested in hearing from talented individuals. Send us your resume and tell us what you'd like to do!
           </p>
-          <a href="mailto:careers@fitaura.rw" className="inline-block bg-indigo-600 text-white px-6 py-2 rounded font-bold hover:bg-indigo-700">
+          <a href="mailto:careers@mbabazicloset.rw" className="inline-block bg-indigo-600 text-white px-6 py-2 rounded font-bold hover:bg-indigo-700">
             Send Your Resume
           </a>
         </div>

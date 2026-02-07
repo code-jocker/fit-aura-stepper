@@ -19,7 +19,7 @@ router.post('/flutterwave/initialize', async (req, res) => {
       return res.status(500).json({ message: 'Payment gateway not configured' });
     }
 
-    const tx_ref = `FITAURA-${orderId}-${Date.now()}`;
+    const tx_ref = `MBABAZI-${orderId}-${Date.now()}`;
 
     const response = await axios.post(
       'https://api.flutterwave.com/v3/payments',

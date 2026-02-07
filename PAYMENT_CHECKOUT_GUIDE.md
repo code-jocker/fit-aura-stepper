@@ -5,7 +5,7 @@
 ### 1. Admin Login & Add Test Products
 ```
 URL: http://localhost:3001/login
-Admin Tab → Username: fitaura → Password: 12345
+Admin Tab → Username: mbabazi → Password: 12345
 ```
 
 **Add Sample Product:**

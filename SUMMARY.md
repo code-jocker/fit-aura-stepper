@@ -1,8 +1,8 @@
-# 🇷🇼 Fit Aura & Steppers - Complete E-Commerce Platform
+# 🇷🇼 MBABAZI CLOSET - Complete E-Commerce Platform
 
 ## ✨ Project Overview
 
-A full-stack, production-ready e-commerce application for **Fit Aura & Steppers** - Rwanda's premium fashion destination specializing in sneakers, athleisure wear, and accessories.
+A full-stack, production-ready e-commerce application for **MBABAZI CLOSET** - Rwanda's premium fashion destination specializing in sneakers, athleisure wear, and accessories.
 
 ### What Has Been Created
 
@@ -20,7 +20,7 @@ A full-stack, production-ready e-commerce application for **Fit Aura & Steppers*
 ## 📁 Project Structure
 
 ```
-fit-aura-steppers/
+mbabazi-closet/
 ├── backend/                    # Node.js/Express API server
 │   ├── models/                 # MongoDB schemas (5 models)
 │   ├── routes/                 # API endpoints (7 route files)
@@ -346,7 +346,7 @@ npm start
 
 1. **Clone/Setup**
    ```bash
-   cd fit-aura-steppers
+   cd mbabazi-closet
    npm install  # in both backend and frontend
    ```
 
@@ -386,7 +386,7 @@ npm start
 
 ## 📞 Support
 
-- **Email**: support@fitaura.rw
+- **Email**: support@mbabazicloset.rw
 - **Phone**: +250 (0) 798 000 000
 - **Website**: https://stepaura.lovable.app/
 
@@ -394,7 +394,7 @@ npm start
 
 ## 📝 License
 
-MIT License - 2026 Fit Aura & Steppers
+MIT License - 2026 MBABAZI CLOSET
 
 ---
 

@@ -1,7 +1,7 @@
-# Guest Features & Search Implementation Guide
+# Demographic Filtering Implementation Guide
 
 ## Overview
-This document outlines the complete implementation of optional login (guest access) and search/demographic filtering functionality for the Fit Aura Steppers platform.
+This document outlines the complete implementation of optional login (guest access) and search/demographic filtering functionality for the MBABAZI CLOSET platform.
 
 ---
 
@@ -89,7 +89,7 @@ Color: Black, White
 Results show women's shoes in $50-$150 range, sizes 7-9, black or white.
 
 ### Admin Product Setup:
-1. **Login as admin** - Username: `fitaura`, Password: `12345`
+1. **Login as admin** - Username: `mbabazi`, Password: `12345`
 2. **Go to Admin page** - Create or edit product
 3. **Set audience dropdown** - Select target demographic (default: Unisex)
 4. **Save product** - Audience saved to database
@@ -254,7 +254,7 @@ Faster checkout (saved addresses)
 - [ ] Clear all filters resets everything
 
 ### Admin Features ✅
-- [ ] Login as fitaura/12345
+- [ ] Login as mbabazi/12345
 - [ ] Create product with audience selector
 - [ ] Edit product audience
 - [ ] Save and verify audience in database

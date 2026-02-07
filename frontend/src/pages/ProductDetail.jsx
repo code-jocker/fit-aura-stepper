@@ -121,7 +121,7 @@ export default function ProductDetail() {
                 <img
                   src={product.images?.[selectedImage] || 'https://via.placeholder.com/800x1000?text=Product+Image'}
                   alt={product.name}
-                  className="w-full h-full object-contain md:object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = 'https://via.placeholder.com/800x1000?text=Image+Not+Available';

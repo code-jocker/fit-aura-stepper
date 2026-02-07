@@ -123,13 +123,13 @@
 ## Authentication Setup
 
 ### Admin Login Credentials
-- **Username**: `fitaura`
+- **Username**: `mbabazi`
 - **Password**: `12345`
 
 ### JWT Configuration
 Created `.env` file in backend with:
 ```env
-JWT_SECRET=fit-aura-steppers-super-secret-jwt-key-2026
+JWT_SECRET=mbabazi-closet-super-secret-jwt-key-2026
 JWT_EXPIRE=7d
 ```
 
@@ -138,7 +138,7 @@ JWT_EXPIRE=7d
 ## Testing Checklist
 
 ### Admin Dashboard
-- [ ] Login with `fitaura` / `12345`
+- [ ] Login with `mbabazi` / `12345`
 - [ ] View products with images displaying correctly
 - [ ] Images load from URLs (use format: `https://example.com/image.jpg`)
 - [ ] Add new product with multiple image URLs

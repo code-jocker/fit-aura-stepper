@@ -288,7 +288,15 @@ export default function Home() {
               {comingSoon.map(product => (
                 <div key={product._id} className="relative group overflow-hidden rounded-[2.5rem] bg-white p-4 shadow-2xl">
                   <div className="aspect-[4/5] overflow-hidden rounded-[2rem]">
-                    <img src={product.images?.[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <img 
+                      src={product.images?.[0] || 'https://via.placeholder.com/800x1000?text=Product+Image'} 
+                      alt={product.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://via.placeholder.com/800x1000?text=Image+Not+Available';
+                      }}
+                    />
                   </div>
                   <div className="mt-6 px-4 pb-4">
                     <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 px-3 py-1 rounded-full mb-3 inline-block">🔜 {product.publishDate ? new Date(product.publishDate).toLocaleDateString() : 'Coming Soon'}</span>

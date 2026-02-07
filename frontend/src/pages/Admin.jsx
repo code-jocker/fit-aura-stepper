@@ -31,7 +31,7 @@ export default function Admin() {
     price: '',
     salePrice: '',
     description: '',
-    images: '',
+    images: [],
     sizes: '',
     colors: '',
     stock: '',
@@ -39,6 +39,37 @@ export default function Admin() {
     isNew: true,
     isPublished: true
   });
+
+  // Image Compression Helper
+  const compressImage = (base64Str, maxWidth = 800, maxHeight = 800, quality = 0.7) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = base64Str;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+    });
+  };
 
   // Fetch products
   const fetchProducts = async () => {
@@ -187,25 +218,17 @@ export default function Admin() {
       }
 
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const result = reader.result;
+        const compressedResult = await compressImage(result);
         setFormData(prev => {
-          // Normalize images into array first
-          let currentImages = [];
-          if (prev.images) {
-            if (Array.isArray(prev.images)) {
-              currentImages = [...prev.images];
-            } else {
-              currentImages = prev.images.split(',').map(s => s.trim()).filter(s => s);
-            }
-          }
-          
-          if (!currentImages.includes(result)) {
-            currentImages.push(result);
+          const currentImages = Array.isArray(prev.images) ? [...prev.images] : [];
+          if (!currentImages.includes(compressedResult)) {
+            currentImages.push(compressedResult);
           }
           return {
             ...prev,
-            images: currentImages.join(', ')
+            images: currentImages
           };
         });
       };
@@ -220,9 +243,7 @@ export default function Admin() {
     e.preventDefault();
     
     // Improved validation for images
-    const imageList = typeof formData.images === 'string' 
-      ? formData.images.split(',').map(img => img.trim()).filter(img => img)
-      : (Array.isArray(formData.images) ? formData.images : []);
+    const imageList = Array.isArray(formData.images) ? formData.images : [];
 
     if (!formData.name || !formData.brand || !formData.price || !formData.description || imageList.length === 0) {
       alert('Please fill in all required fields including at least one image');
@@ -268,7 +289,7 @@ export default function Admin() {
         price: '',
         salePrice: '',
         description: '',
-        images: '',
+        images: [],
         sizes: '',
         colors: '',
         stock: '',
@@ -298,7 +319,7 @@ export default function Admin() {
       price: product.price,
       salePrice: product.salePrice || '',
       description: product.description,
-      images: product.images.join(', '),
+      images: Array.isArray(product.images) ? product.images : [],
       sizes: product.sizes.join(', '),
       colors: product.colors.join(', '),
       stock: product.stock,
@@ -340,7 +361,7 @@ export default function Admin() {
       price: '',
       salePrice: '',
       description: '',
-      images: '',
+      images: [],
       sizes: '',
       colors: '',
       stock: '',
@@ -856,9 +877,9 @@ export default function Admin() {
                             e.preventDefault();
                             const url = e.target.value.trim();
                             if (url) {
-                              const imgs = formData.images ? formData.images.split(',').map(s => s.trim()).filter(s => s) : [];
+                              const imgs = Array.isArray(formData.images) ? [...formData.images] : [];
                               imgs.push(url);
-                              setFormData(prev => ({ ...prev, images: imgs.join(', ') }));
+                              setFormData(prev => ({ ...prev, images: imgs }));
                               e.target.value = '';
                             }
                           }
@@ -870,9 +891,9 @@ export default function Admin() {
                           const input = document.getElementById('newImageUrl');
                           const url = input.value.trim();
                           if (url) {
-                            const imgs = formData.images ? formData.images.split(',').map(s => s.trim()).filter(s => s) : [];
+                            const imgs = Array.isArray(formData.images) ? [...formData.images] : [];
                             imgs.push(url);
-                            setFormData(prev => ({ ...prev, images: imgs.join(', ') }));
+                            setFormData(prev => ({ ...prev, images: imgs }));
                             input.value = '';
                           }
                         }}
@@ -884,8 +905,14 @@ export default function Admin() {
                     
                     <textarea
                       name="images"
-                      value={formData.images}
-                      onChange={handleInputChange}
+                      value={Array.isArray(formData.images) ? formData.images.join(', ') : ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          images: val.split(',').map(s => s.trim()).filter(s => s) 
+                        }));
+                      }}
                       className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 ring-amber-500 font-mono text-xs bg-gray-50/50"
                       placeholder="Current image list (comma-separated)..."
                       rows="3"
@@ -910,14 +937,11 @@ export default function Admin() {
                     />
                   </label>
                   
-                  {formData.images && (
+                  {formData.images && formData.images.length > 0 && (
                     <div className="w-full">
                       <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 ml-1">Live Previews</h3>
                       <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 max-h-48 overflow-y-auto p-1">
-                        {(typeof formData.images === 'string' 
-                          ? formData.images.split(',').map(s => s.trim()).filter(s => s)
-                          : (Array.isArray(formData.images) ? formData.images : [])
-                        ).map((img, i) => (
+                        {formData.images.map((img, i) => (
                           <div key={i} className="relative group aspect-square">
                             <img 
                               src={img} 
@@ -931,11 +955,11 @@ export default function Admin() {
                             <button 
                               type="button"
                               onClick={() => {
-                                const imgs = (typeof formData.images === 'string' 
-                                  ? formData.images.split(',').map(s => s.trim()).filter(s => s)
-                                  : (Array.isArray(formData.images) ? formData.images : []));
-                                imgs.splice(i, 1);
-                                setFormData(prev => ({ ...prev, images: imgs.join(', ') }));
+                                setFormData(prev => {
+                                  const imgs = [...prev.images];
+                                  imgs.splice(i, 1);
+                                  return { ...prev, images: imgs };
+                                });
                               }}
                               className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-10"
                             >

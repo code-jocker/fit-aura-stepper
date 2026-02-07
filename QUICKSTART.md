@@ -112,12 +112,12 @@ Token stored in localStorage and sent in Authorization header.
 
 ### MongoDB Local
 ```
-mongodb://localhost:27017/fit-aura-steppers
+mongodb://localhost:27017/mbabazi-closet
 ```
 
 ### MongoDB Atlas (Cloud)
 ```
-mongodb+srv://username:password@cluster.mongodb.net/fit-aura-steppers
+mongodb+srv://username:password@cluster.mongodb.net/mbabazi-closet
 ```
 
 ## 🎨 Customization
@@ -181,7 +181,7 @@ Sample products to add to MongoDB:
 
 - Documentation: See README.md
 - Issues: Check DEPLOYMENT.md for production setup
-- Help: support@fitaura.rw
+- Help: support@mbabazicloset.rw
 
 ## ✅ Next Steps
 

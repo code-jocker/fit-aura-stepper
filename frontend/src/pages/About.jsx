@@ -173,7 +173,7 @@ export default function About() {
           <div>
             <p className="text-3xl mb-3">✉️</p>
             <h3 className="font-bold mb-2">Email</h3>
-            <p className="text-gray-700">hello@fitaurasteppers.rw</p>
+            <p className="text-gray-700">hello@mbabazicloset.rw</p>
           </div>
         </div>
       </section>

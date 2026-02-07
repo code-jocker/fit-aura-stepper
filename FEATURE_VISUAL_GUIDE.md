@@ -116,7 +116,7 @@ Final Results: Women's running shoes size 8
 ```
 ┌──────────────────────────────────┐
 │   ADMIN LOGIN                    │
-│   Username: fitaura              │
+│   Username: mbabazi              │
 │   Password: 12345                │
 └──────────┬───────────────────────┘
            │
@@ -164,7 +164,7 @@ Final Results: Women's running shoes size 8
 ### BEFORE (Login Required)
 ```
 ┌─────────────────────────────────┐
-│ 🇷🇼 FIT AURA         [Search] 🔍│
+│ 🇷🇼 MBABAZI CLOSET  [Search] 🔍│
 │                         [Cart]🛒 │
 │                      [Sign In]   │
 │ (Cart only visible when logged in)
@@ -174,7 +174,7 @@ Final Results: Women's running shoes size 8
 ### AFTER (Guest Access)
 ```
 ┌─────────────────────────────────┐
-│ 🇷🇼 FIT AURA         [Search] 🔍│
+│ 🇷🇼 MBABAZI CLOSET  [Search] 🔍│
 │                         [Cart]🛒 │
 │                                  │
 │ (Cart visible for EVERYONE)      │
@@ -462,7 +462,7 @@ PRODUCT CARD
 
 ### Example 1: Guest Shopper
 ```
-1. Open Fit Aura Steppers homepage
+1. Open MBABAZI CLOSET homepage
    └─ No login required ✓
 
 2. Search "black running shoes"
@@ -486,7 +486,7 @@ PRODUCT CARD
 
 ### Example 2: Admin Creating Product
 ```
-1. Login: fitaura / 12345
+1. Login: mbabazi / 12345
    └─ Dashboard loads ✓
 
 2. Click "Add Product"

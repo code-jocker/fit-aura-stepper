@@ -1,4 +1,4 @@
-# 🎯 START HERE - Fit Aura & Steppers Platform
+# 🎯 START HERE - MBABAZI CLOSET Platform
 
 Welcome! Your complete e-commerce platform is ready. Here's how to get started:
 
@@ -84,7 +84,7 @@ npm start
 ## 📂 What's Inside
 
 ```
-📦 fit-aura-steppers/
+📦 mbabazi-closet/
 ├── 📁 backend/          Complete API server
 ├── 📁 frontend/         React e-commerce app
 ├── 📄 SUMMARY.md       ⭐ Read this first
@@ -122,7 +122,7 @@ npm start
 
 ### Required: Edit `backend/.env`
 ```env
-MONGODB_URI=mongodb+srv://youruser:yourpass@cluster.mongodb.net/fit-aura-steppers
+MONGODB_URI=mongodb+srv://youruser:yourpass@cluster.mongodb.net/mbabazi-closet
 JWT_SECRET=your_random_secret_key_here
 PORT=5000
 ```
@@ -175,7 +175,7 @@ AIRTEL_API_KEY=your_api_key
 # Connect to MongoDB and insert:
 db.products.insertOne({
   name: "Classic Street Walker",
-  brand: "Steppers",
+  brand: "MBABAZI CLOSET",
   price: 75000,
   images: ["https://..."],
   stock: 50
@@ -249,7 +249,7 @@ Your e-commerce platform is ready to:
 ---
 
 ### 📞 Support
-- Email: support@fitaura.rw
+- Email: support@mbabazicloset.rw
 - Phone: +250 (0) 798 000 000
 
 ### 📝 Next: Read [SUMMARY.md](SUMMARY.md)

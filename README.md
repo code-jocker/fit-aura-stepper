@@ -47,7 +47,7 @@ npm start
 ## Project Structure
 
 ```
-fit-aura-steppers/
+mbabazi-closet/
 ├── backend/
 │   ├── models/          # MongoDB schemas
 │   ├── routes/          # API endpoints
@@ -110,10 +110,10 @@ Free delivery available in Kigali, Rwanda.
 
 ## Support
 
-📧 support@fitaura.rw
+📧 support@mbabazicloset.rw
 📞 +250 (0) 798 000 000
 💬 24/7 Live Chat Support
 
 ## License
 
-MIT License - 2026 Fit Aura & Steppers
+MIT License - 2026 MBABAZI CLOSET

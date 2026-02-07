@@ -37,9 +37,13 @@ export default function QuickAddModal({ product, isOpen, onClose }) {
       <div className="bg-white rounded-[3rem] max-w-lg w-full overflow-hidden shadow-2xl transform animate-in zoom-in slide-in-from-bottom-8 duration-500">
         <div className="relative h-64 sm:h-80 overflow-hidden">
           <img
-            src={product.images?.[0] || 'https://via.placeholder.com/500'}
+            src={product.images?.[0] || 'https://via.placeholder.com/800x1000?text=Product+Image'}
             alt={product.name}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'https://via.placeholder.com/800x1000?text=Image+Not+Available';
+            }}
           />
           <button 
             onClick={onClose} 

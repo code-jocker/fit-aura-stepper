@@ -80,7 +80,7 @@ export default function Shipping() {
             </p>
             <div className="space-y-2">
               <p className="text-gray-700">📞 <strong>+250 (0) 798 000 000</strong></p>
-              <p className="text-gray-700">📧 <strong>shipping@fitaura.rw</strong></p>
+              <p className="text-gray-700">📧 <strong>shipping@mbabazicloset.rw</strong></p>
               <p className="text-gray-700">⏰ Monday - Friday, 9 AM - 6 PM EAT</p>
             </div>
           </div>

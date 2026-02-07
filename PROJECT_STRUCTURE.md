@@ -1,7 +1,7 @@
 # Project Structure
 
 ```
-fit-aura-steppers/
+mbabazi-closet/
 │
 ├── 📁 backend/
 │   ├── 📁 config/

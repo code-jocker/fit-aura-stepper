@@ -83,7 +83,7 @@ export default function OrderConfirmation() {
           <h3 className="font-bold text-lg mb-4">📞 Need Help?</h3>
           <p className="text-gray-600 mb-4">Contact our 24/7 support team</p>
           <div className="space-y-2">
-            <p>📧 support@fitaura.rw</p>
+            <p>📧 support@mbabazicloset.rw</p>
             <p>📞 +250 (0) 798 000 000</p>
           </div>
         </div>

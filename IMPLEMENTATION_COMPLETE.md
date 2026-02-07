@@ -208,7 +208,7 @@ if (selectedAudience) {
 - [x] All filters work together
 
 ### ✅ Admin Tests
-- [x] Login as fitaura/12345
+- [x] Login as mbabazi/12345
 - [x] Create product with audience selection
 - [x] Edit product audience
 - [x] Audience appears in product filters
@@ -242,7 +242,7 @@ if (selectedAudience) {
 ### For Admin
 
 #### Create Product with Audience
-1. Login: fitaura / 12345
+1. Login: mbabazi / 12345
 2. Click "Add Product" button
 3. Fill in all fields
 4. **Select audience** from dropdown (new field)
@@ -412,7 +412,7 @@ db.products.updateMany(
 
 ## Summary
 
-The Fit Aura Steppers platform now offers a complete e-commerce experience with:
+The MBABAZI CLOSET platform now offers a complete e-commerce experience with:
 
 ✅ **No Friction Guest Access** - Shop without login  
 ✅ **Powerful Search** - Find products instantly  
