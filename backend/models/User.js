@@ -27,10 +27,6 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  location: {
-    type: String,
-    default: ''
-  },
   name: {
     type: String,
     required: true
