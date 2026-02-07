@@ -190,7 +190,20 @@ router.put('/:orderId/delivered', auth, async (req, res) => {
     
     await order.save();
 
-    // Here we would normally trigger notifications
+    // Trigger notifications using email service
+    try {
+      const { sendOrderConfirmation } = require('../config/email');
+      if (order.email) {
+        await sendOrderConfirmation(order.email, order._id, {
+          total: order.total,
+          deliveryFee: order.deliveryFee
+        });
+        console.log(`📩 Delivery confirmation email sent to ${order.email}`);
+      }
+    } catch (notifyErr) {
+      console.error('❌ Notification Error:', notifyErr.message);
+    }
+
     console.log(`✨ Order ${order._id} marked as DELIVERED by ${req.user.name}`);
     console.log(`📩 Notification: Thank you message sent to customer ${order.customerName} (${order.email || order.phone})`);
     console.log(`📩 Notification: Admin notified about delivery for order ${order._id}`);

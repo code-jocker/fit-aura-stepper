@@ -15,7 +15,10 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-V6E9L4Z8Q9');
+      gtag('config', 'G-V6E9L4Z8Q9', {
+        'page_path': window.location.pathname,
+        'user_id': localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).id : 'guest'
+      });
     </script>
 
     <meta charset="utf-8" />
