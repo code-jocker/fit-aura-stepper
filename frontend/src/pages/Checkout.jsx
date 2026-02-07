@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
-import { orderService } from '../api';
+import { orderService, paymentService } from '../api';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -99,7 +99,7 @@ export default function Checkout() {
     try {
       const formattedPhone = formatPhone(formData.phone);
 
-      // Create order immediately
+      // Create order first
       const orderData = {
         customerName: formData.fullName,
         email: formData.email,
@@ -122,24 +122,43 @@ export default function Checkout() {
         total: total,
         notes: formData.notes,
         status: 'pending',
-        paymentStatus: formData.paymentMethod === 'cash' ? 'pending' : 'completed',
-        transactionId: formData.paymentMethod === 'cash' ? null : 'MOMO-' + Math.floor(100000000 + Math.random() * 900000000)
+        paymentStatus: 'pending', // Always pending initially for online payments
       };
 
       console.log('Sending order data:', orderData);
       const orderResponse = await orderService.create(orderData);
-      console.log('Order response:', orderResponse);
       const orderId = orderResponse.data._id;
 
       if (!orderId) {
-        throw new Error('Order was created but no ID was returned');
+        throw new Error('Order creation failed');
       }
 
+      // Handle Online Payment with Flutterwave
+      if (formData.paymentMethod === 'momo' || formData.paymentMethod === 'airtel' || formData.paymentMethod === 'card') {
+        const paymentData = {
+          orderId: orderId,
+          amount: total,
+          email: formData.email,
+          phone: formattedPhone,
+          name: formData.fullName
+        };
+
+        const paymentResponse = await paymentService.initiateFlutterwave(paymentData);
+        
+        if (paymentResponse.data.status === 'success' && paymentResponse.data.link) {
+          // Clear cart before redirecting
+          clearCart();
+          // Redirect to Flutterwave checkout
+          window.location.href = paymentResponse.data.link;
+          return;
+        } else {
+          throw new Error('Failed to initialize payment gateway');
+        }
+      }
+
+      // If Cash on Delivery
       setPaymentStep('success');
-      
-      // Brief delay to show success state
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise(resolve => setTimeout(resolve, 1500));
       clearCart();
       navigate(`/order-confirmation/${orderId}`);
     } catch (error) {

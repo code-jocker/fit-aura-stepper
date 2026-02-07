@@ -27,6 +27,9 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Flutterwave Webhook (Must be before dbCheckMiddleware if you want it to always work)
+app.post('/api/payments/webhook/flutterwave', express.json(), require('./routes/payments'));
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

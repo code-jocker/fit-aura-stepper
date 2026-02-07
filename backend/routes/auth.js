@@ -5,7 +5,7 @@ const User = require('../models/User');
 const mongoose = require('mongoose');
 const { OAuth2Client } = require('google-auth-library');
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
 
 // Google Login
 router.post('/google-login', async (req, res) => {
@@ -14,6 +14,11 @@ router.post('/google-login', async (req, res) => {
     
     if (!tokenId) {
       return res.status(400).json({ message: 'No token provided' });
+    }
+
+    if (!client) {
+      console.error('❌ GOOGLE_CLIENT_ID is not configured');
+      return res.status(500).json({ message: 'Google login is not configured on server' });
     }
 
     // Verify the Google token

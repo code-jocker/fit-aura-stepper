@@ -71,6 +71,10 @@ export const paymentService = {
     api.post('/payments/momo', data),
   initiateAirtel: (data) => 
     api.post('/payments/airtel', data),
+  initiateFlutterwave: (data) =>
+    api.post('/payments/flutterwave/initialize', data),
+  verifyFlutterwave: (params) =>
+    api.get('/payments/flutterwave/verify', { params }),
 };
 
 export const subscriptionService = {
