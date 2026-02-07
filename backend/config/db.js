@@ -14,6 +14,10 @@ const connectDB = async (retryCount = 5) => {
     
     console.log(`⏳ Connecting to MongoDB Atlas (Attempt ${6 - retryCount}/5)...`);
     const conn = await mongoose.connect(mongoUri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 15000, // Wait 15s before failing
+      socketTimeoutMS: 45000,
       autoIndex: true,
     });
     
