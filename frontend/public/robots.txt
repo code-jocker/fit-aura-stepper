@@ -15,4 +15,4 @@ Allow: /
 User-agent: bingbot
 Allow: /
 
-Sitemap: https://fit-aura-steppers.onrender.com/sitemap.xml
+Sitemap: https://mbabazi-closet.onrender.com/sitemap.xml
