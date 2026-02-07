@@ -21,7 +21,7 @@ export default function ProductDetail() {
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '', userName: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
-  const { addToCart, user } = useStore();
+  const { user } = useStore();
 
   useEffect(() => {
     const fetchProductAndRelated = async () => {

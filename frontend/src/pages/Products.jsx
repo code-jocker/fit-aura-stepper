@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import ProductCard from '../components/ProductCard';
@@ -11,7 +11,7 @@ export default function Products() {
   const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [categories, setCategories] = useState(['shoes', 'clothes', 'accessories']);
+  const [categories] = useState(['shoes', 'clothes', 'accessories']);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedAudience, setSelectedAudience] = useState('');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
@@ -26,11 +26,7 @@ export default function Products() {
   const [isComingSoon, setIsComingSoon] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       // Fetch products
@@ -62,17 +58,13 @@ export default function Products() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData();
   }, [isComingSoon]);
 
   useEffect(() => {
-    applyFilters();
-  }, [products, selectedCategory, selectedAudience, searchQuery, priceRange, sortBy, selectedSizes, selectedColors, isSaleOnly, isComingSoon]);
+    fetchData();
+  }, [fetchData]);
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...products];
 
     // Admin vs Public View logic is handled by the API, but we can double check here
@@ -158,7 +150,11 @@ export default function Products() {
     });
 
     setFilteredProducts(filtered);
-  };
+  }, [products, selectedCategory, selectedAudience, searchQuery, priceRange, sortBy, selectedSizes, selectedColors, isSaleOnly, isComingSoon]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   const handleQuickAdd = (product) => {
     setSelectedProduct(product);

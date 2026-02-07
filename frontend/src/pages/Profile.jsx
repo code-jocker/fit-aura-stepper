@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -11,16 +11,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [showLogout, setShowLogout] = useState(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    fetchUserData();
-  }, [navigate]);
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
@@ -42,7 +33,16 @@ export default function Profile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    fetchUserData();
+  }, [navigate, fetchUserData]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
