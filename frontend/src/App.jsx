@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { Helmet } from 'react-helmet-async';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -42,6 +43,11 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
+      <Helmet>
+        <title>MBABAZI CLOSET | Premium Fashion & Authentic Sneakers Rwanda 🇷🇼</title>
+        <meta name="description" content="MBABAZI CLOSET is Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali." />
+        <link rel="canonical" href="https://mbabazi-closet.onrender.com/" />
+      </Helmet>
       <Router>
         <div className="flex flex-col min-h-screen">
           <Header />

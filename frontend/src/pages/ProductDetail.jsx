@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { productService } from '../api';
 import ProductCard from '../components/ProductCard';
@@ -100,6 +101,11 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-white">
+      <Helmet>
+        <title>{`${product.name} | MBABAZI CLOSET Rwanda`}</title>
+        <meta name="description" content={product.description?.substring(0, 160)} />
+        <link rel="canonical" href={`https://mbabazi-closet.onrender.com/product/${id}`} />
+      </Helmet>
       {/* Breadcrumbs */}
       <nav className="max-w-7xl mx-auto px-4 py-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
         <Link to="/" className="hover:text-amber-500 transition">Home</Link>

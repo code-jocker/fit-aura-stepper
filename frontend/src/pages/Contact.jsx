@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
 const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
@@ -54,6 +55,11 @@ export default function Contact() {
 
   return (
     <div>
+      <Helmet>
+        <title>Contact Us | MBABAZI CLOSET Rwanda</title>
+        <meta name="description" content="Get in touch with MBABAZI CLOSET. We're here to help with your orders, sizing questions, or any feedback you have about our premium sneakers and fashion." />
+        <link rel="canonical" href="https://mbabazi-closet.onrender.com/contact" />
+      </Helmet>
       {/* Hero Section */}
       <section className="bg-black text-white py-16 mb-16">
         <div className="container text-center">

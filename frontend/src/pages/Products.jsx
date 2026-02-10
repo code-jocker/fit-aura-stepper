@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../components/FilterSidebar';
@@ -167,6 +168,11 @@ export default function Products() {
 
   return (
     <div className="min-h-screen bg-white">
+      <Helmet>
+        <title>Shop All Products | MBABAZI CLOSET Rwanda</title>
+        <meta name="description" content="Browse our collection of premium sneakers, clothes, and accessories. Authentic brands including Nike, Jordan, and Adidas delivered across Rwanda." />
+        <link rel="canonical" href="https://mbabazi-closet.onrender.com/products" />
+      </Helmet>
       {/* Category Header & Breadcrumbs */}
       <section className="bg-gray-50 pt-16 pb-8 border-b">
         <div className="max-w-7xl mx-auto px-4">

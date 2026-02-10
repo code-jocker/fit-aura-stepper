@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { productService, testimonialService, subscriptionService } from '../api';
 import ProductCard from '../components/ProductCard';
 import QuickAddModal from '../components/QuickAddModal';
@@ -64,6 +65,12 @@ export default function Home() {
 
   return (
     <div>
+      <Helmet>
+        <title>MBABAZI CLOSET | Premium Fashion & Authentic Sneakers Rwanda 🇷🇼</title>
+        <meta name="description" content="MBABAZI CLOSET is Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali with express delivery. Elevate your style with the best fashion store in Rwanda." />
+        <meta name="keywords" content="Sneakers Rwanda, Jordan Kigali, Nike Rwanda, MBABAZI CLOSET, Online Shopping Rwanda, Authentic Sneakers Kigali, Best Shoe Store Rwanda, Buy Jordan Rwanda, Nike Store Kigali, Fashion Rwanda, Athleisure Kigali" />
+        <link rel="canonical" href="https://mbabazi-closet.onrender.com/" />
+      </Helmet>
       {/* Hero Section */}
       <section className="relative h-[80vh] overflow-hidden flex items-center">
         <div
