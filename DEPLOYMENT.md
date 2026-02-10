@@ -14,7 +14,7 @@ echo ".env" >> .gitignore
 
 2. **Deploy to Heroku**
 ```bash
-heroku create fit-aura-api
+heroku create mbabazi-closet-api
 heroku config:set MONGODB_URI=your_mongodb_connection
 heroku config:set JWT_SECRET=your_secret_key
 git push heroku main
@@ -41,7 +41,7 @@ vercel
 
 3. **Configure Environment**
 - Set `REACT_APP_API_URL` to your backend URL
-- Example: `https://fit-aura-api.railway.app/api`
+- Example: `https://mbabazi-closet-api.railway.app/api`
 
 ## Database Setup (MongoDB Atlas)
 

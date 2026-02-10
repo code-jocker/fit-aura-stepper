@@ -11,6 +11,18 @@ const connectDB = require('./config/db');
 dotenv.config();
 
 const app = express();
+
+// Domain Redirection Middleware (Force mbabazi-closet.onrender.com)
+app.use((req, res, next) => {
+  const host = req.get('host');
+  const targetHost = 'mbabazi-closet.onrender.com';
+  
+  if (process.env.NODE_ENV === 'production' && host && host.includes('fit-aura-steppers.onrender.com')) {
+    return res.redirect(301, `https://${targetHost}${req.originalUrl}`);
+  }
+  next();
+});
+
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
