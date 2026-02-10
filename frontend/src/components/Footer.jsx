@@ -92,9 +92,14 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-white/10 pt-12 flex flex-col md:flex-row justify-between items-center gap-8">
-          <p className="text-gray-500 font-bold text-sm">
-            © 2026 MBABAZI CLOSET. Crafted for Rwanda 🇷🇼
-          </p>
+          <div className="text-center md:text-left">
+            <p className="text-gray-500 font-bold text-sm">
+              © 2026 MBABAZI CLOSET. Crafted for Rwanda 🇷🇼
+            </p>
+            <p className="text-gray-600 font-bold text-[10px] mt-1 uppercase tracking-widest">
+              Made by <a href="https://clever-digital.solutions" target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:text-white transition-colors">C</a> - Clever Digital Solutions
+            </p>
+          </div>
           
           <div className="flex flex-wrap justify-center gap-6 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all">
             {['MTN MOMO', 'AIRTEL MONEY', 'VISA', 'MASTERCARD', 'CASH ON DELIVERY'].map(method => (
