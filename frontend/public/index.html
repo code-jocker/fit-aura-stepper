@@ -15,21 +15,9 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      
-      let userId = 'guest';
-      try {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          if (user && user.id) userId = user.id;
-        }
-      } catch (e) {
-        console.warn('GA: Failed to parse user from localStorage');
-      }
-
       gtag('config', 'G-V6E9L4Z8Q9', {
         'page_path': window.location.pathname,
-        'user_id': userId
+        'user_id': localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).id : 'guest'
       });
     </script>
 
@@ -46,11 +34,7 @@
     <meta name="keywords" content="Sneakers Rwanda, Jordan Kigali, Nike Rwanda, MBABAZI CLOSET, Online Shopping Rwanda, Authentic Sneakers Kigali, Best Shoe Store Rwanda, Buy Jordan Rwanda, Nike Store Kigali, Fashion Rwanda, Athleisure Kigali" />
     <meta name="author" content="MBABAZI CLOSET" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="revisit-after" content="1 days" />
-    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
-    <link rel="canonical" href="https://fit-aura-steppers.onrender.com/" />
+    <link rel="canonical" href="https://mbabazi-closet.onrender.com/" />
     
     <!-- Geo Tags for Rwanda -->
     <meta name="geo.region" content="RW-01" />
@@ -63,17 +47,17 @@
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://fit-aura-steppers.onrender.com/" />
+    <meta property="og:url" content="https://mbabazi-closet.onrender.com/" />
     <meta property="og:title" content="MBABAZI CLOSET | Best Authentic Sneakers & Fashion in Rwanda" />
     <meta property="og:description" content="Experience the best of premium fashion in Rwanda. Authentic global brands, express Kigali delivery, and secure MoMo payments. Shop now!" />
-    <meta property="og:image" content="https://fit-aura-steppers.onrender.com/MBABAZI.JPG" />
+    <meta property="og:image" content="https://mbabazi-closet.onrender.com/MBABAZI.JPG" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://fit-aura-steppers.onrender.com/" />
+    <meta property="twitter:url" content="https://mbabazi-closet.onrender.com/" />
     <meta property="twitter:title" content="MBABAZI CLOSET | Best Authentic Sneakers & Fashion in Rwanda" />
     <meta property="twitter:description" content="Experience the best of premium fashion in Rwanda. Authentic global brands, express Kigali delivery, and secure MoMo payments. Shop now!" />
-    <meta property="twitter:image" content="https://fit-aura-steppers.onrender.com/MBABAZI.JPG" />
+    <meta property="twitter:image" content="https://mbabazi-closet.onrender.com/MBABAZI.JPG" />
 
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
@@ -81,8 +65,8 @@
       "@context": "https://schema.org",
       "@type": "ClothingStore",
       "name": "MBABAZI CLOSET",
-      "url": "https://fit-aura-steppers.onrender.com/",
-      "logo": "https://fit-aura-steppers.onrender.com/MBABAZI.JPG",
+      "url": "https://mbabazi-closet.onrender.com/",
+      "logo": "https://mbabazi-closet.onrender.com/MBABAZI.JPG",
       "description": "Premium sneakers and fashion store in Kigali, Rwanda. Selling authentic Nike, Jordan, and Adidas.",
       "address": {
         "@type": "PostalAddress",

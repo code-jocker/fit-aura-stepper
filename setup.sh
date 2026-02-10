@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# MBABAZI CLOSET - Complete Setup Script
+# mbabazi-closet - Complete Setup Script
 # This script helps you quickly set up the entire project
 
-echo "🇷🇼 MBABAZI CLOSET - Project Setup"
+echo "🇷🇼 mbabazi-closet - Project Setup"
 echo "========================================"
 echo ""
 

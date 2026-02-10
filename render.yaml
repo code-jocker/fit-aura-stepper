@@ -1,7 +1,7 @@
 services:
   # Unified Full-Stack Service
   - type: web
-    name: fit-aura-steppers
+    name: mbabazi-closet
     env: node
     plan: free
     buildCommand: npm run build
@@ -10,8 +10,8 @@ services:
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI
-                value: mongodb+srv://princeshyakaclever_db_user:rfa3CabGkUIzn92X@cluster0.akflul6.mongodb.net/fit_aura_db?retryWrites=true&w=majority
+        value: mongodb+srv://princeshyakaclever_db_user:rfa3CabGkUIzn92X@cluster0.akflul6.mongodb.net/mbabazi_closet_db?retryWrites=true&w=majority
       - key: JWT_SECRET
         value: rfa3CabGkUIzn92X_secret_key_fit_aura
       - key: FRONTEND_URL
-        value: https://fit-aura-steppers.onrender.com # Change this if your name is different
+        value: https://mbabazi-closet.onrender.com # Change this if your name is different

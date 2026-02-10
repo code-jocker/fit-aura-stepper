@@ -134,14 +134,10 @@ router.put('/location', auth, async (req, res) => {
       return res.status(401).json({ message: 'Not authorized - Delivery only' });
     }
     
-    const { location, lat, lng } = req.body;
-    const updateData = {};
-    if (location) updateData.location = location;
-    if (lat && lng) updateData.currentLocation = { lat, lng };
-
+    const { location } = req.body;
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      updateData,
+      { location },
       { new: true }
     ).select('-password');
     

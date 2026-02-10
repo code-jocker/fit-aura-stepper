@@ -7,6 +7,7 @@ export default function DeliveryDashboard() {
   const [worker, setWorker] = useState(null);
   const [assignedOrders, setAssignedOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [updating, setUpdating] = useState(false);
   const [startLocation, setStartLocation] = useState(null);
   const [gettingStartLocation, setGettingStartLocation] = useState(false);
@@ -48,7 +49,7 @@ export default function DeliveryDashboard() {
       });
       setWorker(response.data);
     } catch (err) {
-      console.error('Failed to fetch profile data:', err);
+      setError('Failed to fetch profile data');
     }
   };
 
@@ -60,7 +61,7 @@ export default function DeliveryDashboard() {
       });
       setAssignedOrders(response.data);
     } catch (err) {
-      console.error('Failed to fetch assigned orders:', err);
+      setError('Failed to fetch assigned orders');
     } finally {
       setLoading(false);
     }

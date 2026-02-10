@@ -8,6 +8,8 @@ export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [comingSoon, setComingSoon] = useState([]);
+  const [hotDeals, setHotDeals] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [subscribeEmail, setSubscribeEmail] = useState('');
@@ -19,20 +21,24 @@ export default function Home() {
 
   const fetchData = async () => {
     try {
-      const [arrivalsRes, testimonialsRes, featuredRes, comingSoonRes] = await Promise.all([
+      const [arrivalsRes, dealsRes, testimonialsRes, featuredRes, comingSoonRes] = await Promise.all([
         productService.getAll({ isNew: true, limit: 6 }).catch(() => ({ data: [] })),
+        productService.getAll({ sale: true, limit: 6 }).catch(() => ({ data: [] })),
         testimonialService.getAll().catch(() => ({ data: [] })),
         productService.getAll({ featured: true, limit: 3 }).catch(() => ({ data: [] })),
         // Fetch coming soon products for the special section
         productService.getAll({ comingSoon: true, limit: 3 }).catch(() => ({ data: [] }))
       ]);
       setNewArrivals(arrivalsRes?.data || []);
-      // Testimonials are fetched but currently not used in the UI state
+      setHotDeals(dealsRes?.data || []);
+      setTestimonials(testimonialsRes?.data?.slice(0, 5) || []);
       setFeaturedProducts(featuredRes?.data || []);
       setComingSoon(comingSoonRes?.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       setNewArrivals([]);
+      setHotDeals([]);
+      setTestimonials([]);
       setFeaturedProducts([]);
     }
   };
@@ -282,15 +288,7 @@ export default function Home() {
               {comingSoon.map(product => (
                 <div key={product._id} className="relative group overflow-hidden rounded-[2.5rem] bg-white p-4 shadow-2xl">
                   <div className="aspect-[4/5] overflow-hidden rounded-[2rem]">
-                    <img 
-                      src={product.images?.[0] || 'https://via.placeholder.com/800x1000?text=Product+Image'} 
-                      alt={product.name} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = 'https://via.placeholder.com/800x1000?text=Image+Not+Available';
-                      }}
-                    />
+                    <img src={product.images?.[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                   </div>
                   <div className="mt-6 px-4 pb-4">
                     <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 px-3 py-1 rounded-full mb-3 inline-block">🔜 {product.publishDate ? new Date(product.publishDate).toLocaleDateString() : 'Coming Soon'}</span>

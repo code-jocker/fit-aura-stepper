@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function TrackOrder() {
+  const navigate = useNavigate();
   const [orderId, setOrderId] = useState('');
   const [orderStatus, setOrderStatus] = useState(null);
   const [loading, setLoading] = useState(false);
