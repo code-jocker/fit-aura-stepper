@@ -51,10 +51,28 @@ const Portfolio = () => {
   ];
 
   const stats = [
-    { label: 'Projects Completed', value: '50+' },
-    { label: 'Happy Clients', value: '30+' },
-    { label: 'Lines of Code', value: '250K+' },
-    { label: 'Cloud Uptime', value: '99.9%' },
+    { label: 'Projects Completed', value: '150+' },
+    { label: 'Happy Clients', value: '100+' },
+    { label: 'Lines of Code', value: '1M+' },
+    { label: 'Cloud Uptime', value: '100%' },
+  ];
+
+  const communicationPoints = [
+    {
+      title: '24/7 VIP SUPPORT',
+      description: 'Instant access to our lead engineers via dedicated WhatsApp and Slack channels. We are never out of reach.',
+      icon: '📱'
+    },
+    {
+      title: 'REAL-TIME UPDATES',
+      description: 'Daily sprint reports and live staging environments. Watch your vision come to life in real-time.',
+      icon: '🔄'
+    },
+    {
+      title: 'STRATEGIC PARTNERSHIP',
+      description: 'We don\'t just take orders; we provide expert advisory to ensure your technology drives massive ROI.',
+      icon: '🤝'
+    }
   ];
 
   const coreValues = [
@@ -120,9 +138,33 @@ const Portfolio = () => {
       </section>
 
       {/* Communication & Values Section */}
-      <section className="py-32 bg-white border-b border-gray-100">
+      <section className="py-32 bg-white border-b border-gray-100 overflow-hidden">
         <div className="container px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center mb-32">
+          <div className="flex flex-col items-center text-center mb-32">
+            <span className="text-amber-600 font-black uppercase tracking-[0.5em] text-xs mb-6">Unrivaled Communication</span>
+            <h2 className="text-6xl md:text-9xl font-black uppercase mb-10 leading-[0.85] tracking-tighter">
+              BIG DIALOGUE <br />
+              <span className="text-amber-500">BIGGER RESULTS.</span>
+            </h2>
+            <div className="w-24 h-2 bg-black mt-8"></div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-32">
+            {communicationPoints.map((point, index) => (
+              <div key={index} className="bg-black text-white p-12 rounded-[3rem] relative overflow-hidden group hover:-translate-y-4 transition-all duration-500">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl group-hover:bg-amber-500/20 transition-all"></div>
+                <div className="text-5xl mb-8">{point.icon}</div>
+                <h3 className="text-2xl font-black mb-6 uppercase tracking-tight">{point.title}</h3>
+                <p className="text-gray-400 leading-relaxed text-lg font-light">{point.description}</p>
+                <div className="mt-10 flex items-center gap-3 text-amber-500 text-[10px] font-black uppercase tracking-widest">
+                  <span>Learn More</span>
+                  <div className="w-8 h-px bg-amber-500 group-hover:w-12 transition-all"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div>
               <h2 className="text-5xl md:text-7xl font-black uppercase mb-10 leading-none tracking-tighter">
                 COMMUNICATION <br />
