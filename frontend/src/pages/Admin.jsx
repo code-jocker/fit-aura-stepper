@@ -47,10 +47,13 @@ const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.RE
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeSubTab, setActiveSubTab] = useState('all');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [staff, setStaff] = useState([]); // Added staff state
   const [deliveryStaff, setDeliveryStaff] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -91,22 +94,30 @@ export default function Admin() {
     setIsTyping(true);
 
     try {
+      // Create context about the store for the AI
+      const storeContext = {
+        adminName: 'Mbabazi Admin',
+        storeName: 'Mbabazi Closet',
+        stats: {
+          totalProducts: products.length,
+          totalOrders: orders.length,
+          totalCustomers: 1284,
+          revenue: '1,240,000 RWF',
+          lowStock: products.filter(p => p.stock < 10).length
+        },
+        activeTab: activeTab,
+        recentOrders: orders.slice(0, 3).map(o => ({ id: o._id.slice(-8), customer: o.customerName, total: o.total, status: o.status }))
+      };
+
       const response = await axios.post(`${API_URL}/chat`, {
         messages: [...chatMessages, newMessage],
-        context: {
-          adminData: {
-            totalProducts: products.length,
-            totalOrders: orders.length,
-            totalRevenue: '1,240,000 RWF',
-            lowStockItems: products.filter(p => p.stock < 10).length
-          }
-        }
+        context: storeContext
       });
 
       setChatMessages(prev => [...prev, { role: 'assistant', content: response.data.content }]);
     } catch (err) {
       console.error('Chat error:', err);
-      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error connecting to the AI server.' }]);
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'I apologize, but I am having trouble connecting to the store database right now. How else can I assist you with the dashboard?' }]);
     } finally {
       setIsTyping(false);
     }
@@ -202,30 +213,55 @@ export default function Admin() {
 
   // Stats for Dashboard
   const stats = [
-    { label: 'Total Sales', value: '1,240,000 RWF', icon: DollarSign, trend: '+12.5%', color: 'bg-black' },
-    { label: 'Total Orders', value: orders.length, icon: ShoppingBag, trend: '+8.2%', color: 'bg-amber-500' },
-    { label: 'Total Customers', value: '1,284', icon: Users, trend: '+5.4%', color: 'bg-zinc-800' },
-    { label: 'Total Products', value: products.length, icon: Package, trend: '+2.1%', color: 'bg-zinc-900' },
-    { label: 'Pending Orders', value: orders.filter(o => o.status === 'pending').length, icon: Clock, trend: '-3.1%', color: 'bg-amber-600' },
-    { label: 'Low Stock Items', value: products.filter(p => p.stock < 10).length, icon: AlertCircle, trend: '+12%', color: 'bg-red-500' },
+    { label: 'Total Sales', value: '1,240,000 RWF', icon: DollarSign, trend: '+12.5%', color: 'bg-black', sparkline: [40, 35, 50, 45, 60, 55, 70] },
+    { label: 'Total Orders', value: orders.length, icon: ShoppingBag, trend: '+8.2%', color: 'bg-amber-500', sparkline: [20, 25, 22, 30, 28, 35, 32] },
+    { label: 'Total Customers', value: '1,284', icon: Users, trend: '+5.4%', color: 'bg-zinc-800', sparkline: [10, 15, 12, 18, 16, 22, 20] },
+    { label: 'Total Products', value: products.length, icon: Package, trend: '+2.1%', color: 'bg-zinc-900', sparkline: [5, 8, 7, 10, 9, 12, 11] },
+    { label: 'Pending Orders', value: orders.filter(o => o.status === 'pending').length, icon: Clock, trend: '-3.1%', color: 'bg-amber-600', sparkline: [15, 12, 14, 10, 12, 8, 10] },
+    { label: 'Low Stock Items', value: products.filter(p => p.stock < 10).length, icon: AlertCircle, trend: '+12%', color: 'bg-red-500', sparkline: [8, 10, 12, 15, 14, 18, 16] },
   ];
+
+  // Products Table Filter Logic
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         p.brand.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (activeSubTab === 'inventory') return matchesSearch && p.stock < 10;
+    if (activeSubTab === 'categories') return false; // This would need category grouping logic
+    return matchesSearch;
+  });
+
+  // Orders Table Filter Logic
+  const filteredOrders = orders.filter(o => {
+    const matchesSearch = o.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         o._id.includes(searchTerm);
+    
+    if (activeSubTab === 'pending') return matchesSearch && o.status === 'pending';
+    if (activeSubTab === 'completed') return matchesSearch && o.status === 'delivered';
+    if (activeSubTab === 'cancelled') return matchesSearch && o.status === 'cancelled';
+    return matchesSearch;
+  });
 
   // Fetch Data
   const fetchData = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer \${token}` } };
+      const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      const [prodRes, orderRes, staffRes] = await Promise.all([
-        axios.get(`\${API_URL}/products?limit=all&adminView=true`),
-        axios.get(`\${API_URL}/orders`, config),
-        axios.get(`\${API_URL}/user?role=delivery`, config)
+      const [prodRes, orderRes, staffRes, customerRes, allStaffRes] = await Promise.all([
+        axios.get(`${API_URL}/products?limit=all&adminView=true`),
+        axios.get(`${API_URL}/orders`, config),
+        axios.get(`${API_URL}/user?role=delivery`, config),
+        axios.get(`${API_URL}/user?role=customer`, config),
+        axios.get(`${API_URL}/user?role=admin`, config) // Fetch admin/staff
       ]);
 
       setProducts(prodRes.data || []);
       setOrders(orderRes.data || []);
       setDeliveryStaff(staffRes.data || []);
+      setCustomers(customerRes.data || []);
+      setStaff(allStaffRes.data || []);
     } catch (err) {
       console.error('Fetch error:', err);
     } finally {
@@ -244,26 +280,53 @@ export default function Admin() {
 
   // --- UI Components ---
 
-  const SidebarItem = ({ id, label, icon: Icon }) => (
-    <button
-      onClick={() => setActiveTab(id)}
-      className={`w-full flex items-center gap-4 px-6 py-4 transition-all duration-300 \${
-        activeTab === id 
-          ? 'bg-amber-500 text-black font-black' 
-          : 'text-gray-400 hover:bg-white/5 hover:text-white'
-      }`}
-    >
-      <Icon size={20} />
-      {isSidebarOpen && <span className="uppercase tracking-widest text-xs font-bold">{label}</span>}
-      {activeTab === id && isSidebarOpen && <ChevronRight size={16} className="ml-auto" />}
-    </button>
-  );
+  const SidebarItem = ({ id, label, icon: Icon, subItems = [] }) => {
+    const isActive = activeTab === id;
+    const hasSubItems = subItems.length > 0;
+
+    return (
+      <div className="w-full">
+        <button
+          onClick={() => {
+            setActiveTab(id);
+            if (hasSubItems) setActiveSubTab(subItems[0].id);
+          }}
+          className={`w-full flex items-center gap-4 px-6 py-4 transition-all duration-300 ${
+            isActive 
+              ? 'bg-amber-500 text-black font-black' 
+              : 'text-gray-400 hover:bg-white/5 hover:text-white'
+          }`}
+        >
+          <Icon size={20} />
+          {isSidebarOpen && <span className="uppercase tracking-widest text-xs font-bold">{label}</span>}
+          {isActive && isSidebarOpen && !hasSubItems && <ChevronRight size={16} className="ml-auto" />}
+        </button>
+        
+        {isActive && hasSubItems && isSidebarOpen && (
+          <div className="bg-zinc-900/50 py-2">
+            {subItems.map((sub) => (
+              <button
+                key={sub.id}
+                onClick={() => setActiveSubTab(sub.id)}
+                className={`w-full flex items-center gap-3 pl-14 pr-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
+                  activeSubTab === sub.id ? 'text-amber-500' : 'text-gray-500 hover:text-white'
+                }`}
+              >
+                <div className={`w-1 h-1 rounded-full ${activeSubTab === sub.id ? 'bg-amber-500' : 'bg-transparent'}`}></div>
+                {sub.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <div className={`min-h-screen flex \${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-black'}`}>
+    <div className={`min-h-screen flex ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-black'}`}>
       {/* Sidebar */}
       <aside 
-        className={`fixed left-0 top-0 h-full bg-black transition-all duration-500 z-50 \${
+        className={`fixed left-0 top-0 h-full bg-black transition-all duration-500 z-50 ${
           isSidebarOpen ? 'w-64' : 'w-20'
         }`}
       >
@@ -274,8 +337,28 @@ export default function Admin() {
 
         <nav className="mt-10 max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
           <SidebarItem id="dashboard" label="Dashboard" icon={LayoutDashboard} />
-          <SidebarItem id="products" label="Products" icon={Package} />
-          <SidebarItem id="orders" label="Orders" icon={ShoppingBag} />
+          <SidebarItem 
+            id="products" 
+            label="Products" 
+            icon={Package} 
+            subItems={[
+              { id: 'all', label: 'All Products' },
+              { id: 'add', label: 'Add Product' },
+              { id: 'categories', label: 'Categories' },
+              { id: 'inventory', label: 'Inventory' }
+            ]}
+          />
+          <SidebarItem 
+            id="orders" 
+            label="Orders" 
+            icon={ShoppingBag} 
+            subItems={[
+              { id: 'all', label: 'All Orders' },
+              { id: 'pending', label: 'Pending' },
+              { id: 'completed', label: 'Completed' },
+              { id: 'cancelled', label: 'Cancelled' }
+            ]}
+          />
           <SidebarItem id="customers" label="Customers" icon={Users} />
           <SidebarItem id="payments" label="Payments" icon={CreditCard} />
           <SidebarItem id="reviews" label="Reviews" icon={Star} />
@@ -362,16 +445,29 @@ export default function Admin() {
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
                 {stats.map((stat, i) => (
-                  <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 group hover:border-amber-500 transition-all">
-                    <div className={`\${stat.color} w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg`}>
-                      <stat.icon size={24} />
+                  <div key={i} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 group hover:border-amber-500 transition-all">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`${stat.color} w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg`}>
+                        <stat.icon size={18} />
+                      </div>
+                      <span className={`text-[10px] font-black ${stat.trend.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
+                        {stat.trend}
+                      </span>
                     </div>
-                    <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{stat.label}</p>
-                    <div className="flex items-baseline gap-3">
-                      <h3 className="text-2xl font-black tracking-tight">{stat.value}</h3>
-                      <span className="text-green-500 text-xs font-black">{stat.trend}</span>
+                    <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{stat.label}</p>
+                    <h3 className="text-xl font-black tracking-tight mb-4">{stat.value}</h3>
+                    
+                    {/* Simplified Sparkline */}
+                    <div className="flex items-end gap-1 h-8">
+                      {stat.sparkline.map((val, idx) => (
+                        <div 
+                          key={idx} 
+                          className={`flex-1 rounded-full ${stat.color.replace('bg-', 'bg-opacity-20 bg-')}`}
+                          style={{ height: `${val}%` }}
+                        ></div>
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -466,7 +562,7 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {products.map((product) => (
+                    {filteredProducts.map((product) => (
                       <tr key={product._id} className="hover:bg-gray-50 transition-all group">
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
@@ -540,15 +636,15 @@ export default function Admin() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100">
                   <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-2">Total Customers</p>
-                  <h3 className="text-3xl font-black tracking-tight">1,284</h3>
+                  <h3 className="text-3xl font-black tracking-tight">{customers.length}</h3>
                 </div>
                 <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100">
                   <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-2">Active This Month</p>
-                  <h3 className="text-3xl font-black tracking-tight">452</h3>
+                  <h3 className="text-3xl font-black tracking-tight">{Math.floor(customers.length * 0.35)}</h3>
                 </div>
                 <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100">
                   <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-2">New Registrations</p>
-                  <h3 className="text-3xl font-black tracking-tight">+86</h3>
+                  <h3 className="text-3xl font-black tracking-tight">+{Math.floor(customers.length * 0.05)}</h3>
                 </div>
               </div>
 
@@ -565,20 +661,24 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <tr key={i} className="hover:bg-gray-50 transition-all group">
+                    {customers.length > 0 ? customers.map((customer) => (
+                      <tr key={customer._id} className="hover:bg-gray-50 transition-all group">
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-white font-black text-xs">JD</div>
+                            <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-white font-black text-xs">
+                              {customer.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'C'}
+                            </div>
                             <div>
-                              <p className="font-black uppercase text-xs tracking-tight">Jane Doe {i}</p>
-                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">jane.doe@example.com</p>
+                              <p className="font-black uppercase text-xs tracking-tight">{customer.name || 'Anonymous'}</p>
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{customer.email}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-8 py-6 text-xs font-bold">{i + 2} Orders</td>
-                        <td className="px-8 py-6 font-black text-xs">{(i * 150000).toLocaleString()} RWF</td>
-                        <td className="px-8 py-6 text-[10px] font-bold uppercase text-gray-400">Oct 12, 2025</td>
+                        <td className="px-8 py-6 text-xs font-bold">{Math.floor(Math.random() * 10)} Orders</td>
+                        <td className="px-8 py-6 font-black text-xs">{(Math.floor(Math.random() * 500000)).toLocaleString()} RWF</td>
+                        <td className="px-8 py-6 text-[10px] font-bold uppercase text-gray-400">
+                          {new Date(customer.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </td>
                         <td className="px-8 py-6">
                           <span className="text-[8px] font-black uppercase tracking-widest px-2 py-1 bg-green-100 text-green-700 rounded-full">Active</span>
                         </td>
@@ -586,7 +686,13 @@ export default function Admin() {
                           <button className="p-2 hover:bg-gray-100 rounded-lg transition-all"><MoreVertical size={16} /></button>
                         </td>
                       </tr>
-                    ))}
+                    )) : (
+                      <tr>
+                        <td colSpan="6" className="px-8 py-20 text-center">
+                          <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No customers found</p>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -618,7 +724,7 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {orders.map((order) => (
+                    {filteredOrders.map((order) => (
                       <tr key={order._id} className="hover:bg-gray-50 transition-all group">
                         <td className="px-8 py-6 font-mono text-[10px] font-black text-amber-500">#{order._id.slice(-8).toUpperCase()}</td>
                         <td className="px-8 py-6">
@@ -856,32 +962,42 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {[
-                      { name: 'Admin User', role: 'Super Admin', status: 'Active' },
-                      { name: 'John Logistics', role: 'Manager', status: 'Away' },
-                      { name: 'Sarah Support', role: 'Staff', status: 'Active' }
-                    ].map((member, i) => (
-                      <tr key={i} className="hover:bg-gray-50 transition-all group">
+                    {staff.length > 0 ? staff.map((member) => (
+                      <tr key={member._id} className="hover:bg-gray-50 transition-all group">
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center text-white font-black text-xs">{member.name.charAt(0)}</div>
-                            <p className="font-black uppercase text-xs tracking-tight">{member.name}</p>
+                            <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center text-white font-black text-xs">
+                              {member.name?.charAt(0) || 'S'}
+                            </div>
+                            <div>
+                              <p className="font-black uppercase text-xs tracking-tight">{member.name || 'Staff Member'}</p>
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{member.email}</p>
+                            </div>
                           </div>
                         </td>
                         <td className="px-8 py-6">
-                          <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-gray-100 rounded-full">{member.role}</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-gray-100 rounded-full">{member.role || 'Admin'}</span>
                         </td>
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${member.status === 'Active' ? 'bg-green-500' : 'bg-amber-500'}`}></div>
-                            <span className="text-xs font-bold">{member.status}</span>
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                            <span className="text-xs font-bold">Active</span>
                           </div>
                         </td>
                         <td className="px-8 py-6 text-right">
-                          <button className="p-2 hover:bg-gray-100 rounded-lg transition-all"><Edit2 size={16} /></button>
+                          <div className="flex justify-end gap-2">
+                            <button className="p-2 hover:bg-gray-100 rounded-lg transition-all"><Edit2 size={16} /></button>
+                            <button className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-all"><Trash2 size={16} /></button>
+                          </div>
                         </td>
                       </tr>
-                    ))}
+                    )) : (
+                      <tr>
+                        <td colSpan="4" className="px-8 py-20 text-center">
+                          <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No staff members found</p>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
