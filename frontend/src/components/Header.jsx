@@ -79,7 +79,7 @@ export default function Header() {
           <Link to="/" className="flex items-center group">
             <div className="relative overflow-hidden bg-black rounded-xl p-1.5 shadow-xl shadow-amber-500/10 border border-amber-500/20 group-hover:border-amber-500/50 transition-all duration-500">
               <img 
-                src="/MBABAZI.JPG" 
+                src="/mbabazi.png" 
                 alt="MBABAZI CLOSET" 
                 className={`h-12 md:h-16 w-auto object-contain transition-transform duration-700 group-hover:scale-110 group-hover:rotate-2 ${scrolled ? 'scale-90 h-10 md:h-12' : ''}`} 
                 onError={(e) => {

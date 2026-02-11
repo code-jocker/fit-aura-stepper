@@ -11,7 +11,7 @@ export default function Footer() {
           {/* Brand Identity */}
           <div className="max-w-xs">
             <Link to="/" className="mb-8 block">
-              <img src="/MBABAZI.JPG" alt="MBABAZI CLOSET" className="h-12 w-auto object-contain brightness-0 invert" />
+              <img src="/mbabazi.png" alt="MBABAZI CLOSET" className="h-12 w-auto object-contain brightness-0 invert" />
             </Link>
             <p className="text-gray-400 text-lg font-medium leading-relaxed mb-8">
               Rwanda's ultimate destination for premium sneakers and modern streetwear. Elevating your style, one step at a time.
