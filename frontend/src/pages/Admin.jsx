@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import DeliveryMap from '../components/DeliveryMap';
 import { 
@@ -25,7 +25,22 @@ import {
   Trash2,
   CheckCircle2,
   Clock,
-  AlertCircle
+  AlertCircle,
+  MessageSquare,
+  PieChart,
+  CreditCard,
+  Star,
+  Ticket,
+  BarChart3,
+  Shield,
+  Globe,
+  Palette,
+  Mail,
+  FileText,
+  Smartphone,
+  Send,
+  Sparkles,
+  Bot
 } from 'lucide-react';
 
 const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
@@ -41,6 +56,23 @@ export default function Admin() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  
+  // Chatbot State
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState([
+    { role: 'assistant', content: 'Hello Admin! I am your MBABAZI AI assistant. How can I help you manage your store today?' }
+  ]);
+  const [userMessage, setUserMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const chatEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages, isTyping]);
 
   const [formData, setFormData] = useState({
     name: '', brand: '', category: 'shoes', audience: 'unisex',
@@ -48,6 +80,37 @@ export default function Admin() {
     sizes: '', colors: '', stock: '', isFeatured: false,
     isNew: true, isPublished: true
   });
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!userMessage.trim()) return;
+
+    const newMessage = { role: 'user', content: userMessage };
+    setChatMessages(prev => [...prev, newMessage]);
+    setUserMessage('');
+    setIsTyping(true);
+
+    try {
+      const response = await axios.post(`${API_URL}/chat`, {
+        messages: [...chatMessages, newMessage],
+        context: {
+          adminData: {
+            totalProducts: products.length,
+            totalOrders: orders.length,
+            totalRevenue: '1,240,000 RWF',
+            lowStockItems: products.filter(p => p.stock < 10).length
+          }
+        }
+      });
+
+      setChatMessages(prev => [...prev, { role: 'assistant', content: response.data.content }]);
+    } catch (err) {
+      console.error('Chat error:', err);
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error connecting to the AI server.' }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -139,10 +202,12 @@ export default function Admin() {
 
   // Stats for Dashboard
   const stats = [
-    { label: 'Total Revenue', value: '1,240,000 RWF', icon: DollarSign, trend: '+12.5%', color: 'bg-green-500' },
-    { label: 'Total Orders', value: orders.length, icon: ShoppingBag, trend: '+8.2%', color: 'bg-blue-500' },
-    { label: 'Total Customers', value: '450', icon: Users, trend: '+5.4%', color: 'bg-purple-500' },
-    { label: 'Active Products', value: products.length, icon: Package, trend: '+2.1%', color: 'bg-amber-500' },
+    { label: 'Total Sales', value: '1,240,000 RWF', icon: DollarSign, trend: '+12.5%', color: 'bg-black' },
+    { label: 'Total Orders', value: orders.length, icon: ShoppingBag, trend: '+8.2%', color: 'bg-amber-500' },
+    { label: 'Total Customers', value: '1,284', icon: Users, trend: '+5.4%', color: 'bg-zinc-800' },
+    { label: 'Total Products', value: products.length, icon: Package, trend: '+2.1%', color: 'bg-zinc-900' },
+    { label: 'Pending Orders', value: orders.filter(o => o.status === 'pending').length, icon: Clock, trend: '-3.1%', color: 'bg-amber-600' },
+    { label: 'Low Stock Items', value: products.filter(p => p.stock < 10).length, icon: AlertCircle, trend: '+12%', color: 'bg-red-500' },
   ];
 
   // Fetch Data
@@ -207,12 +272,16 @@ export default function Admin() {
           {isSidebarOpen && <span className="text-white font-black tracking-tighter uppercase">Mbabazi Closet</span>}
         </div>
 
-        <nav className="mt-10">
+        <nav className="mt-10 max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
           <SidebarItem id="dashboard" label="Dashboard" icon={LayoutDashboard} />
           <SidebarItem id="products" label="Products" icon={Package} />
           <SidebarItem id="orders" label="Orders" icon={ShoppingBag} />
           <SidebarItem id="customers" label="Customers" icon={Users} />
-          <SidebarItem id="deliveries" label="Deliveries" icon={Truck} />
+          <SidebarItem id="payments" label="Payments" icon={CreditCard} />
+          <SidebarItem id="reviews" label="Reviews" icon={Star} />
+          <SidebarItem id="promotions" label="Promotions" icon={Ticket} />
+          <SidebarItem id="reports" label="Reports" icon={BarChart3} />
+          <SidebarItem id="staff" label="Staff" icon={Shield} />
           <SidebarItem id="settings" label="Settings" icon={Settings} />
         </nav>
 
@@ -586,41 +655,285 @@ export default function Admin() {
             </div>
           )}
 
-          {activeTab === 'deliveries' && (
-            <div className="space-y-8 animate-in zoom-in duration-500">
-               <div className="flex justify-between items-end">
+          {activeTab === 'payments' && (
+            <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+              <div className="flex justify-between items-end">
                 <div>
-                  <h1 className="text-4xl font-black uppercase tracking-tighter">Deliveries</h1>
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Logistics & Tracking</p>
+                  <h1 className="text-4xl font-black uppercase tracking-tighter">Payments</h1>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Revenue & Transaction History</p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-white rounded-[3rem] p-4 shadow-sm border border-gray-100 h-[600px] overflow-hidden">
-                  <DeliveryMap orders={orders} />
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {[
+                  { label: 'Total Revenue', value: '45.2M RWF', icon: DollarSign, color: 'bg-black' },
+                  { label: 'Successful', value: '1,240', icon: CheckCircle2, color: 'bg-green-500' },
+                  { label: 'Pending', value: '12', icon: Clock, color: 'bg-amber-500' },
+                  { label: 'Refunded', value: '3', icon: AlertCircle, color: 'bg-red-500' }
+                ].map((stat, i) => (
+                  <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-gray-100">
+                    <div className={`${stat.color} w-10 h-10 rounded-xl flex items-center justify-center text-white mb-4`}>
+                      <stat.icon size={20} />
+                    </div>
+                    <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">{stat.label}</p>
+                    <h3 className="text-2xl font-black">{stat.value}</h3>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Transaction ID</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Customer</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Method</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Amount</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <tr key={i} className="hover:bg-gray-50 transition-all group">
+                        <td className="px-8 py-6 font-mono text-[10px] font-black text-amber-500">#TXN-{Math.random().toString(36).substr(2, 9).toUpperCase()}</td>
+                        <td className="px-8 py-6 text-xs font-bold uppercase">Customer {i}</td>
+                        <td className="px-8 py-6 text-[10px] font-black uppercase">Mobile Money</td>
+                        <td className="px-8 py-6 font-black text-xs">{(i * 45000).toLocaleString()} RWF</td>
+                        <td className="px-8 py-6">
+                          <span className="text-[8px] font-black uppercase tracking-widest px-3 py-1 bg-green-100 text-green-700 rounded-full">Success</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'reviews' && (
+            <div className="space-y-8 animate-in slide-in-from-left-4 duration-500">
+              <div className="flex justify-between items-end">
+                <div>
+                  <h1 className="text-4xl font-black uppercase tracking-tighter">Reviews</h1>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Customer Feedback & Ratings</p>
                 </div>
-                <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100 overflow-y-auto max-h-[600px]">
-                  <h2 className="text-xl font-black uppercase tracking-tight mb-8">Active Staff</h2>
-                  <div className="space-y-6">
-                    {deliveryStaff.map((staff) => (
-                      <div key={staff._id} className="p-6 bg-gray-50 rounded-3xl border-2 border-transparent hover:border-amber-500 transition-all">
-                        <div className="flex items-center gap-4 mb-4">
-                          <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-white font-black">{staff.name.charAt(0)}</div>
-                          <div>
-                            <p className="font-black uppercase text-xs tracking-tight">{staff.name}</p>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Available</p>
+              </div>
+
+              <div className="bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Product</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Customer</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Rating</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Comment</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {[1, 2, 3].map((i) => (
+                      <tr key={i} className="hover:bg-gray-50 transition-all group">
+                        <td className="px-8 py-6 text-xs font-black uppercase">Luxury Heels v{i}</td>
+                        <td className="px-8 py-6 text-xs font-bold">Alice Johnson</td>
+                        <td className="px-8 py-6">
+                          <div className="flex gap-0.5">
+                            {[1, 2, 3, 4, 5].map(star => <Star key={star} size={12} className="fill-amber-500 text-amber-500" />)}
                           </div>
+                        </td>
+                        <td className="px-8 py-6 text-[10px] text-gray-500 max-w-xs">Amazing quality, fits perfectly. The delivery was fast!</td>
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button className="bg-black text-white px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-amber-500 transition-all">Approve</button>
+                            <button className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-red-100 transition-all">Reject</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'promotions' && (
+            <div className="space-y-8 animate-in zoom-in duration-500">
+              <div className="flex justify-between items-end">
+                <div>
+                  <h1 className="text-4xl font-black uppercase tracking-tighter">Promotions</h1>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Coupons & Discounts</p>
+                </div>
+                <button className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl">+ Create Coupon</button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="bg-white p-10 rounded-[3rem] border border-gray-100 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full -mr-16 -mt-16 transition-all group-hover:scale-150"></div>
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="bg-amber-100 text-amber-600 px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">Active</div>
+                        <button className="text-gray-300 hover:text-black transition-colors"><MoreVertical size={20} /></button>
+                      </div>
+                      <h3 className="text-3xl font-black tracking-tighter mb-2">MBABAZI{i}0</h3>
+                      <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-6">{i * 10}% Off on all orders</p>
+                      <div className="flex justify-between items-center pt-6 border-t border-gray-50">
+                        <div>
+                          <p className="text-gray-300 text-[8px] font-black uppercase tracking-widest mb-1">Uses</p>
+                          <p className="text-xs font-black">124 / 500</p>
                         </div>
-                        <div className="flex gap-2">
-                          <button className="flex-1 bg-black text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 transition-all">Assign Order</button>
+                        <div>
+                          <p className="text-gray-300 text-[8px] font-black uppercase tracking-widest mb-1">Expiry</p>
+                          <p className="text-xs font-black">Dec 2025</p>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'reports' && (
+            <div className="space-y-8 animate-in fade-in duration-500">
+              <div className="flex justify-between items-end">
+                <div>
+                  <h1 className="text-4xl font-black uppercase tracking-tighter">Reports</h1>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Analytics & Performance</p>
+                </div>
+                <div className="flex gap-4">
+                  <button className="flex items-center gap-2 bg-white border border-gray-100 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:shadow-md transition-all">
+                    <FileText size={16} /> Export PDF
+                  </button>
+                  <button className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl">
+                    <TrendingUp size={16} /> Generate Report
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="bg-white rounded-[3rem] p-10 border border-gray-100">
+                  <h3 className="text-xl font-black uppercase tracking-tight mb-8">Revenue Growth</h3>
+                  <div className="h-64 bg-gray-50 rounded-[2rem] flex items-end justify-between p-8">
+                    {[40, 60, 45, 90, 65, 80, 95].map((h, i) => (
+                      <div key={i} className="w-8 bg-black rounded-t-xl transition-all hover:bg-amber-500 cursor-pointer" style={{ height: `${h}%` }}></div>
                     ))}
+                  </div>
+                </div>
+                <div className="bg-white rounded-[3rem] p-10 border border-gray-100">
+                  <h3 className="text-xl font-black uppercase tracking-tight mb-8">Sales by Category</h3>
+                  <div className="flex items-center justify-center h-64">
+                    <div className="relative w-48 h-48 rounded-full border-[20px] border-black flex items-center justify-center">
+                      <div className="absolute inset-0 rounded-full border-[20px] border-amber-500" style={{ clipPath: 'polygon(50% 50%, 100% 0, 100% 100%, 0 100%)' }}></div>
+                      <div className="text-center">
+                        <p className="text-2xl font-black">74%</p>
+                        <p className="text-[8px] font-black uppercase text-gray-400">Shoes</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           )}
+
+          {activeTab === 'staff' && (
+            <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-between items-end">
+                <div>
+                  <h1 className="text-4xl font-black uppercase tracking-tighter">Staff</h1>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Team Management & Roles</p>
+                </div>
+                <button className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl">+ Add Member</button>
+              </div>
+
+              <div className="bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Member</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Role</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {[
+                      { name: 'Admin User', role: 'Super Admin', status: 'Active' },
+                      { name: 'John Logistics', role: 'Manager', status: 'Away' },
+                      { name: 'Sarah Support', role: 'Staff', status: 'Active' }
+                    ].map((member, i) => (
+                      <tr key={i} className="hover:bg-gray-50 transition-all group">
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center text-white font-black text-xs">{member.name.charAt(0)}</div>
+                            <p className="font-black uppercase text-xs tracking-tight">{member.name}</p>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-gray-100 rounded-full">{member.role}</span>
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${member.status === 'Active' ? 'bg-green-500' : 'bg-amber-500'}`}></div>
+                            <span className="text-xs font-bold">{member.status}</span>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <button className="p-2 hover:bg-gray-100 rounded-lg transition-all"><Edit2 size={16} /></button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-8 animate-in fade-in duration-500">
+              <div>
+                <h1 className="text-4xl font-black uppercase tracking-tighter">Settings</h1>
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Configure your platform</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100">
+                  <h3 className="text-xl font-black uppercase tracking-tight mb-8">Store Information</h3>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Store Name</label>
+                      <input type="text" defaultValue="MBABAZI CLOSET" className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Contact Email</label>
+                      <input type="email" defaultValue="contact@mbabazicloset.com" className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                    </div>
+                    <button className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl">Save Changes</button>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100">
+                  <h3 className="text-xl font-black uppercase tracking-tight mb-8">System Status</h3>
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between p-6 bg-green-50 rounded-3xl border border-green-100">
+                      <div className="flex items-center gap-4">
+                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-xs font-black uppercase tracking-widest text-green-700">API Server Operational</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-green-600">99.9% Uptime</span>
+                    </div>
+                    <div className="flex items-center justify-between p-6 bg-blue-50 rounded-3xl border border-blue-100">
+                      <div className="flex items-center gap-4">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span className="text-xs font-black uppercase tracking-widest text-blue-700">Database Connected</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-blue-600">Atlas Cluster 0</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {showProductForm && (
             <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
               <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[3rem] shadow-2xl animate-in zoom-in-95 duration-300">
@@ -721,49 +1034,77 @@ export default function Admin() {
               </div>
             </div>
           )}
-            <div className="space-y-8 animate-in fade-in duration-500">
-              <div>
-                <h1 className="text-4xl font-black uppercase tracking-tighter">Settings</h1>
-                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Configure your platform</p>
-              </div>
+        </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100">
-                  <h3 className="text-xl font-black uppercase tracking-tight mb-8">Store Information</h3>
-                  <div className="space-y-6">
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Store Name</label>
-                      <input type="text" defaultValue="MBABAZI CLOSET" className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Contact Email</label>
-                      <input type="email" defaultValue="contact@mbabazicloset.com" className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
-                    </div>
-                    <button className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl">Save Changes</button>
+        {/* AI Chatbot Floating Button & Panel */}
+        <div className="fixed bottom-10 right-10 z-[100]">
+          {showChat ? (
+            <div className="bg-white w-[400px] h-[600px] rounded-[3rem] shadow-2xl border border-gray-100 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
+              {/* Chat Header */}
+              <div className="bg-black p-8 text-white flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-amber-500 rounded-2xl flex items-center justify-center">
+                    <Bot size={24} className="text-black" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest">Aura Assistant</h3>
+                    <p className="text-[10px] font-bold text-amber-500 uppercase tracking-tighter">AI Store Manager</p>
                   </div>
                 </div>
+                <button onClick={() => setShowChat(false)} className="hover:text-amber-500 transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
 
-                <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100">
-                  <h3 className="text-xl font-black uppercase tracking-tight mb-8">System Status</h3>
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between p-6 bg-green-50 rounded-3xl border border-green-100">
-                      <div className="flex items-center gap-4">
-                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs font-black uppercase tracking-widest text-green-700">API Server Operational</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-green-600">99.9% Uptime</span>
-                    </div>
-                    <div className="flex items-center justify-between p-6 bg-blue-50 rounded-3xl border border-blue-100">
-                      <div className="flex items-center gap-4">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span className="text-xs font-black uppercase tracking-widest text-blue-700">Database Connected</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-blue-600">Atlas Cluster 0</span>
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-5 rounded-[2rem] text-xs font-bold ${
+                      msg.role === 'user' 
+                        ? 'bg-amber-500 text-black rounded-tr-none' 
+                        : 'bg-gray-50 text-black rounded-tl-none border border-gray-100'
+                    }`}>
+                      {msg.content}
                     </div>
                   </div>
-                </div>
+                ))}
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-gray-50 p-5 rounded-[2rem] rounded-tl-none border border-gray-100 flex gap-1">
+                      <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce"></div>
+                      <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                      <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
               </div>
+
+              {/* Chat Input */}
+              <form onSubmit={handleSendMessage} className="p-8 border-t border-gray-50">
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    value={userMessage}
+                    onChange={(e) => setUserMessage(e.target.value)}
+                    placeholder="Ask anything about your store..."
+                    className="w-full bg-gray-50 border-none rounded-2xl py-4 pl-6 pr-14 text-xs font-bold focus:ring-2 ring-amber-500 outline-none transition-all"
+                  />
+                  <button type="submit" className="absolute right-2 top-2 w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center hover:bg-amber-500 transition-all">
+                    <Send size={16} />
+                  </button>
+                </div>
+              </form>
             </div>
+          ) : (
+            <button 
+              onClick={() => setShowChat(true)}
+              className="w-20 h-20 bg-black text-white rounded-[2rem] flex items-center justify-center shadow-2xl hover:bg-amber-500 hover:scale-110 transition-all group"
+            >
+              <Bot size={32} className="group-hover:text-black transition-colors" />
+              <div className="absolute -top-2 -right-2 bg-amber-500 text-black w-8 h-8 rounded-full border-4 border-white flex items-center justify-center text-[10px] font-black">1</div>
+            </button>
           )}
         </div>
       </main>
