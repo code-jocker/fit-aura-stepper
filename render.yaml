@@ -17,3 +17,5 @@ services:
         value: https://mbabazi-closet.onrender.com
       - key: API_BASE_URL
         value: https://mbabazi-closet.onrender.com/api
+      - key: GROQ_API_KEY
+        sync: false # Set this in Render Dashboard for security

@@ -18,6 +18,7 @@ import Profile from './pages/Profile';
 import DeliveryDashboard from './pages/DeliveryDashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Portfolio from './pages/Portfolio';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import TrackOrder from './pages/TrackOrder';
@@ -60,6 +61,7 @@ function App() {
               <Route path="/products" element={<Products />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/about" element={<About />} />
+              <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/track-order" element={<TrackOrder />} />
               <Route path="/returns" element={<Returns />} />

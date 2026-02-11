@@ -173,29 +173,20 @@ io.on('connection', (socket) => {
 
 const startServer = async () => {
   const PORT = process.env.PORT || 5000;
-  try {
-    // 1. Connect to Database FIRST
-    await connectDB();
+  
+  // 1. Start Express server immediately to satisfy Render's port binding requirement
+  server.listen(PORT, () => {
+    console.log(`\n🚀 Server running on port ${PORT}`);
+    console.log(`📊 API Health: http://localhost:${PORT}/api/health\n`);
     
-    // 2. Start Express server
-    server.listen(PORT, () => {
-      console.log(`\n🚀 Server running on port ${PORT}`);
-      console.log(`📊 API Health: http://localhost:${PORT}/api/health\n`);
+    // 2. Connect to Database in the background
+    connectDB().catch(err => {
+      console.error('❌ Background Database Connection Error:', err.message);
+      if (process.env.NODE_ENV === 'production') {
+        console.warn('⚠️ Server is running but database connection failed. Some features will be unavailable.');
+      }
     });
-  } catch (err) {
-    console.error('❌ Critical Startup Error:', err.message);
-    
-    // Exit process on database connection failure in production
-    if (process.env.NODE_ENV === 'production') {
-      console.error('💥 Production shutdown: Database must be available.');
-      process.exit(1);
-    } else {
-      // In development, start server in degraded mode for debugging
-      server.listen(PORT, () => {
-        console.log(`\n⚠️  Server running in DEGRADED MODE (No DB) on port ${PORT}`);
-      });
-    }
-  }
+  });
 };
 
 startServer();
