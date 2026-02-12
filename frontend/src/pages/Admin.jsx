@@ -761,7 +761,7 @@ export default function Admin() {
 
       {/* Main Content Area */}
       <main 
-        className={`flex-1 transition-all duration-500 \${
+        className={`flex-1 transition-all duration-500 ${
           isSidebarOpen ? 'ml-64' : 'ml-20'
         }`}
       >
@@ -884,7 +884,7 @@ export default function Admin() {
                         </div>
                         <div className="text-right">
                           <p className="font-black text-xs">{order.total.toLocaleString()} RWF</p>
-                          <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full \${
+                          <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
                             order.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                           }`}>
                             {order.status}
@@ -1115,12 +1115,12 @@ export default function Admin() {
                         <td className="px-8 py-6 font-black text-xs">{product.price.toLocaleString()} RWF</td>
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full \${product.stock > 10 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                            <div className={`w-2 h-2 rounded-full ${product.stock > 10 ? 'bg-green-500' : 'bg-red-500'}`}></div>
                             <span className="text-xs font-bold">{product.stock} Units</span>
                           </div>
                         </td>
                         <td className="px-8 py-6">
-                          <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full \${
+                          <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
                             product.isPublished ? 'bg-green-100 text-green-700' : 'bg-zinc-100 text-zinc-500'
                           }`}>
                             {product.isPublished ? 'Published' : 'Draft'}
@@ -1362,7 +1362,7 @@ export default function Admin() {
                           )}
                         </td>
                         <td className="px-8 py-6">
-                          <span className={`text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full \${
+                          <span className={`text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${
                             order.status === 'delivered' ? 'bg-green-100 text-green-700' : 
                             order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
                             'bg-amber-100 text-amber-700'
@@ -1947,7 +1947,6 @@ export default function Admin() {
               <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[3rem] shadow-2xl animate-in zoom-in-95 duration-300">
                 <div className="p-10">
                   <div className="flex justify-between items-center mb-10">
-                  <div className="flex justify-between items-center mb-6">
                     <div>
                       <h2 className="text-3xl font-black uppercase tracking-tighter">{editingId ? 'Edit Product' : 'New Product'}</h2>
                       <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Add your luxury item to the collection</p>
