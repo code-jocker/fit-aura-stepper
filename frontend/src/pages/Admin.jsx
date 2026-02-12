@@ -1259,8 +1259,9 @@ export default function Admin() {
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
           {activeTab === 'orders' && (
             <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
