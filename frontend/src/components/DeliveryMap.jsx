@@ -15,7 +15,7 @@ const center = {
 export default function DeliveryMap({ orders, onMarkerClick }) {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: "your-google-maps-api-key-here"
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "your-google-maps-api-key-here"
   });
 
   const [selectedOrder, setSelectedOrder] = React.useState(null);

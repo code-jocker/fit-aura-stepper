@@ -7,6 +7,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 const connectDB = require('./config/db');
+const { swaggerUi, specs } = require('./config/swagger');
 
 dotenv.config();
 
@@ -93,12 +94,15 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
 // Routes
 try {
   // Apply dbCheckMiddleware to all /api routes except health check
   app.use('/api', dbCheckMiddleware);
   
   app.use('/api/products', require('./routes/products'));
+  app.use('/api/categories', require('./routes/categories'));
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/user', require('./routes/user'));
   app.use('/api/orders', require('./routes/orders'));
@@ -107,6 +111,7 @@ try {
   app.use('/api/reviews', require('./routes/reviews'));
   app.use('/api/chatbot', require('./routes/chatbot'));
   app.use('/api/contact', require('./routes/contact'));
+  app.use('/api/settings', require('./routes/settings'));
   console.log('✅ All routes loaded successfully');
 
   // Catch-all for unmatched /api routes

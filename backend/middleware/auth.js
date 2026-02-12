@@ -35,12 +35,34 @@ const optionalAuth = (req, res, next) => {
 
 const adminAuth = (req, res, next) => {
   auth(req, res, () => {
-    if (req.user && req.user.role === 'admin') {
+    const allowedRoles = ['super_admin', 'admin'];
+    if (req.user && allowedRoles.includes(req.user.role)) {
       next();
     } else {
-      res.status(403).json({ message: 'Access denied. Admin only.' });
+      res.status(403).json({ message: 'Access denied. Admin privileges required.' });
     }
   });
 };
 
-module.exports = { auth, optionalAuth, adminAuth };
+const superAdminAuth = (req, res, next) => {
+  auth(req, res, () => {
+    if (req.user && req.user.role === 'super_admin') {
+      next();
+    } else {
+      res.status(403).json({ message: 'Access denied. Super Admin privileges required.' });
+    }
+  });
+};
+
+const staffAuth = (req, res, next) => {
+  auth(req, res, () => {
+    const allowedRoles = ['super_admin', 'admin', 'staff', 'support'];
+    if (req.user && allowedRoles.includes(req.user.role)) {
+      next();
+    } else {
+      res.status(403).json({ message: 'Access denied. Staff privileges required.' });
+    }
+  });
+};
+
+module.exports = { auth, optionalAuth, adminAuth, superAdminAuth, staffAuth };

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { auth, optionalAuth, adminAuth } = require('../middleware/auth');
+const { validateOrderUpdate } = require('../middleware/validation');
 const Order = require('../models/Order');
 const User = require('../models/User');
 
@@ -137,7 +138,7 @@ router.get('/:orderId', optionalAuth, async (req, res) => {
 });
 
 // Update order (ADMIN)
-router.put('/:orderId', adminAuth, async (req, res) => {
+router.put('/:orderId', adminAuth, validateOrderUpdate, async (req, res) => {
   try {
     const { status, paymentStatus, deliveryAddress, phone, notes, deliveryPerson, assignedAt, adminNote } = req.body;
     
@@ -198,23 +199,80 @@ router.put('/:orderId/delivered', auth, async (req, res) => {
           total: order.total,
           deliveryFee: order.deliveryFee
         });
-        console.log(`📩 Delivery confirmation email sent to ${order.email}`);
       }
-    } catch (notifyErr) {
-      console.error('❌ Notification Error:', notifyErr.message);
+    } catch (emailErr) {
+      console.error('Email notification failed:', emailErr);
     }
 
-    console.log(`✨ Order ${order._id} marked as DELIVERED by ${req.user.name}`);
-    console.log(`📩 Notification: Thank you message sent to customer ${order.customerName} (${order.email || order.phone})`);
-    console.log(`📩 Notification: Admin notified about delivery for order ${order._id}`);
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
-    res.json({ 
-      message: 'Order marked as delivered successfully',
-      order,
-      notifications: {
-        admin: 'Admin notified',
-        customer: 'Confirmation sent'
+// Get admin statistics (ADMIN)
+router.get('/stats/summary', adminAuth, async (req, res) => {
+  try {
+    // Get total revenue (only from completed/delivered orders)
+    const revenueStats = await Order.aggregate([
+      { $match: { status: 'delivered' } },
+      { $group: { _id: null, total: { $sum: '$total' } } }
+    ]);
+
+    const totalRevenue = revenueStats.length > 0 ? revenueStats[0].total : 0;
+
+    // Get order counts by status
+    const statusStats = await Order.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    // Get sales by category
+    const salesByCategory = await Order.aggregate([
+      { $match: { status: 'delivered' } },
+      { $unwind: '$items' },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'items.productId',
+          foreignField: '_id',
+          as: 'product'
+        }
+      },
+      { $unwind: '$product' },
+      {
+        $group: {
+          _id: '$product.category',
+          revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+          count: { $sum: '$items.quantity' }
+        }
       }
+    ]);
+
+    // Get daily revenue for last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const dailyRevenue = await Order.aggregate([
+      {
+        $match: {
+          status: 'delivered',
+          createdAt: { $gte: sevenDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          revenue: { $sum: '$total' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    res.json({
+      totalRevenue,
+      statusStats,
+      salesByCategory,
+      dailyRevenue
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

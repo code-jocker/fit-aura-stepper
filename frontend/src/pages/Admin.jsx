@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import DeliveryMap from '../components/DeliveryMap';
 import { 
   LayoutDashboard, 
@@ -51,10 +53,14 @@ export default function Admin() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]); // Added categories state
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [staff, setStaff] = useState([]); // Added staff state
   const [deliveryStaff, setDeliveryStaff] = useState([]);
+  const [adminStats, setAdminStats] = useState(null); // Added for dashboard charts
+  const [selectedOrders, setSelectedOrders] = useState([]); // Added for bulk actions
+  const [isDragging, setIsDragging] = useState(false); // Added for drag & drop
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showProductForm, setShowProductForm] = useState(false);
@@ -78,11 +84,77 @@ export default function Admin() {
   }, [chatMessages, isTyping]);
 
   const [formData, setFormData] = useState({
-    name: '', brand: '', category: 'shoes', audience: 'unisex',
-    price: '', salePrice: '', description: '', images: [],
-    sizes: '', colors: '', stock: '', isFeatured: false,
-    isNew: true, isPublished: true
+    name: '', 
+    brand: '', 
+    category: 'shoes', 
+    subcategory: '',
+    audience: 'unisex',
+    price: '', 
+    salePrice: '', 
+    description: '', 
+    shortDescription: '',
+    sku: '',
+    tags: '',
+    images: [],
+    sizes: '', 
+    colors: '', 
+    stock: '', 
+    lowStockThreshold: 5,
+    weight: '',
+    dimensions: { length: '', width: '', height: '' },
+    isFeatured: false,
+    isNew: true, 
+    isPublished: true,
+    metaTitle: '',
+    metaDescription: '',
+    slug: '',
+    status: 'published',
+    variants: []
   });
+
+  const [staffFormData, setStaffFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'staff',
+    phone: '',
+    location: ''
+  });
+  const [showStaffForm, setShowStaffForm] = useState(false);
+
+  const [activeFormTab, setActiveFormTab] = useState('basic'); // 'basic', 'pricing', 'inventory', 'variants', 'shipping', 'seo'
+
+  const handleStaffSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      
+      await axios.post(`${API_URL}/user/staff`, staffFormData, config);
+      
+      setShowStaffForm(false);
+      setStaffFormData({
+        name: '',
+        email: '',
+        password: '',
+        role: 'staff',
+        phone: '',
+        location: ''
+      });
+      fetchData();
+      alert('Staff member created successfully!');
+    } catch (err) {
+      console.error('Staff submit error:', err);
+      if (err.response?.data?.errors) {
+        alert(`Validation Error: ${err.response.data.errors.join(', ')}`);
+      } else {
+        alert(err.response?.data?.message || 'Failed to create staff member');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -123,37 +195,117 @@ export default function Admin() {
     }
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({
-          ...prev,
-          images: [...prev.images, reader.result]
-        }));
-      };
-      reader.readAsDataURL(file);
+    await processFiles(files);
+  };
+
+  const processFiles = async (files) => {
+    const validFiles = files.filter(file => {
+      if (!file.type.startsWith('image/')) {
+        alert(`File ${file.name} is not an image`);
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`File ${file.name} is too large (max 5MB)`);
+        return false;
+      }
+      return true;
     });
+
+    if (validFiles.length === 0) return;
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const formDataUpload = new FormData();
+      validFiles.forEach(file => {
+        formDataUpload.append('images', file);
+      });
+
+      const response = await axios.post(`${API_URL}/products/upload`, formDataUpload, {
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}` 
+        }
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...response.data.urls]
+      }));
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert('Failed to upload images');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeImage = async (urlToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter(url => url !== urlToRemove)
+    }));
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/products/delete-image`, { url: urlToRemove }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (err) {
+      console.error('Delete image error:', err);
+      // We don't alert here to not disturb the user experience, 
+      // as the image is already removed from the form state
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    processFiles(files);
   };
 
   const handleEdit = (product) => {
     setEditingId(product._id);
     setFormData({
-      name: product.name,
-      brand: product.brand,
-      category: product.category,
+      name: product.name || '',
+      brand: product.brand || '',
+      category: product.category || 'shoes',
+      subcategory: product.subcategory || '',
       audience: product.audience || 'unisex',
-      price: product.price,
+      price: product.price || '',
       salePrice: product.salePrice || '',
-      description: product.description,
+      description: product.description || '',
+      shortDescription: product.shortDescription || '',
+      sku: product.sku || '',
+      tags: product.tags ? product.tags.join(', ') : '',
       images: product.images || [],
       sizes: product.sizes ? product.sizes.join(', ') : '',
       colors: product.colors ? product.colors.join(', ') : '',
-      stock: product.stock,
+      stock: product.stock || '',
+      lowStockThreshold: product.lowStockThreshold || 5,
+      weight: product.weight || '',
+      dimensions: product.dimensions || { length: '', width: '', height: '' },
       isFeatured: product.isFeatured || false,
       isNew: product.isNew !== undefined ? product.isNew : true,
-      isPublished: product.isPublished !== undefined ? product.isPublished : true
+      isPublished: product.isPublished !== undefined ? product.isPublished : true,
+      metaTitle: product.metaTitle || '',
+      metaDescription: product.metaDescription || '',
+      slug: product.slug || '',
+      status: product.status || 'published',
+      variants: product.variants || []
     });
     setShowProductForm(true);
   };
@@ -172,50 +324,101 @@ export default function Admin() {
      }
    };
 
-   const handleSubmit = async (e) => {
-     e.preventDefault();
-     setLoading(true);
-     try {
-       const token = localStorage.getItem('token');
-       const config = { headers: { Authorization: `Bearer ${token}` } };
-       
-       const data = {
-         ...formData,
-         price: Number(formData.price),
-         salePrice: formData.salePrice ? Number(formData.salePrice) : undefined,
-         stock: Number(formData.stock),
-         sizes: typeof formData.sizes === 'string' ? formData.sizes.split(',').map(s => s.trim()).filter(s => s) : formData.sizes,
-         colors: typeof formData.colors === 'string' ? formData.colors.split(',').map(c => c.trim()).filter(c => c) : formData.colors
-       };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      
+      // Check if we are saving a category or a product
+      if (activeTab === 'categories') {
+        const catData = {
+          name: formData.name,
+          description: formData.description,
+          image: formData.image,
+          subcategories: formData.subcategories
+        };
 
-       if (editingId) {
-         await axios.put(`${API_URL}/products/${editingId}`, data, config);
-       } else {
-         await axios.post(`${API_URL}/products`, data, config);
-       }
-       
-       setShowProductForm(false);
-       setEditingId(null);
-       setFormData({
-         name: '', brand: '', category: 'shoes', audience: 'unisex',
-         price: '', salePrice: '', description: '', images: [],
-         sizes: '', colors: '', stock: '', isFeatured: false,
-         isNew: true, isPublished: true
-       });
-       fetchData();
-     } catch (err) {
-       console.error('Submit error:', err);
-       alert(err.response?.data?.message || 'Failed to save product');
-     } finally {
-       setLoading(false);
-     }
-   };
+        if (editingId) {
+          await axios.put(`${API_URL}/categories/${editingId}`, catData, config);
+        } else {
+          await axios.post(`${API_URL}/categories`, catData, config);
+        }
+      } else {
+        const data = {
+          ...formData,
+          price: Number(formData.price),
+          salePrice: formData.salePrice ? Number(formData.salePrice) : undefined,
+          stock: Number(formData.stock),
+          lowStockThreshold: Number(formData.lowStockThreshold),
+          weight: formData.weight ? Number(formData.weight) : undefined,
+          dimensions: {
+            length: formData.dimensions.length ? Number(formData.dimensions.length) : undefined,
+            width: formData.dimensions.width ? Number(formData.dimensions.width) : undefined,
+            height: formData.dimensions.height ? Number(formData.dimensions.height) : undefined
+          },
+          sizes: typeof formData.sizes === 'string' ? formData.sizes.split(',').map(s => s.trim()).filter(s => s) : formData.sizes,
+          colors: typeof formData.colors === 'string' ? formData.colors.split(',').map(c => c.trim()).filter(c => c) : formData.colors,
+          tags: typeof formData.tags === 'string' ? formData.tags.split(',').map(t => t.trim()).filter(t => t) : formData.tags
+        };
+
+        if (editingId) {
+          await axios.put(`${API_URL}/products/${editingId}`, data, config);
+        } else {
+          await axios.post(`${API_URL}/products`, data, config);
+        }
+      }
+      
+      setShowProductForm(false);
+      setEditingId(null);
+      setFormData({
+        name: '', 
+        brand: '', 
+        category: 'shoes', 
+        subcategory: '',
+        audience: 'unisex',
+        price: '', 
+        salePrice: '', 
+        description: '', 
+        shortDescription: '',
+        sku: '',
+        tags: '',
+        images: [],
+        sizes: '', 
+        colors: '', 
+        stock: '', 
+        lowStockThreshold: 5,
+        weight: '',
+        dimensions: { length: '', width: '', height: '' },
+        isFeatured: false,
+        isNew: true, 
+        isPublished: true,
+        metaTitle: '',
+        metaDescription: '',
+        slug: '',
+        status: 'published',
+        variants: []
+      });
+      fetchData();
+      alert(editingId ? 'Updated successfully!' : 'Created successfully!');
+    } catch (err) {
+      console.error('Submit error:', err);
+      if (err.response?.data?.errors) {
+        alert(`Validation Error: ${err.response.data.errors.join(', ')}`);
+      } else {
+        alert(err.response?.data?.message || 'Failed to save');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Stats for Dashboard
   const stats = [
     { 
-      label: 'Total Sales', 
-      value: `${orders.reduce((acc, curr) => acc + (curr.total || 0), 0).toLocaleString()} RWF`, 
+      label: 'Total Revenue', 
+      value: `${(adminStats?.totalRevenue || 0).toLocaleString()} RWF`, 
       icon: DollarSign, 
       trend: '+12.5%', 
       color: 'bg-black', 
@@ -230,10 +433,10 @@ export default function Admin() {
       sparkline: [20, 25, 22, 30, 28, 35, 32] 
     },
     { 
-      label: 'Total Customers', 
-      value: customers.length, 
-      icon: Users, 
-      trend: '+5.4%', 
+      label: 'Delivered', 
+      value: orders.filter(o => o.status === 'delivered').length, 
+      icon: CheckCircle2, 
+      trend: '+15%', 
       color: 'bg-zinc-800', 
       sparkline: [10, 15, 12, 18, 16, 22, 20] 
     },
@@ -272,12 +475,30 @@ export default function Admin() {
     return matchesSearch;
   });
 
+  // Customers Table Data Calculation
+  const customersWithStats = customers.map(customer => {
+    const customerOrders = orders.filter(o => o.userId === customer._id || o.email === customer.email);
+    const totalSpent = customerOrders.reduce((acc, curr) => acc + (curr.total || 0), 0);
+    return {
+      ...customer,
+      ordersCount: customerOrders.length,
+      totalSpent
+    };
+  });
+
+  const filteredCustomers = customersWithStats.filter(c => {
+    const matchesSearch = c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         c.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
+
   // Orders Table Filter Logic
   const filteredOrders = orders.filter(o => {
     const matchesSearch = o.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          o._id.includes(searchTerm);
     
     if (activeSubTab === 'pending') return matchesSearch && o.status === 'pending';
+    if (activeSubTab === 'shipped') return matchesSearch && o.status === 'shipped';
     if (activeSubTab === 'completed') return matchesSearch && o.status === 'delivered';
     if (activeSubTab === 'cancelled') return matchesSearch && o.status === 'cancelled';
     return matchesSearch;
@@ -290,12 +511,14 @@ export default function Admin() {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      const [prodRes, orderRes, staffRes, customerRes, allStaffRes] = await Promise.all([
+      const [prodRes, orderRes, staffRes, customerRes, allStaffRes, catRes, statsRes] = await Promise.all([
         axios.get(`${API_URL}/products?limit=all&adminView=true`),
         axios.get(`${API_URL}/orders`, config),
         axios.get(`${API_URL}/user?role=delivery`, config),
         axios.get(`${API_URL}/user?role=customer`, config),
-        axios.get(`${API_URL}/user?role=admin`, config) // Fetch admin/staff
+        axios.get(`${API_URL}/user?role=admin`, config), // Fetch admin/staff
+        axios.get(`${API_URL}/categories`, config), // Fetch categories
+        axios.get(`${API_URL}/orders/stats/summary`, config) // Fetch dashboard stats
       ]);
 
       setProducts(prodRes.data || []);
@@ -303,6 +526,8 @@ export default function Admin() {
       setDeliveryStaff(staffRes.data || []);
       setCustomers(customerRes.data || []);
       setStaff(allStaffRes.data || []);
+      setCategories(catRes.data || []);
+      setAdminStats(statsRes.data || null);
     } catch (err) {
       console.error('Fetch error:', err);
     } finally {
@@ -350,6 +575,23 @@ export default function Admin() {
     }
   };
 
+  const handleAssignDelivery = async (orderId, deliveryPersonId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/orders/${orderId}`, { 
+        deliveryPerson: deliveryPersonId,
+        assignedAt: new Date()
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchData();
+      alert('Order assigned to delivery staff');
+    } catch (err) {
+      console.error('Assign delivery error:', err);
+      alert('Failed to assign delivery staff');
+    }
+  };
+
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm('Are you sure you want to delete this order?')) return;
     try {
@@ -361,6 +603,30 @@ export default function Admin() {
     } catch (err) {
       console.error('Delete order error:', err);
       alert('Failed to delete order');
+    }
+  };
+
+  const handleBulkUpdateStatus = async (newStatus) => {
+    if (selectedOrders.length === 0) return;
+    if (!window.confirm(`Update ${selectedOrders.length} orders to ${newStatus}?`)) return;
+    
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      
+      await Promise.all(selectedOrders.map(id => 
+        axios.put(`${API_URL}/orders/${id}`, { status: newStatus }, config)
+      ));
+      
+      setSelectedOrders([]);
+      fetchData();
+      alert('Orders updated successfully');
+    } catch (err) {
+      console.error('Bulk update error:', err);
+      alert('Failed to update some orders');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -459,6 +725,11 @@ export default function Admin() {
             ]}
           />
           <SidebarItem 
+            id="categories" 
+            label="Categories" 
+            icon={MoreVertical} 
+          />
+          <SidebarItem 
             id="orders" 
             label="Orders" 
             icon={ShoppingBag} 
@@ -466,6 +737,7 @@ export default function Admin() {
               { id: 'all', label: 'All Orders' },
               { id: 'pending', label: 'Pending' },
               { id: 'completed', label: 'Completed' },
+              { id: 'tracking', label: 'Tracking' },
               { id: 'cancelled', label: 'Cancelled' }
             ]}
           />
@@ -651,6 +923,146 @@ export default function Admin() {
             </div>
           )}
 
+          {activeTab === 'categories' && (
+            <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-between items-end">
+                <div>
+                  <h1 className="text-4xl font-black uppercase tracking-tighter">Categories</h1>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Organize your products</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    // Reset category form
+                    setEditingId(null);
+                    setFormData({
+                      name: '',
+                      description: '',
+                      image: '',
+                      subcategories: []
+                    });
+                    // For simplicity, we reuse showProductForm but for category
+                    setShowProductForm(true); 
+                  }}
+                  className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl"
+                >
+                  + Create New Category
+                </button>
+              </div>
+              
+              <div className="bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden">
+                {activeSubTab === 'tracking' ? (
+                  <div className="p-8">
+                    <div className="flex justify-between items-center mb-8">
+                      <div>
+                        <h2 className="text-xl font-black uppercase tracking-tight">Delivery Tracking Map</h2>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Real-time order locations & delivery status</p>
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <span className="text-[10px] font-black uppercase tracking-widest">Delivered</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                          <span className="text-[10px] font-black uppercase tracking-widest">Pending</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-[600px] rounded-[2rem] overflow-hidden border border-gray-100 shadow-inner">
+                      <DeliveryMap 
+                        orders={orders} 
+                        onMarkerClick={(order) => {
+                          setSearchTerm(order._id);
+                          setActiveSubTab('all');
+                        }} 
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <table className="w-full text-left">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Category Name</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Subcategories</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {categories.map((cat) => (
+                      <tr key={cat._id} className="hover:bg-gray-50 transition-all group">
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center">
+                              {cat.image ? (
+                                <img src={cat.image} alt="" className="w-full h-full object-cover rounded-2xl" />
+                              ) : (
+                                <MoreVertical className="text-gray-300" size={20} />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-black uppercase text-xs tracking-tight">{cat.name}</p>
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest truncate max-w-xs">{cat.description || 'No description'}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="flex flex-wrap gap-2">
+                            {cat.subcategories && cat.subcategories.length > 0 ? (
+                              cat.subcategories.map((sub, idx) => (
+                                <span key={idx} className="text-[8px] font-black uppercase tracking-widest px-2 py-1 bg-zinc-100 rounded-full">
+                                  {sub.name}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-[8px] text-gray-400 font-bold uppercase">None</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button 
+                              className="p-2 hover:bg-amber-100 text-amber-600 rounded-lg transition-all"
+                              onClick={() => {
+                                setEditingId(cat._id);
+                                setFormData({
+                                  name: cat.name,
+                                  description: cat.description || '',
+                                  image: cat.image || '',
+                                  subcategories: cat.subcategories || []
+                                });
+                                setShowProductForm(true);
+                              }}
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button 
+                              className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-all"
+                              onClick={async () => {
+                                if (!window.confirm('Delete this category?')) return;
+                                try {
+                                  const token = localStorage.getItem('token');
+                                  await axios.delete(`${API_URL}/categories/${cat._id}`, {
+                                    headers: { Authorization: `Bearer ${token}` }
+                                  });
+                                  fetchData();
+                                } catch (err) {
+                                  alert('Failed to delete category');
+                                }
+                              }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'products' && (
             <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
               <div className="flex justify-between items-end">
@@ -766,8 +1178,35 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left">
+              {activeSubTab === 'tracking' ? (
+                <div className="bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden p-8 animate-in zoom-in-95 duration-500">
+                  <div className="flex justify-between items-center mb-8">
+                    <div>
+                      <h2 className="text-xl font-black uppercase tracking-tight">Delivery Tracking Map</h2>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Real-time order locations & delivery status</p>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span className="text-[10px] font-black uppercase tracking-widest">Delivered</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <span className="text-[10px] font-black uppercase tracking-widest">Pending</span>
+                      </div>
+                    </div>
+                  </div>
+                  <DeliveryMap 
+                    orders={orders} 
+                    onMarkerClick={(order) => {
+                      setSearchTerm(order._id);
+                      setActiveSubTab('all');
+                    }} 
+                  />
+                </div>
+              ) : (
+                <div className="bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden">
+                  <table className="w-full text-left">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
                       <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Customer</th>
@@ -779,7 +1218,7 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {customers.length > 0 ? customers.map((customer) => (
+                    {filteredCustomers.length > 0 ? filteredCustomers.map((customer) => (
                       <tr key={customer._id} className="hover:bg-gray-50 transition-all group">
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
@@ -792,8 +1231,8 @@ export default function Admin() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-8 py-6 text-xs font-bold">{Math.floor(Math.random() * 10)} Orders</td>
-                        <td className="px-8 py-6 font-black text-xs">{(Math.floor(Math.random() * 500000)).toLocaleString()} RWF</td>
+                        <td className="px-8 py-6 text-xs font-bold">{customer.ordersCount} Orders</td>
+                        <td className="px-8 py-6 font-black text-xs">{customer.totalSpent.toLocaleString()} RWF</td>
                         <td className="px-8 py-6 text-[10px] font-bold uppercase text-gray-400">
                           {new Date(customer.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </td>
@@ -831,6 +1270,22 @@ export default function Admin() {
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Manage customer transactions</p>
                 </div>
                 <div className="flex gap-4">
+                  {selectedOrders.length > 0 && (
+                    <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-xl border border-amber-100 animate-in fade-in zoom-in duration-300">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-amber-700">{selectedOrders.length} Selected</span>
+                      <select 
+                        onChange={(e) => handleBulkUpdateStatus(e.target.value)}
+                        className="bg-white border border-amber-200 text-[10px] font-black uppercase px-2 py-1 rounded-lg focus:outline-none"
+                        value=""
+                      >
+                        <option value="" disabled>Bulk Actions</option>
+                        <option value="pending">Mark Pending</option>
+                        <option value="shipped">Mark Shipped</option>
+                        <option value="delivered">Mark Delivered</option>
+                        <option value="cancelled">Mark Cancelled</option>
+                      </select>
+                    </div>
+                  )}
                   <button className="bg-white border border-gray-100 px-8 py-4 rounded-2xl font-black uppercase tracking-widest shadow-sm hover:shadow-md transition-all">Export CSV</button>
                 </div>
               </div>
@@ -839,8 +1294,23 @@ export default function Admin() {
                 <table className="w-full text-left">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
-                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Order ID</th>
-                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Customer</th>
+                      <th className="px-8 py-6">
+                        <input 
+                          type="checkbox" 
+                          className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                          checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedOrders(filteredOrders.map(o => o._id));
+                            } else {
+                              setSelectedOrders([]);
+                            }
+                          }}
+                        />
+                      </th>
+                      <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Order ID</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Customer & Address</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Delivery Staff</th>
                       <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
                       <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Total</th>
                       <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Payment</th>
@@ -849,11 +1319,46 @@ export default function Admin() {
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {filteredOrders.map((order) => (
-                      <tr key={order._id} className="hover:bg-gray-50 transition-all group">
-                        <td className="px-8 py-6 font-mono text-[10px] font-black text-amber-500">#{order._id.slice(-8).toUpperCase()}</td>
+                      <tr key={order._id} className={`hover:bg-gray-50 transition-all group ${selectedOrders.includes(order._id) ? 'bg-amber-50/30' : ''}`}>
+                        <td className="px-8 py-6">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                            checked={selectedOrders.includes(order._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedOrders([...selectedOrders, order._id]);
+                              } else {
+                                setSelectedOrders(selectedOrders.filter(id => id !== order._id));
+                              }
+                            }}
+                          />
+                        </td>
+                        <td className="px-4 py-6 font-mono text-[10px] font-black text-amber-500">#{order._id.slice(-8).toUpperCase()}</td>
                         <td className="px-8 py-6">
                           <p className="font-black uppercase text-xs tracking-tight">{order.customerName || 'Guest'}</p>
                           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{order.phone || 'No Phone'}</p>
+                          <div className="mt-1 flex items-start gap-1">
+                            <Truck size={10} className="text-gray-400 mt-0.5 shrink-0" />
+                            <p className="text-[10px] text-gray-500 font-medium leading-tight max-w-[150px]">{order.deliveryAddress || 'No Address'}</p>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <select 
+                            value={order.deliveryPerson || ''} 
+                            onChange={(e) => handleAssignDelivery(order._id, e.target.value)}
+                            className="text-[10px] font-black uppercase tracking-widest bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-black"
+                          >
+                            <option value="">Unassigned</option>
+                            {deliveryStaff.map(staff => (
+                              <option key={staff._id} value={staff._id}>{staff.name}</option>
+                            ))}
+                          </select>
+                          {order.assignedAt && (
+                            <p className="text-[8px] text-gray-400 font-bold uppercase mt-1">
+                              Assigned: {new Date(order.assignedAt).toLocaleDateString()}
+                            </p>
+                          )}
                         </td>
                         <td className="px-8 py-6">
                           <span className={`text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full \${
@@ -1124,65 +1629,67 @@ export default function Admin() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-white rounded-[3rem] p-10 border border-gray-100 shadow-sm">
-                  <h3 className="text-xl font-black uppercase tracking-tight mb-8">Revenue Growth</h3>
+                  <h3 className="text-xl font-black uppercase tracking-tight mb-8">Revenue Growth (Last 7 Days)</h3>
                   <div className="h-64 bg-gray-50 rounded-[2rem] flex items-end justify-between p-8 gap-2">
-                    {/* Dynamic revenue chart based on recent orders */}
-                    {Array.from({ length: 7 }).map((_, i) => {
-                      const day = new Date();
-                      day.setDate(day.getDate() - (6 - i));
-                      const dayRevenue = orders
-                        .filter(o => new Date(o.createdAt).toDateString() === day.toDateString())
-                        .reduce((acc, curr) => acc + (curr.total || 0), 0);
-                      
-                      const maxRevenue = Math.max(...Array.from({ length: 7 }).map((_, j) => {
-                        const d = new Date();
-                        d.setDate(d.getDate() - j);
-                        return orders
-                          .filter(o => new Date(o.createdAt).toDateString() === d.toDateString())
-                          .reduce((acc, curr) => acc + (curr.total || 0), 0);
-                      }), 1000);
+                    {adminStats?.dailyRevenue ? (
+                      adminStats.dailyRevenue.map((day, i) => {
+                        const maxRevenue = Math.max(...adminStats.dailyRevenue.map(d => d.revenue), 1000);
+                        const height = (day.revenue / maxRevenue) * 100;
+                        const date = new Date(day._id);
 
-                      const height = (dayRevenue / maxRevenue) * 100;
-
-                      return (
-                        <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                          <div 
-                            className="w-full bg-black rounded-t-xl transition-all group-hover:bg-amber-500 cursor-pointer relative" 
-                            style={{ height: `${Math.max(height, 5)}%` }}
-                          >
-                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] font-black py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                              {dayRevenue.toLocaleString()} RWF
+                        return (
+                          <div key={day._id} className="flex-1 flex flex-col items-center gap-2 group">
+                            <div 
+                              className="w-full bg-black rounded-t-xl transition-all group-hover:bg-amber-500 cursor-pointer relative" 
+                              style={{ height: `${Math.max(height, 5)}%` }}
+                            >
+                              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] font-black py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                {day.revenue.toLocaleString()} RWF
+                              </div>
                             </div>
+                            <span className="text-[8px] font-black uppercase text-gray-400">{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
                           </div>
-                          <span className="text-[8px] font-black uppercase text-gray-400">{day.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">No revenue data available</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="bg-white rounded-[3rem] p-10 border border-gray-100 shadow-sm">
-                  <h3 className="text-xl font-black uppercase tracking-tight mb-8">Sales by Category</h3>
+                  <h3 className="text-xl font-black uppercase tracking-tight mb-8">Revenue by Category</h3>
                   <div className="space-y-6">
-                    {['shoes', 'clothes', 'accessories'].map(cat => {
-                      const catTotal = products.filter(p => p.category === cat).length;
-                      const percentage = products.length > 0 ? (catTotal / products.length) * 100 : 0;
-                      return (
-                        <div key={cat} className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-black uppercase tracking-widest">{cat}</span>
-                            <span className="text-[10px] font-black">{Math.round(percentage)}%</span>
+                    {adminStats?.salesByCategory?.length > 0 ? (
+                      adminStats.salesByCategory.map(cat => {
+                        const totalRevenue = adminStats.salesByCategory.reduce((acc, curr) => acc + curr.revenue, 0);
+                        const percentage = totalRevenue > 0 ? (cat.revenue / totalRevenue) * 100 : 0;
+                        return (
+                          <div key={cat._id} className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-black uppercase tracking-widest">{cat._id}</span>
+                              <div className="text-right">
+                                <span className="text-[10px] font-black block">{cat.revenue.toLocaleString()} RWF</span>
+                                <span className="text-[8px] text-gray-400 font-bold">{Math.round(percentage)}% of total</span>
+                              </div>
+                            </div>
+                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-black rounded-full transition-all duration-1000" 
+                                style={{ width: `${percentage}%` }}
+                              ></div>
+                            </div>
                           </div>
-                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-black rounded-full transition-all duration-1000" 
-                              style={{ width: `${percentage}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <div className="pt-6 text-center">
+                        );
+                      })
+                    ) : (
+                      <div className="pt-6 text-center">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">No sales data found</p>
+                      </div>
+                    )}
+                    <div className="pt-6 text-center border-t border-gray-50 mt-6">
                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Products Managed</p>
                       <p className="text-4xl font-black">{products.length}</p>
                     </div>
@@ -1199,7 +1706,22 @@ export default function Admin() {
                   <h1 className="text-4xl font-black uppercase tracking-tighter">Staff</h1>
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Team Management & Roles</p>
                 </div>
-                <button className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl">+ Add Member</button>
+                <button 
+                  onClick={() => {
+                    setStaffFormData({
+                      name: '',
+                      email: '',
+                      password: '',
+                      role: 'staff',
+                      phone: '',
+                      location: ''
+                    });
+                    setShowStaffForm(true);
+                  }}
+                  className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl"
+                >
+                  + Add Member
+                </button>
               </div>
 
               <div className="bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden">
@@ -1238,7 +1760,24 @@ export default function Admin() {
                         <td className="px-8 py-6 text-right">
                           <div className="flex justify-end gap-2">
                             <button className="p-2 hover:bg-gray-100 rounded-lg transition-all"><Edit2 size={16} /></button>
-                            <button className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-all"><Trash2 size={16} /></button>
+                            <button 
+                              onClick={async () => {
+                                if (!window.confirm(`Are you sure you want to delete ${member.name}?`)) return;
+                                try {
+                                  const token = localStorage.getItem('token');
+                                  await axios.delete(`${API_URL}/user/${member._id}`, {
+                                    headers: { Authorization: `Bearer ${token}` }
+                                  });
+                                  fetchData();
+                                  alert('Staff member deleted successfully');
+                                } catch (err) {
+                                  alert(err.response?.data?.message || 'Failed to delete staff member');
+                                }
+                              }}
+                              className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-all"
+                            >
+                              <Trash2 size={16} />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -1301,11 +1840,113 @@ export default function Admin() {
             </div>
           )}
 
+          {showStaffForm && (
+            <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden">
+                <div className="p-10">
+                  <div className="flex justify-between items-center mb-10">
+                    <div>
+                      <h2 className="text-3xl font-black uppercase tracking-tighter">Add Staff Member</h2>
+                      <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Register a new team member</p>
+                    </div>
+                    <button onClick={() => setShowStaffForm(false)} className="p-4 hover:bg-gray-100 rounded-2xl transition-all">
+                      <X size={24} />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleStaffSubmit} className="space-y-6">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="col-span-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Full Name</label>
+                        <input 
+                          required 
+                          type="text" 
+                          value={staffFormData.name} 
+                          onChange={(e) => setStaffFormData({...staffFormData, name: e.target.value})} 
+                          className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Email Address</label>
+                        <input 
+                          required 
+                          type="email" 
+                          value={staffFormData.email} 
+                          onChange={(e) => setStaffFormData({...staffFormData, email: e.target.value})} 
+                          className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Password</label>
+                        <input 
+                          required 
+                          type="password" 
+                          value={staffFormData.password} 
+                          onChange={(e) => setStaffFormData({...staffFormData, password: e.target.value})} 
+                          className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Role</label>
+                        <select 
+                          value={staffFormData.role} 
+                          onChange={(e) => setStaffFormData({...staffFormData, role: e.target.value})} 
+                          className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold"
+                        >
+                          <option value="admin">Admin</option>
+                          <option value="staff">Staff</option>
+                          <option value="delivery">Delivery</option>
+                          <option value="support">Support</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Phone Number</label>
+                        <input 
+                          type="text" 
+                          value={staffFormData.phone} 
+                          onChange={(e) => setStaffFormData({...staffFormData, phone: e.target.value})} 
+                          className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Location</label>
+                        <input 
+                          type="text" 
+                          value={staffFormData.location} 
+                          onChange={(e) => setStaffFormData({...staffFormData, location: e.target.value})} 
+                          className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-6 flex gap-4">
+                      <button 
+                        type="button" 
+                        onClick={() => setShowStaffForm(false)}
+                        className="flex-1 bg-gray-100 text-black py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="submit" 
+                        disabled={loading} 
+                        className="flex-[2] bg-black text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-2xl disabled:opacity-50"
+                      >
+                        {loading ? 'Adding...' : 'Add Member'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+
           {showProductForm && (
             <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
               <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[3rem] shadow-2xl animate-in zoom-in-95 duration-300">
                 <div className="p-10">
                   <div className="flex justify-between items-center mb-10">
+                  <div className="flex justify-between items-center mb-6">
                     <div>
                       <h2 className="text-3xl font-black uppercase tracking-tighter">{editingId ? 'Edit Product' : 'New Product'}</h2>
                       <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Add your luxury item to the collection</p>
@@ -1315,86 +1956,252 @@ export default function Admin() {
                     </button>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div className="space-y-6">
-                      <div>
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Product Name</label>
-                        <input required type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Brand</label>
-                          <input required type="text" value={formData.brand} onChange={(e) => setFormData({...formData, brand: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Category</label>
-                          <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold">
-                            <option value="shoes">Shoes</option>
-                            <option value="clothes">Clothes</option>
-                            <option value="accessories">Accessories</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Price (RWF)</label>
-                          <input required type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Stock</label>
-                          <input required type="number" value={formData.stock} onChange={(e) => setFormData({...formData, stock: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Description</label>
-                        <textarea required value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} rows="4" className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold resize-none"></textarea>
-                      </div>
-                    </div>
+                  {/* Form Tabs */}
+                  <div className="flex gap-2 mb-8 overflow-x-auto pb-2 custom-scrollbar">
+                    {[
+                      { id: 'basic', label: 'Basic Info' },
+                      { id: 'pricing', label: 'Pricing' },
+                      { id: 'inventory', label: 'Inventory' },
+                      { id: 'variants', label: 'Variants' },
+                      { id: 'shipping', label: 'Shipping' },
+                      { id: 'seo', label: 'SEO Settings' }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveFormTab(tab.id)}
+                        className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                          activeFormTab === tab.id 
+                            ? 'bg-black text-white shadow-lg' 
+                            : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
 
-                    <div className="space-y-6">
-                      <div>
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Images</label>
-                        <div className="grid grid-cols-3 gap-3 mb-4">
-                          {formData.images.map((img, i) => (
-                            <div key={i} className="aspect-square bg-gray-100 rounded-2xl overflow-hidden relative group">
-                              <img src={img} alt="" className="w-full h-full object-cover" />
-                              <button type="button" onClick={() => setFormData({...formData, images: formData.images.filter((_, idx) => idx !== i)})} className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                                <Trash2 size={20} />
-                              </button>
+                  <form onSubmit={handleSubmit} className="space-y-8">
+                    {activeFormTab === 'basic' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-300">
+                        <div className="space-y-6">
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Product Name</label>
+                            <input required type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Brand</label>
+                            <input required type="text" value={formData.brand} onChange={(e) => setFormData({...formData, brand: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Category</label>
+                              <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold">
+                                <option value="shoes">Shoes</option>
+                                <option value="clothes">Clothes</option>
+                                <option value="accessories">Accessories</option>
+                              </select>
                             </div>
-                          ))}
-                          <label className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-amber-500 hover:bg-amber-50 transition-all text-gray-400 hover:text-amber-500">
-                            <Plus size={24} />
-                            <span className="text-[8px] font-black uppercase mt-2">Upload</span>
-                            <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" />
-                          </label>
+                            <div>
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Subcategory</label>
+                              <input type="text" value={formData.subcategory} onChange={(e) => setFormData({...formData, subcategory: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Audience</label>
+                            <select value={formData.audience} onChange={(e) => setFormData({...formData, audience: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold">
+                              <option value="unisex">Unisex</option>
+                              <option value="men">Men</option>
+                              <option value="women">Women</option>
+                              <option value="kids">Kids</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="space-y-6">
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Short Description</label>
+                            <input type="text" value={formData.shortDescription} onChange={(e) => setFormData({...formData, shortDescription: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Full Description</label>
+                            <div className="bg-gray-50 rounded-2xl overflow-hidden">
+                              <ReactQuill 
+                                theme="snow"
+                                value={formData.description} 
+                                onChange={(content) => setFormData({...formData, description: content})}
+                                className="admin-quill-editor"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Tags (comma separated)</label>
+                            <input type="text" placeholder="luxury, summer, collection..." value={formData.tags} onChange={(e) => setFormData({...formData, tags: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div className="flex items-center gap-6 pt-4">
+                            <label className="flex items-center gap-3 cursor-pointer">
+                              <input type="checkbox" checked={formData.isFeatured} onChange={(e) => setFormData({...formData, isFeatured: e.target.checked})} className="w-5 h-5 rounded-lg border-gray-200 text-amber-500 focus:ring-amber-500" />
+                              <span className="text-[10px] font-black uppercase tracking-widest">Featured</span>
+                            </label>
+                            <label className="flex items-center gap-3 cursor-pointer">
+                              <input type="checkbox" checked={formData.isPublished} onChange={(e) => setFormData({...formData, isPublished: e.target.checked})} className="w-5 h-5 rounded-lg border-gray-200 text-amber-500 focus:ring-amber-500" />
+                              <span className="text-[10px] font-black uppercase tracking-widest">Published</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 block">Product Images</label>
+                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {formData.images.map((img, i) => (
+                              <div key={i} className="aspect-square bg-gray-100 rounded-3xl overflow-hidden relative group shadow-sm">
+                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                <button type="button" onClick={() => removeImage(img)} className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                                  <Trash2 size={24} />
+                                </button>
+                              </div>
+                            ))}
+                            <label className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:border-amber-500 hover:bg-amber-50 transition-all text-gray-400 hover:text-amber-500">
+                              <Plus size={32} />
+                              <span className="text-[10px] font-black uppercase mt-2">Upload</span>
+                              <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" />
+                            </label>
+                          </div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Sizes (comma separated)</label>
-                          <input type="text" placeholder="38, 39, 40..." value={formData.sizes} onChange={(e) => setFormData({...formData, sizes: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                    )}
+
+                    {activeFormTab === 'pricing' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-300">
+                        <div className="space-y-6">
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Regular Price (RWF)</label>
+                            <input required type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Sale Price (RWF)</label>
+                            <input type="number" value={formData.salePrice} onChange={(e) => setFormData({...formData, salePrice: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Colors (comma separated)</label>
-                          <input type="text" placeholder="Black, White..." value={formData.colors} onChange={(e) => setFormData({...formData, colors: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                        <div className="space-y-6 bg-amber-50 p-8 rounded-[2rem] flex flex-col justify-center border border-amber-100">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-2">Discount Preview</p>
+                          {formData.price && formData.salePrice ? (
+                            <div>
+                              <p className="text-4xl font-black text-black">
+                                {Math.round(((formData.price - formData.salePrice) / formData.price) * 100)}% OFF
+                              </p>
+                              <p className="text-[10px] font-bold text-amber-500 uppercase mt-1 tracking-widest">
+                                Save {(formData.price - formData.salePrice).toLocaleString()} RWF per item
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-gray-400 font-bold text-xs uppercase italic tracking-widest">Enter prices to see discount percentage</p>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-6 pt-4">
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <input type="checkbox" checked={formData.isFeatured} onChange={(e) => setFormData({...formData, isFeatured: e.target.checked})} className="w-5 h-5 rounded-lg border-gray-200 text-amber-500 focus:ring-amber-500" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Featured</span>
-                        </label>
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <input type="checkbox" checked={formData.isPublished} onChange={(e) => setFormData({...formData, isPublished: e.target.checked})} className="w-5 h-5 rounded-lg border-gray-200 text-amber-500 focus:ring-amber-500" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Published</span>
-                        </label>
+                    )}
+
+                    {activeFormTab === 'inventory' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-300">
+                        <div className="space-y-6">
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">SKU (Stock Keeping Unit)</label>
+                            <input type="text" placeholder="AURA-SH-001" value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Total Stock</label>
+                              <input required type="number" value={formData.stock} onChange={(e) => setFormData({...formData, stock: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Low Stock Alert</label>
+                              <input type="number" value={formData.lowStockThreshold} onChange={(e) => setFormData({...formData, lowStockThreshold: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-6">
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Sizes (comma separated)</label>
+                            <input type="text" placeholder="38, 39, 40..." value={formData.sizes} onChange={(e) => setFormData({...formData, sizes: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Colors (comma separated)</label>
+                            <input type="text" placeholder="Black, White, Brown..." value={formData.colors} onChange={(e) => setFormData({...formData, colors: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                        </div>
                       </div>
-                      <div className="pt-6">
-                        <button type="submit" disabled={loading} className="w-full bg-black text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-2xl disabled:opacity-50">
-                          {loading ? 'Processing...' : (editingId ? 'Update Product' : 'Create Product')}
-                        </button>
+                    )}
+
+                    {activeFormTab === 'variants' && (
+                      <div className="animate-in fade-in duration-300">
+                         <div className="bg-gray-50 p-8 rounded-[2rem] border border-gray-100 text-center space-y-4">
+                           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                             <Palette className="text-amber-500" size={32} />
+                           </div>
+                           <h3 className="text-sm font-black uppercase tracking-widest">Advanced Variants Management</h3>
+                           <p className="text-gray-400 text-[10px] font-bold uppercase max-w-xs mx-auto">Create specific stock and price for each size/color combination</p>
+                           <button type="button" className="bg-black text-white px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 transition-all">
+                             Generate Variants from Sizes/Colors
+                           </button>
+                         </div>
+                         {/* Variants Table would go here */}
                       </div>
+                    )}
+
+                    {activeFormTab === 'shipping' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-300">
+                        <div className="space-y-6">
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Weight (kg)</label>
+                            <input type="number" step="0.01" value={formData.weight} onChange={(e) => setFormData({...formData, weight: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                        </div>
+                        <div className="space-y-6">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Dimensions (L x W x H cm)</label>
+                          <div className="grid grid-cols-3 gap-4">
+                            <input type="number" placeholder="L" value={formData.dimensions.length} onChange={(e) => setFormData({...formData, dimensions: {...formData.dimensions, length: e.target.value}})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-4 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                            <input type="number" placeholder="W" value={formData.dimensions.width} onChange={(e) => setFormData({...formData, dimensions: {...formData.dimensions, width: e.target.value}})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-4 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                            <input type="number" placeholder="H" value={formData.dimensions.height} onChange={(e) => setFormData({...formData, dimensions: {...formData.dimensions, height: e.target.value}})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-4 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeFormTab === 'seo' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-300">
+                        <div className="space-y-6">
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Meta Title</label>
+                            <input type="text" placeholder="SEO optimized title..." value={formData.metaTitle} onChange={(e) => setFormData({...formData, metaTitle: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">URL Slug</label>
+                            <input type="text" placeholder="product-url-slug" value={formData.slug} onChange={(e) => setFormData({...formData, slug: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                        </div>
+                        <div className="space-y-6">
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Meta Description</label>
+                            <textarea value={formData.metaDescription} onChange={(e) => setFormData({...formData, metaDescription: e.target.value})} rows="4" className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold resize-none" placeholder="Search engine description..."></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-10 flex gap-4">
+                      <button 
+                        type="button" 
+                        onClick={() => setShowProductForm(false)}
+                        className="flex-1 bg-gray-100 text-black py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="submit" 
+                        disabled={loading} 
+                        className="flex-[2] bg-black text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-2xl disabled:opacity-50"
+                      >
+                        {loading ? 'Processing...' : (editingId ? 'Update Product' : 'Create Product')}
+                      </button>
                     </div>
                   </form>
                 </div>
@@ -1475,6 +2282,29 @@ export default function Admin() {
           )}
         </div>
       </main>
+      {/* Custom Styles for Quill */}
+      <style>{`
+        .admin-quill-editor .ql-toolbar {
+          border: none !important;
+          background: #f9fafb !important;
+          padding: 12px 20px !important;
+        }
+        .admin-quill-editor .ql-container {
+          border: none !important;
+          min-height: 200px !important;
+          font-family: inherit !important;
+          font-size: 0.875rem !important;
+        }
+        .admin-quill-editor .ql-editor {
+          padding: 20px !important;
+          font-weight: 700 !important;
+        }
+        .admin-quill-editor .ql-editor.ql-blank::before {
+          color: #9ca3af !important;
+          font-style: normal !important;
+          left: 20px !important;
+        }
+      `}</style>
     </div>
   );
 }

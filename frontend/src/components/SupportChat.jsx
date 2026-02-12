@@ -30,14 +30,17 @@ export default function SupportChat() {
     setIsLoading(true);
     
     try {
-      const response = await axios.post(`${API_URL}/chatbot/chat`, {
-        message: currentInput
+      const response = await axios.post(`${API_URL}/chatbot`, {
+        messages: messages.concat(userMessage).map(m => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: m.text
+        }))
       });
 
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         sender: 'support',
-        text: response.data.response
+        text: response.data.content
       }]);
     } catch (error) {
       console.error('Chatbot error:', error);

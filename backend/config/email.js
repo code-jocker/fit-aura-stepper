@@ -66,8 +66,26 @@ const sendContactMessage = async (name, email, message) => {
   return transporter.sendMail(mailOptions);
 };
 
+const sendPasswordResetEmail = async (email, resetUrl) => {
+  const mailOptions = {
+    from: 'security@mbabazicloset.rw',
+    to: email,
+    subject: 'Password Reset Request - MBABAZI CLOSET',
+    html: `
+      <h2>Password Reset Request</h2>
+      <p>You requested a password reset for your MBABAZI CLOSET account.</p>
+      <p>Please click the link below to reset your password. This link will expire in 1 hour.</p>
+      <p><a href="${resetUrl}" style="background-color: #f59e0b; color: black; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 8px;">Reset Password</a></p>
+      <p>If you did not request this, please ignore this email.</p>
+    `
+  };
+  
+  return transporter.sendMail(mailOptions);
+};
+
 module.exports = {
   sendOrderConfirmation,
   sendWelcomeEmail,
-  sendContactMessage
+  sendContactMessage,
+  sendPasswordResetEmail
 };

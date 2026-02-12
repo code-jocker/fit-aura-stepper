@@ -20,9 +20,18 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['customer', 'admin', 'delivery'],
+    enum: ['customer', 'admin', 'delivery', 'super_admin', 'staff', 'support'],
     default: 'customer'
   },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  refreshToken: {
+    type: String
+  },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
   isAvailable: {
     type: Boolean,
     default: true

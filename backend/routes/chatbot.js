@@ -29,27 +29,37 @@ BEHAVIOR:
 - ALWAYS be ready to answer ANY question. If you don't know a specific internal detail, offer to connect them to a human manager via our contact page.
 - Encourage customers to complete their purchase and explain how easy the payment process is with Flutterwave or MoMo.`;
 
-router.post('/chat', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const { message } = req.body;
+    const { messages, context } = req.body;
 
-    if (!message) {
-      return res.status(400).json({ message: 'Message is required' });
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ message: 'Messages array is required' });
+    }
+
+    const lastMessage = messages[messages.length - 1]?.content;
+    
+    // Construct dynamic system prompt with context
+    let dynamicSystemPrompt = SYSTEM_INSTRUCTIONS;
+    if (context) {
+      dynamicSystemPrompt += `\n\nCURRENT DASHBOARD CONTEXT:\n${JSON.stringify(context, null, 2)}`;
     }
 
     // Try Groq first if available
     if (process.env.GROQ_API_KEY) {
       try {
+        const groqMessages = [
+          { role: "system", content: dynamicSystemPrompt },
+          ...messages.map(m => ({ role: m.role, content: m.content }))
+        ];
+
         const chatCompletion = await groq.chat.completions.create({
-          messages: [
-            { role: "system", content: SYSTEM_INSTRUCTIONS },
-            { role: "user", content: message },
-          ],
+          messages: groqMessages,
           model: "llama-3.3-70b-versatile",
         });
 
         return res.json({
-          response: chatCompletion.choices[0]?.message?.content || ""
+          content: chatCompletion.choices[0]?.message?.content || ""
         });
       } catch (err) {
         console.error('Groq Error, falling back to Gemini:', err.message);
@@ -59,22 +69,28 @@ router.post('/chat', async (req, res) => {
     // Fallback to Gemini if available
     if (process.env.GEMINI_API_KEY) {
       try {
+        const history = messages.slice(0, -1).map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }]
+        }));
+
         const chat = model.startChat({
           history: [
             {
               role: "user",
-              parts: [{ text: SYSTEM_INSTRUCTIONS }],
+              parts: [{ text: dynamicSystemPrompt }],
             },
             {
               role: "model",
-              parts: [{ text: "Understood. I am MBABAZI AI, the MBABAZI CLOSET assistant. How can I help you today? 👟✨🇷🇼" }],
+              parts: [{ text: "Understood. I am MBABAZI AI, the MBABAZI CLOSET assistant. I have access to the store's current data and context. How can I help you manage the store today? 👟✨🇷🇼" }],
             },
+            ...history
           ],
         });
 
-        const result = await chat.sendMessage(message);
+        const result = await chat.sendMessage(lastMessage);
         const response = await result.response;
-        return res.json({ response: response.text() });
+        return res.json({ content: response.text() });
       } catch (err) {
         console.error('Gemini Error:', err.message);
       }
@@ -82,7 +98,7 @@ router.post('/chat', async (req, res) => {
 
     // Final Fallback: If no AI is configured, provide a helpful static response
     return res.json({
-      response: "Hello! I am MBABAZI AI from MBABAZI CLOSET. 👟✨ My AI brain is currently being updated, but I can tell you that we are based in Kigali and offer FREE delivery within the city! For urgent help, please visit our contact page or reach out via WhatsApp. 🇷🇼"
+      content: "Hello! I am MBABAZI AI. 👟✨ My AI brain is currently being updated. However, I can see you're looking at the " + (context?.activeTab || "dashboard") + ". For urgent help, please reach out via WhatsApp. 🇷🇼"
     });
 
   } catch (error) {
