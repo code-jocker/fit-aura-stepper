@@ -213,12 +213,54 @@ export default function Admin() {
 
   // Stats for Dashboard
   const stats = [
-    { label: 'Total Sales', value: '1,240,000 RWF', icon: DollarSign, trend: '+12.5%', color: 'bg-black', sparkline: [40, 35, 50, 45, 60, 55, 70] },
-    { label: 'Total Orders', value: orders.length, icon: ShoppingBag, trend: '+8.2%', color: 'bg-amber-500', sparkline: [20, 25, 22, 30, 28, 35, 32] },
-    { label: 'Total Customers', value: '1,284', icon: Users, trend: '+5.4%', color: 'bg-zinc-800', sparkline: [10, 15, 12, 18, 16, 22, 20] },
-    { label: 'Total Products', value: products.length, icon: Package, trend: '+2.1%', color: 'bg-zinc-900', sparkline: [5, 8, 7, 10, 9, 12, 11] },
-    { label: 'Pending Orders', value: orders.filter(o => o.status === 'pending').length, icon: Clock, trend: '-3.1%', color: 'bg-amber-600', sparkline: [15, 12, 14, 10, 12, 8, 10] },
-    { label: 'Low Stock Items', value: products.filter(p => p.stock < 10).length, icon: AlertCircle, trend: '+12%', color: 'bg-red-500', sparkline: [8, 10, 12, 15, 14, 18, 16] },
+    { 
+      label: 'Total Sales', 
+      value: `${orders.reduce((acc, curr) => acc + (curr.total || 0), 0).toLocaleString()} RWF`, 
+      icon: DollarSign, 
+      trend: '+12.5%', 
+      color: 'bg-black', 
+      sparkline: [40, 35, 50, 45, 60, 55, 70] 
+    },
+    { 
+      label: 'Total Orders', 
+      value: orders.length, 
+      icon: ShoppingBag, 
+      trend: '+8.2%', 
+      color: 'bg-amber-500', 
+      sparkline: [20, 25, 22, 30, 28, 35, 32] 
+    },
+    { 
+      label: 'Total Customers', 
+      value: customers.length, 
+      icon: Users, 
+      trend: '+5.4%', 
+      color: 'bg-zinc-800', 
+      sparkline: [10, 15, 12, 18, 16, 22, 20] 
+    },
+    { 
+      label: 'Total Products', 
+      value: products.length, 
+      icon: Package, 
+      trend: '+2.1%', 
+      color: 'bg-zinc-900', 
+      sparkline: [5, 8, 7, 10, 9, 12, 11] 
+    },
+    { 
+      label: 'Pending Orders', 
+      value: orders.filter(o => o.status === 'pending').length, 
+      icon: Clock, 
+      trend: '-3.1%', 
+      color: 'bg-amber-600', 
+      sparkline: [15, 12, 14, 10, 12, 8, 10] 
+    },
+    { 
+      label: 'Low Stock Items', 
+      value: products.filter(p => p.stock < 10).length, 
+      icon: AlertCircle, 
+      trend: '+12%', 
+      color: 'bg-red-500', 
+      sparkline: [8, 10, 12, 15, 14, 18, 16] 
+    },
   ];
 
   // Products Table Filter Logic
@@ -227,7 +269,6 @@ export default function Admin() {
                          p.brand.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (activeSubTab === 'inventory') return matchesSearch && p.stock < 10;
-    if (activeSubTab === 'categories') return false; // This would need category grouping logic
     return matchesSearch;
   });
 
@@ -270,8 +311,78 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    fetchData();
+    const checkAdmin = async () => {
+      const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user'));
+      
+      if (!token || !user || user.role !== 'admin') {
+        window.location.href = '/login';
+        return;
+      }
+      fetchData();
+    };
+    checkAdmin();
   }, []);
+
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/orders/${orderId}`, { status: newStatus }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchData();
+    } catch (err) {
+      console.error('Update order error:', err);
+      alert('Failed to update order status');
+    }
+  };
+
+  const handleUpdatePaymentStatus = async (orderId, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/orders/${orderId}`, { paymentStatus: newStatus }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchData();
+    } catch (err) {
+      console.error('Update payment error:', err);
+      alert('Failed to update payment status');
+    }
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to delete this order?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchData();
+    } catch (err) {
+      console.error('Delete order error:', err);
+      alert('Failed to delete order');
+    }
+  };
+
+  const handleDeleteCustomer = async (customerId) => {
+    if (!window.confirm('Are you sure you want to delete this customer?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/user/${customerId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchData();
+    } catch (err) {
+      console.error('Delete customer error:', err);
+      alert('Failed to delete customer');
+    }
+  };
+
+  const handleUpdateSettings = async (e) => {
+    e.preventDefault();
+    alert('Settings saved successfully!');
+    // In a real app, you would save this to the backend
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -344,7 +455,6 @@ export default function Admin() {
             subItems={[
               { id: 'all', label: 'All Products' },
               { id: 'add', label: 'Add Product' },
-              { id: 'categories', label: 'Categories' },
               { id: 'inventory', label: 'Inventory' }
             ]}
           />
@@ -431,7 +541,15 @@ export default function Admin() {
             <div className="space-y-8 animate-in fade-in duration-500">
               <div className="flex justify-between items-end">
                 <div>
-                  <h1 className="text-4xl font-black uppercase tracking-tighter">Dashboard Overview</h1>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-4xl font-black uppercase tracking-tighter">Dashboard Overview</h1>
+                    {orders.some(o => new Date(o.createdAt).toDateString() === new Date().toDateString()) && (
+                      <span className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-[8px] font-black uppercase tracking-widest animate-pulse">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                        Live Activity
+                      </span>
+                    )}
+                  </div>
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Welcome back, Administrator</p>
                 </div>
                 <div className="flex gap-4">
@@ -683,7 +801,13 @@ export default function Admin() {
                           <span className="text-[8px] font-black uppercase tracking-widest px-2 py-1 bg-green-100 text-green-700 rounded-full">Active</span>
                         </td>
                         <td className="px-8 py-6 text-right">
-                          <button className="p-2 hover:bg-gray-100 rounded-lg transition-all"><MoreVertical size={16} /></button>
+                          <button 
+                            onClick={() => handleDeleteCustomer(customer._id)}
+                            className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            title="Delete Customer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </td>
                       </tr>
                     )) : (
@@ -751,7 +875,33 @@ export default function Admin() {
                           </div>
                         </td>
                         <td className="px-8 py-6 text-right">
-                          <button className="p-2 hover:bg-gray-100 rounded-xl transition-all"><MoreVertical size={18} /></button>
+                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {order.status !== 'delivered' && (
+                              <button 
+                                onClick={() => handleUpdateOrderStatus(order._id, 'delivered')}
+                                className="p-2 hover:bg-green-100 text-green-600 rounded-lg transition-all"
+                                title="Mark as Delivered"
+                              >
+                                <CheckCircle2 size={16} />
+                              </button>
+                            )}
+                            {order.paymentStatus !== 'completed' && (
+                              <button 
+                                onClick={() => handleUpdatePaymentStatus(order._id, 'completed')}
+                                className="p-2 hover:bg-blue-100 text-blue-600 rounded-lg transition-all"
+                                title="Mark Payment as Success"
+                              >
+                                <DollarSign size={16} />
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => handleDeleteOrder(order._id)}
+                              className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-all"
+                              title="Delete Order"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -772,13 +922,33 @@ export default function Admin() {
               
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
-                  { label: 'Total Revenue', value: '45.2M RWF', icon: DollarSign, color: 'bg-black' },
-                  { label: 'Successful', value: '1,240', icon: CheckCircle2, color: 'bg-green-500' },
-                  { label: 'Pending', value: '12', icon: Clock, color: 'bg-amber-500' },
-                  { label: 'Refunded', value: '3', icon: AlertCircle, color: 'bg-red-500' }
+                  { 
+                    label: 'Total Revenue', 
+                    value: `${orders.reduce((acc, curr) => acc + (curr.total || 0), 0).toLocaleString()} RWF`, 
+                    icon: DollarSign, 
+                    color: 'bg-black' 
+                  },
+                  { 
+                    label: 'Successful', 
+                    value: orders.filter(o => o.paymentStatus === 'completed').length, 
+                    icon: CheckCircle2, 
+                    color: 'bg-green-500' 
+                  },
+                  { 
+                    label: 'Pending', 
+                    value: orders.filter(o => o.paymentStatus !== 'completed').length, 
+                    icon: Clock, 
+                    color: 'bg-amber-500' 
+                  },
+                  { 
+                    label: 'Avg. Order', 
+                    value: orders.length > 0 ? `${Math.floor(orders.reduce((acc, curr) => acc + (curr.total || 0), 0) / orders.length).toLocaleString()} RWF` : '0 RWF', 
+                    icon: TrendingUp, 
+                    color: 'bg-blue-500' 
+                  }
                 ].map((stat, i) => (
-                  <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-gray-100">
-                    <div className={`${stat.color} w-10 h-10 rounded-xl flex items-center justify-center text-white mb-4`}>
+                  <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                    <div className={`${stat.color} w-10 h-10 rounded-xl flex items-center justify-center text-white mb-4 shadow-lg`}>
                       <stat.icon size={20} />
                     </div>
                     <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">{stat.label}</p>
@@ -796,20 +966,40 @@ export default function Admin() {
                       <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Method</th>
                       <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Amount</th>
                       <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Date</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <tr key={i} className="hover:bg-gray-50 transition-all group">
-                        <td className="px-8 py-6 font-mono text-[10px] font-black text-amber-500">#TXN-{Math.random().toString(36).substr(2, 9).toUpperCase()}</td>
-                        <td className="px-8 py-6 text-xs font-bold uppercase">Customer {i}</td>
-                        <td className="px-8 py-6 text-[10px] font-black uppercase">Mobile Money</td>
-                        <td className="px-8 py-6 font-black text-xs">{(i * 45000).toLocaleString()} RWF</td>
+                    {orders.length > 0 ? orders.map((order) => (
+                      <tr key={order._id} className="hover:bg-gray-50 transition-all group">
+                        <td className="px-8 py-6 font-mono text-[10px] font-black text-amber-500 uppercase">
+                          #{order._id.slice(-10).toUpperCase()}
+                        </td>
                         <td className="px-8 py-6">
-                          <span className="text-[8px] font-black uppercase tracking-widest px-3 py-1 bg-green-100 text-green-700 rounded-full">Success</span>
+                          <p className="text-xs font-black uppercase tracking-tight">{order.customerName || 'Guest'}</p>
+                        </td>
+                        <td className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                          {order.paymentMethod || 'MOMO'}
+                        </td>
+                        <td className="px-8 py-6 font-black text-xs">{(order.total || 0).toLocaleString()} RWF</td>
+                        <td className="px-8 py-6">
+                          <span className={`text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
+                            order.paymentStatus === 'completed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                          }`}>
+                            {order.paymentStatus === 'completed' ? 'Success' : 'Pending'}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 text-right text-[10px] font-bold text-gray-400 uppercase">
+                          {new Date(order.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
-                    ))}
+                    )) : (
+                      <tr>
+                        <td colSpan="6" className="px-8 py-20 text-center">
+                          <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No transactions recorded</p>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -837,24 +1027,40 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {[1, 2, 3].map((i) => (
-                      <tr key={i} className="hover:bg-gray-50 transition-all group">
-                        <td className="px-8 py-6 text-xs font-black uppercase">Luxury Heels v{i}</td>
-                        <td className="px-8 py-6 text-xs font-bold">Alice Johnson</td>
-                        <td className="px-8 py-6">
-                          <div className="flex gap-0.5">
-                            {[1, 2, 3, 4, 5].map(star => <Star key={star} size={12} className="fill-amber-500 text-amber-500" />)}
-                          </div>
-                        </td>
-                        <td className="px-8 py-6 text-[10px] text-gray-500 max-w-xs">Amazing quality, fits perfectly. The delivery was fast!</td>
-                        <td className="px-8 py-6 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button className="bg-black text-white px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-amber-500 transition-all">Approve</button>
-                            <button className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-red-100 transition-all">Reject</button>
-                          </div>
+                    {products.some(p => p.reviews?.length > 0) ? products.flatMap(p => 
+                      (p.reviews || []).map((rev, i) => (
+                        <tr key={`${p._id}-${i}`} className="hover:bg-gray-50 transition-all group">
+                          <td className="px-8 py-6">
+                            <p className="text-xs font-black uppercase tracking-tight">{p.name}</p>
+                          </td>
+                          <td className="px-8 py-6 text-xs font-bold">{rev.user?.name || 'Customer'}</td>
+                          <td className="px-8 py-6">
+                            <div className="flex gap-0.5">
+                              {[1, 2, 3, 4, 5].map(star => (
+                                <Star 
+                                  key={star} 
+                                  size={12} 
+                                  className={star <= rev.rating ? "fill-amber-500 text-amber-500" : "text-gray-200"} 
+                                />
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-8 py-6 text-[10px] text-gray-500 max-w-xs line-clamp-2">{rev.comment}</td>
+                          <td className="px-8 py-6 text-right">
+                            <div className="flex justify-end gap-2">
+                              <button className="bg-black text-white px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-amber-500 transition-all">Approve</button>
+                              <button className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-red-100 transition-all">Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="px-8 py-20 text-center">
+                          <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No customer reviews yet</p>
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -872,29 +1078,37 @@ export default function Admin() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="bg-white p-10 rounded-[3rem] border border-gray-100 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full -mr-16 -mt-16 transition-all group-hover:scale-150"></div>
-                    <div className="relative z-10">
-                      <div className="flex justify-between items-start mb-6">
-                        <div className="bg-amber-100 text-amber-600 px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">Active</div>
-                        <button className="text-gray-300 hover:text-black transition-colors"><MoreVertical size={20} /></button>
-                      </div>
-                      <h3 className="text-3xl font-black tracking-tighter mb-2">MBABAZI{i}0</h3>
-                      <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-6">{i * 10}% Off on all orders</p>
-                      <div className="flex justify-between items-center pt-6 border-t border-gray-50">
-                        <div>
-                          <p className="text-gray-300 text-[8px] font-black uppercase tracking-widest mb-1">Uses</p>
-                          <p className="text-xs font-black">124 / 500</p>
+                {products.filter(p => p.salePrice < p.price).length > 0 ? (
+                  products.filter(p => p.salePrice < p.price).slice(0, 6).map((p, i) => (
+                    <div key={p._id} className="bg-white p-10 rounded-[3rem] border border-gray-100 relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full -mr-16 -mt-16 transition-all group-hover:scale-150"></div>
+                      <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="bg-green-100 text-green-700 px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">Live Sale</div>
+                          <button className="text-gray-300 hover:text-black transition-colors"><MoreVertical size={20} /></button>
                         </div>
-                        <div>
-                          <p className="text-gray-300 text-[8px] font-black uppercase tracking-widest mb-1">Expiry</p>
-                          <p className="text-xs font-black">Dec 2025</p>
+                        <h3 className="text-xl font-black tracking-tighter mb-2 line-clamp-1 uppercase">{p.name}</h3>
+                        <p className="text-amber-500 text-[10px] font-black uppercase tracking-widest mb-6">
+                          {Math.round(((p.price - p.salePrice) / p.price) * 100)}% DISCOUNT APPLIED
+                        </p>
+                        <div className="flex justify-between items-center pt-6 border-t border-gray-50">
+                          <div>
+                            <p className="text-gray-300 text-[8px] font-black uppercase tracking-widest mb-1">Old Price</p>
+                            <p className="text-xs font-black line-through text-gray-400">{p.price.toLocaleString()} RWF</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-300 text-[8px] font-black uppercase tracking-widest mb-1">Sale Price</p>
+                            <p className="text-xs font-black text-green-600">{p.salePrice.toLocaleString()} RWF</p>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="col-span-3 bg-white p-20 rounded-[3rem] border border-gray-100 text-center">
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No active promotions or sales found</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           )}
@@ -906,34 +1120,71 @@ export default function Admin() {
                   <h1 className="text-4xl font-black uppercase tracking-tighter">Reports</h1>
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Analytics & Performance</p>
                 </div>
-                <div className="flex gap-4">
-                  <button className="flex items-center gap-2 bg-white border border-gray-100 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:shadow-md transition-all">
-                    <FileText size={16} /> Export PDF
-                  </button>
-                  <button className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl">
-                    <TrendingUp size={16} /> Generate Report
-                  </button>
-                </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white rounded-[3rem] p-10 border border-gray-100">
+                <div className="bg-white rounded-[3rem] p-10 border border-gray-100 shadow-sm">
                   <h3 className="text-xl font-black uppercase tracking-tight mb-8">Revenue Growth</h3>
-                  <div className="h-64 bg-gray-50 rounded-[2rem] flex items-end justify-between p-8">
-                    {[40, 60, 45, 90, 65, 80, 95].map((h, i) => (
-                      <div key={i} className="w-8 bg-black rounded-t-xl transition-all hover:bg-amber-500 cursor-pointer" style={{ height: `${h}%` }}></div>
-                    ))}
+                  <div className="h-64 bg-gray-50 rounded-[2rem] flex items-end justify-between p-8 gap-2">
+                    {/* Dynamic revenue chart based on recent orders */}
+                    {Array.from({ length: 7 }).map((_, i) => {
+                      const day = new Date();
+                      day.setDate(day.getDate() - (6 - i));
+                      const dayRevenue = orders
+                        .filter(o => new Date(o.createdAt).toDateString() === day.toDateString())
+                        .reduce((acc, curr) => acc + (curr.total || 0), 0);
+                      
+                      const maxRevenue = Math.max(...Array.from({ length: 7 }).map((_, j) => {
+                        const d = new Date();
+                        d.setDate(d.getDate() - j);
+                        return orders
+                          .filter(o => new Date(o.createdAt).toDateString() === d.toDateString())
+                          .reduce((acc, curr) => acc + (curr.total || 0), 0);
+                      }), 1000);
+
+                      const height = (dayRevenue / maxRevenue) * 100;
+
+                      return (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                          <div 
+                            className="w-full bg-black rounded-t-xl transition-all group-hover:bg-amber-500 cursor-pointer relative" 
+                            style={{ height: `${Math.max(height, 5)}%` }}
+                          >
+                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] font-black py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                              {dayRevenue.toLocaleString()} RWF
+                            </div>
+                          </div>
+                          <span className="text-[8px] font-black uppercase text-gray-400">{day.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-                <div className="bg-white rounded-[3rem] p-10 border border-gray-100">
+
+                <div className="bg-white rounded-[3rem] p-10 border border-gray-100 shadow-sm">
                   <h3 className="text-xl font-black uppercase tracking-tight mb-8">Sales by Category</h3>
-                  <div className="flex items-center justify-center h-64">
-                    <div className="relative w-48 h-48 rounded-full border-[20px] border-black flex items-center justify-center">
-                      <div className="absolute inset-0 rounded-full border-[20px] border-amber-500" style={{ clipPath: 'polygon(50% 50%, 100% 0, 100% 100%, 0 100%)' }}></div>
-                      <div className="text-center">
-                        <p className="text-2xl font-black">74%</p>
-                        <p className="text-[8px] font-black uppercase text-gray-400">Shoes</p>
-                      </div>
+                  <div className="space-y-6">
+                    {['shoes', 'clothes', 'accessories'].map(cat => {
+                      const catTotal = products.filter(p => p.category === cat).length;
+                      const percentage = products.length > 0 ? (catTotal / products.length) * 100 : 0;
+                      return (
+                        <div key={cat} className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-black uppercase tracking-widest">{cat}</span>
+                            <span className="text-[10px] font-black">{Math.round(percentage)}%</span>
+                          </div>
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-black rounded-full transition-all duration-1000" 
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="pt-6 text-center">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Products Managed</p>
+                      <p className="text-4xl font-black">{products.length}</p>
                     </div>
                   </div>
                 </div>
@@ -1014,7 +1265,7 @@ export default function Admin() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100">
                   <h3 className="text-xl font-black uppercase tracking-tight mb-8">Store Information</h3>
-                  <div className="space-y-6">
+                  <form onSubmit={handleUpdateSettings} className="space-y-6">
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Store Name</label>
                       <input type="text" defaultValue="MBABAZI CLOSET" className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
@@ -1023,8 +1274,8 @@ export default function Admin() {
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Contact Email</label>
                       <input type="email" defaultValue="contact@mbabazicloset.com" className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
                     </div>
-                    <button className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl">Save Changes</button>
-                  </div>
+                    <button type="submit" className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl">Save Changes</button>
+                  </form>
                 </div>
 
                 <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100">
