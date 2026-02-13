@@ -24,6 +24,8 @@ router.post('/', optionalAuth, async (req, res) => {
       
       return {
         productId: item.productId,
+        name: item.name,
+        image: item.image || (item.images && item.images[0]),
         quantity: quantity,
         price: price,
         size: item.size || 'N/A',
@@ -190,6 +192,32 @@ router.put('/:orderId/delivered', auth, async (req, res) => {
     if (deliveryNote) order.deliveryNote = deliveryNote;
     
     await order.save();
+
+    // Send automated motivation message to delivery person
+    if (order.status === 'delivered' && order.deliveryPerson) {
+      try {
+        const Message = require('../models/Message');
+        const motivations = [
+          "Amazing job! Order delivered successfully! 🚀",
+          "You're on fire! Another delivery completed! ✨",
+          "Excellent work! Keep making our customers happy! 💪",
+          "Great speed! You're a vital part of the team! 🏁",
+          "Thank you for your dedication and hard work! 🌟"
+        ];
+        const randomMotivation = motivations[Math.floor(Math.random() * motivations.length)];
+        
+        const autoMsg = new Message({
+          senderId: req.user.id, // Admin or whoever marked it delivered
+          receiverId: order.deliveryPerson,
+          content: randomMotivation,
+          type: 'motivation'
+        });
+        await autoMsg.save();
+        console.log('✅ Auto-motivation sent to:', order.deliveryPerson);
+      } catch (msgErr) {
+        console.error('Failed to send auto-motivation:', msgErr);
+      }
+    }
 
     // Trigger notifications using email service
     try {

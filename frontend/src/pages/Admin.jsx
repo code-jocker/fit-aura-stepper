@@ -58,6 +58,82 @@ export default function Admin() {
   const [customers, setCustomers] = useState([]);
   const [staff, setStaff] = useState([]); // Added staff state
   const [deliveryStaff, setDeliveryStaff] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [activeChatOrder, setActiveChatOrder] = useState(null);
+  const [newAdminMessage, setNewAdminMessage] = useState('');
+  const chatEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    if (activeChatOrder) {
+      scrollToBottom();
+    }
+  }, [messages, activeChatOrder]);
+
+  const fetchAdminMessages = async (orderId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/messages/order/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessages(response.data);
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+    }
+  };
+
+  const handleSendAdminMessage = async () => {
+    if (!newAdminMessage.trim() || !activeChatOrder) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/messages`, {
+        orderId: activeChatOrder._id,
+        content: newAdminMessage,
+        type: 'chat',
+        receiverId: activeChatOrder.deliveryPerson?._id || activeChatOrder.deliveryPerson
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setNewAdminMessage('');
+      fetchAdminMessages(activeChatOrder._id);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      alert('Failed to send message');
+    }
+  };
+
+  const handleSendMotivation = async (staffId) => {
+    const motivations = [
+      "Keep up the great work! You're making customers happy! 🚀",
+      "Excellent delivery speed today! Keep it up! ✨",
+      "You're a vital part of our team. Drive safe! 🏁",
+      "Great job handling those deliveries. You're crushing it! 💪",
+      "Thank you for your hard work and dedication! 🌟"
+    ];
+    const randomMotivation = motivations[Math.floor(Math.random() * motivations.length)];
+    const content = window.prompt("Send a motivational message:", randomMotivation);
+    
+    if (!content) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/messages/motivate`, {
+        receiverId: staffId,
+        content
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Motivational message sent! 🚀');
+    } catch (err) {
+      console.error('Error sending motivation:', err);
+      alert('Failed to send motivation');
+    }
+  };
   const [adminStats, setAdminStats] = useState(null); // Added for dashboard charts
   const [selectedOrders, setSelectedOrders] = useState([]); // Added for bulk actions
   const [isDragging, setIsDragging] = useState(false); // Added for drag & drop
@@ -121,8 +197,70 @@ export default function Admin() {
     location: ''
   });
   const [showStaffForm, setShowStaffForm] = useState(false);
+  const [promotions, setPromotions] = useState([]);
+  const [showPromoForm, setShowPromoForm] = useState(false);
+  const [promoFormData, setPromoFormData] = useState({
+    title: '',
+    description: '',
+    code: '',
+    type: 'percentage',
+    value: '',
+    startDate: '',
+    endDate: '',
+    isActive: true,
+    applicableTo: 'all',
+    products: []
+  });
 
   const [activeFormTab, setActiveFormTab] = useState('basic'); // 'basic', 'pricing', 'inventory', 'variants', 'shipping', 'seo'
+
+  const handlePromoSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      
+      if (editingId) {
+        await axios.put(`${API_URL}/promotions/${editingId}`, promoFormData, config);
+      } else {
+        await axios.post(`${API_URL}/promotions`, promoFormData, config);
+      }
+      
+      setShowPromoForm(false);
+      setEditingId(null);
+      setPromoFormData({
+        title: '',
+        description: '',
+        code: '',
+        type: 'percentage',
+        value: '',
+        startDate: '',
+        endDate: '',
+        isActive: true,
+        applicableTo: 'all',
+        products: []
+      });
+      fetchPromotions();
+      alert('Promotion saved successfully!');
+    } catch (err) {
+      console.error('Promo submit error:', err);
+      alert(err.response?.data?.message || 'Failed to save promotion');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPromotions = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const res = await axios.get(`${API_URL}/promotions`, config);
+      setPromotions(res.data || []);
+    } catch (err) {
+      console.error('Fetch promotions error:', err);
+    }
+  };
 
   const handleStaffSubmit = async (e) => {
     e.preventDefault();
@@ -528,6 +666,7 @@ export default function Admin() {
       setStaff(allStaffRes.data || []);
       setCategories(catRes.data || []);
       setAdminStats(statsRes.data || null);
+      fetchPromotions();
     } catch (err) {
       console.error('Fetch error:', err);
     } finally {
@@ -1595,31 +1734,95 @@ export default function Admin() {
                   <h1 className="text-4xl font-black uppercase tracking-tighter">Promotions</h1>
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Coupons & Discounts</p>
                 </div>
-                <button className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl">+ Create Coupon</button>
+                <button 
+                  onClick={() => {
+                    setEditingId(null);
+                    setPromoFormData({
+                      title: '',
+                      description: '',
+                      code: '',
+                      type: 'percentage',
+                      value: '',
+                      startDate: '',
+                      endDate: '',
+                      isActive: true,
+                      applicableTo: 'all',
+                      products: []
+                    });
+                    setShowPromoForm(true);
+                  }}
+                  className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl"
+                >
+                  + Create Coupon
+                </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {products.filter(p => p.salePrice < p.price).length > 0 ? (
-                  products.filter(p => p.salePrice < p.price).slice(0, 6).map((p, i) => (
-                    <div key={p._id} className="bg-white p-10 rounded-[3rem] border border-gray-100 relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full -mr-16 -mt-16 transition-all group-hover:scale-150"></div>
+                {promotions.length > 0 ? (
+                  promotions.map((promo) => (
+                    <div key={promo._id} className="bg-white p-10 rounded-[3rem] border border-gray-100 relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
+                      <div className={`absolute top-0 right-0 w-32 h-32 ${promo.isActive ? 'bg-amber-500/10' : 'bg-gray-500/10'} rounded-full -mr-16 -mt-16 transition-all group-hover:scale-150`}></div>
                       <div className="relative z-10">
                         <div className="flex justify-between items-start mb-6">
-                          <div className="bg-green-100 text-green-700 px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">Live Sale</div>
-                          <button className="text-gray-300 hover:text-black transition-colors"><MoreVertical size={20} /></button>
+                          <div className={`${promo.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'} px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase`}>
+                            {promo.isActive ? 'Active' : 'Inactive'}
+                          </div>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => {
+                                setEditingId(promo._id);
+                                setPromoFormData({
+                                  title: promo.title,
+                                  description: promo.description,
+                                  code: promo.code,
+                                  type: promo.type,
+                                  value: promo.value,
+                                  startDate: promo.startDate.split('T')[0],
+                                  endDate: promo.endDate.split('T')[0],
+                                  isActive: promo.isActive,
+                                  applicableTo: promo.applicableTo,
+                                  products: promo.products
+                                });
+                                setShowPromoForm(true);
+                              }}
+                              className="text-gray-400 hover:text-black transition-colors"
+                            >
+                              <Edit2 size={18} />
+                            </button>
+                            <button 
+                              onClick={async () => {
+                                if (window.confirm('Delete this promotion?')) {
+                                  try {
+                                    const token = localStorage.getItem('token');
+                                    await axios.delete(`${API_URL}/promotions/${promo._id}`, {
+                                      headers: { Authorization: `Bearer ${token}` }
+                                    });
+                                    fetchPromotions();
+                                  } catch (err) {
+                                    console.error('Delete promo error:', err);
+                                  }
+                                }
+                              }}
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
                         </div>
-                        <h3 className="text-xl font-black tracking-tighter mb-2 line-clamp-1 uppercase">{p.name}</h3>
-                        <p className="text-amber-500 text-[10px] font-black uppercase tracking-widest mb-6">
-                          {Math.round(((p.price - p.salePrice) / p.price) * 100)}% DISCOUNT APPLIED
+                        <h3 className="text-xl font-black tracking-tighter mb-2 uppercase">{promo.title}</h3>
+                        <p className="text-amber-500 text-[10px] font-black uppercase tracking-widest mb-4">
+                          Code: <span className="text-black">{promo.code || 'N/A'}</span>
                         </p>
                         <div className="flex justify-between items-center pt-6 border-t border-gray-50">
                           <div>
-                            <p className="text-gray-300 text-[8px] font-black uppercase tracking-widest mb-1">Old Price</p>
-                            <p className="text-xs font-black line-through text-gray-400">{p.price.toLocaleString()} RWF</p>
+                            <p className="text-gray-300 text-[8px] font-black uppercase tracking-widest mb-1">Value</p>
+                            <p className="text-xs font-black">
+                              {promo.type === 'percentage' ? `${promo.value}% OFF` : `${promo.value.toLocaleString()} RWF OFF`}
+                            </p>
                           </div>
-                          <div>
-                            <p className="text-gray-300 text-[8px] font-black uppercase tracking-widest mb-1">Sale Price</p>
-                            <p className="text-xs font-black text-green-600">{p.salePrice.toLocaleString()} RWF</p>
+                          <div className="text-right">
+                            <p className="text-gray-300 text-[8px] font-black uppercase tracking-widest mb-1">Expires</p>
+                            <p className="text-xs font-black text-gray-500">{new Date(promo.endDate).toLocaleDateString()}</p>
                           </div>
                         </div>
                       </div>
@@ -1627,10 +1830,87 @@ export default function Admin() {
                   ))
                 ) : (
                   <div className="col-span-3 bg-white p-20 rounded-[3rem] border border-gray-100 text-center">
-                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No active promotions or sales found</p>
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No active promotions found</p>
                   </div>
                 )}
               </div>
+
+              {/* Promo Creation Modal */}
+              {showPromoForm && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                  <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                    <div className="p-10">
+                      <div className="flex justify-between items-center mb-8">
+                        <div>
+                          <h2 className="text-3xl font-black uppercase tracking-tighter">{editingId ? 'Edit Promotion' : 'New Promotion'}</h2>
+                          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Configure your discount campaign</p>
+                        </div>
+                        <button onClick={() => setShowPromoForm(false)} className="p-4 hover:bg-gray-100 rounded-2xl transition-all">
+                          <X size={24} />
+                        </button>
+                      </div>
+
+                      <form onSubmit={handlePromoSubmit} className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="col-span-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Promotion Title</label>
+                            <input required type="text" value={promoFormData.title} onChange={(e) => setPromoFormData({...promoFormData, title: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Coupon Code</label>
+                            <input type="text" value={promoFormData.code} onChange={(e) => setPromoFormData({...promoFormData, code: e.target.value.toUpperCase()})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Discount Type</label>
+                            <select value={promoFormData.type} onChange={(e) => setPromoFormData({...promoFormData, type: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold">
+                              <option value="percentage">Percentage (%)</option>
+                              <option value="fixed_amount">Fixed Amount (RWF)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Value</label>
+                            <input required type="number" value={promoFormData.value} onChange={(e) => setPromoFormData({...promoFormData, value: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Applicable To</label>
+                            <select value={promoFormData.applicableTo} onChange={(e) => setPromoFormData({...promoFormData, applicableTo: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold">
+                              <option value="all">All Products</option>
+                              <option value="categories">Specific Categories</option>
+                              <option value="products">Specific Products</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Start Date</label>
+                            <input required type="date" value={promoFormData.startDate} onChange={(e) => setPromoFormData({...promoFormData, startDate: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">End Date</label>
+                            <input required type="date" value={promoFormData.endDate} onChange={(e) => setPromoFormData({...promoFormData, endDate: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Description</label>
+                            <textarea required value={promoFormData.description} onChange={(e) => setPromoFormData({...promoFormData, description: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold h-24" />
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <input type="checkbox" checked={promoFormData.isActive} onChange={(e) => setPromoFormData({...promoFormData, isActive: e.target.checked})} className="w-5 h-5 rounded-lg border-gray-200 text-amber-500 focus:ring-amber-500" />
+                            <label className="text-[10px] font-black uppercase tracking-widest">Active Promotion</label>
+                          </div>
+                        </div>
+
+                        <div className="pt-4">
+                          <button 
+                            type="submit" 
+                            disabled={loading}
+                            className="w-full bg-black text-white py-6 rounded-3xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl disabled:opacity-50"
+                          >
+                            {loading ? 'Saving...' : (editingId ? 'Update Promotion' : 'Create Promotion')}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1775,6 +2055,15 @@ export default function Admin() {
                         </td>
                         <td className="px-8 py-6 text-right">
                           <div className="flex justify-end gap-2">
+                            {member.role === 'delivery' && (
+                              <button 
+                                onClick={() => handleSendMotivation(member._id)}
+                                className="p-2 hover:bg-green-100 text-green-600 rounded-lg transition-all"
+                                title="Send Motivation"
+                              >
+                                <Heart size={16} />
+                              </button>
+                            )}
                             <button className="p-2 hover:bg-gray-100 rounded-lg transition-all"><Edit2 size={16} /></button>
                             <button 
                               onClick={async () => {

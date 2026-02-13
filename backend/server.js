@@ -112,6 +112,8 @@ try {
   app.use('/api/chatbot', require('./routes/chatbot'));
   app.use('/api/contact', require('./routes/contact'));
   app.use('/api/settings', require('./routes/settings'));
+  app.use('/api/promotions', require('./routes/promotions'));
+  app.use('/api/messages', require('./routes/messages'));
   console.log('✅ All routes loaded successfully');
 
   // Catch-all for unmatched /api routes
