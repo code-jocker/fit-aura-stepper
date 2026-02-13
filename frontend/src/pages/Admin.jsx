@@ -2031,6 +2031,16 @@ export default function Admin() {
                               <option value="kids">Kids</option>
                             </select>
                           </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Regular Price (RWF)</label>
+                              <input required type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Sale Price (RWF)</label>
+                              <input type="number" value={formData.salePrice} onChange={(e) => setFormData({...formData, salePrice: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                            </div>
+                          </div>
                         </div>
                         <div className="space-y-6">
                           <div>
@@ -2066,6 +2076,30 @@ export default function Admin() {
 
                         <div className="md:col-span-2">
                           <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 block">Product Images</label>
+                          <div className="mb-6">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Add Image URL</label>
+                            <div className="flex gap-2">
+                              <input 
+                                type="text" 
+                                id="imageUrlInput"
+                                placeholder="https://example.com/image.jpg" 
+                                className="flex-1 bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                              />
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  const input = document.getElementById('imageUrlInput');
+                                  if (input.value) {
+                                    setFormData(prev => ({...prev, images: [...prev.images, input.value]}));
+                                    input.value = '';
+                                  }
+                                }}
+                                className="bg-black text-white px-6 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-lg text-[10px]"
+                              >
+                                Add URL
+                              </button>
+                            </div>
+                          </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                             {formData.images.map((img, i) => (
                               <div key={i} className="aspect-square bg-gray-100 rounded-3xl overflow-hidden relative group shadow-sm">

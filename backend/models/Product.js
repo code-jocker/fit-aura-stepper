@@ -136,8 +136,12 @@ const productSchema = new mongoose.Schema(
 
 // Pre-save middleware to calculate discount percentage and stock status
 productSchema.pre('save', function(next) {
-  if (this.price && this.salePrice) {
+  if (this.price && this.salePrice && this.salePrice < this.price) {
     this.discountPercentage = Math.round(((this.price - this.salePrice) / this.price) * 100);
+    this.isSale = true;
+  } else {
+    this.discountPercentage = 0;
+    this.isSale = false;
   }
   
   if (this.stock <= 0) {
