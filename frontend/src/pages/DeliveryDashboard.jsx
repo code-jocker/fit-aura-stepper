@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import DeliveryMap from '../components/DeliveryMap';
 
 const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
 
@@ -229,6 +230,19 @@ export default function DeliveryDashboard() {
 
         {/* Right Column: Assigned Orders */}
         <div className="lg:col-span-2">
+          <div className="mb-8">
+            <h3 className="text-2xl font-black uppercase mb-4">Live Delivery Map</h3>
+            <div className="bg-white p-2 rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
+              <DeliveryMap 
+                orders={assignedOrders} 
+                onMarkerClick={(order) => {
+                  const element = document.getElementById(`order-${order._id}`);
+                  if (element) element.scrollIntoView({ behavior: 'smooth' });
+                }} 
+              />
+            </div>
+          </div>
+
           <h3 className="text-2xl font-black uppercase mb-8">Assigned Deliveries</h3>
           
           {assignedOrders.length === 0 ? (
@@ -239,7 +253,7 @@ export default function DeliveryDashboard() {
           ) : (
             <div className="space-y-6">
               {assignedOrders.map(order => (
-                <div key={order._id} className="bg-white border border-gray-100 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                <div key={order._id} id={`order-${order._id}`} className="bg-white border border-gray-100 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                   {/* Admin Message Banner */}
                   <div className="bg-amber-500/10 border-b border-amber-500/20 px-8 py-3 -mx-8 -mt-8 mb-6 flex items-center justify-between">
                     <div className="flex items-center gap-2">

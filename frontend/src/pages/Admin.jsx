@@ -181,7 +181,7 @@ export default function Admin() {
         recentOrders: orders.slice(0, 3).map(o => ({ id: o._id.slice(-8), customer: o.customerName, total: o.total, status: o.status }))
       };
 
-      const response = await axios.post(`${API_URL}/chat`, {
+      const response = await axios.post(`${API_URL}/chatbot`, {
         messages: [...chatMessages, newMessage],
         context: storeContext
       });
@@ -578,14 +578,18 @@ export default function Admin() {
   const handleAssignDelivery = async (orderId, deliveryPersonId) => {
     try {
       const token = localStorage.getItem('token');
+      const order = orders.find(o => o._id === orderId);
+      
       await axios.put(`${API_URL}/orders/${orderId}`, { 
         deliveryPerson: deliveryPersonId,
-        assignedAt: new Date()
+        assignedAt: new Date(),
+        // Ensure status updates to shipped when assigned if it was pending
+        status: order.status === 'pending' ? 'shipped' : order.status
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchData();
-      alert('Order assigned to delivery staff');
+      alert('Order assigned and status updated to shipped');
     } catch (err) {
       console.error('Assign delivery error:', err);
       alert('Failed to assign delivery staff');
@@ -1345,16 +1349,27 @@ export default function Admin() {
                           </div>
                         </td>
                         <td className="px-8 py-6">
-                          <select 
-                            value={order.deliveryPerson || ''} 
-                            onChange={(e) => handleAssignDelivery(order._id, e.target.value)}
-                            className="text-[10px] font-black uppercase tracking-widest bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-black"
-                          >
-                            <option value="">Unassigned</option>
-                            {deliveryStaff.map(staff => (
-                              <option key={staff._id} value={staff._id}>{staff.name}</option>
-                            ))}
-                          </select>
+                          <div className="flex flex-col gap-2">
+                            <select 
+                              value={order.deliveryPerson || ''} 
+                              onChange={(e) => handleAssignDelivery(order._id, e.target.value)}
+                              className="text-[10px] font-black uppercase tracking-widest bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-black w-full"
+                            >
+                              <option value="">Unassigned</option>
+                              {deliveryStaff.map(staff => (
+                                <option key={staff._id} value={staff._id}>{staff.name}</option>
+                              ))}
+                            </select>
+                            {order.deliveryPerson && (
+                              <button 
+                                onClick={() => setActiveSubTab('tracking')}
+                                className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-amber-500 hover:text-black transition-colors"
+                              >
+                                <Globe size={10} />
+                                Track on Map
+                              </button>
+                            )}
+                          </div>
                           {order.assignedAt && (
                             <p className="text-[8px] text-gray-400 font-bold uppercase mt-1">
                               Assigned: {new Date(order.assignedAt).toLocaleDateString()}

@@ -112,13 +112,10 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-
-              {/* 404 Route */}
-              <Route path="*" element={<Home />} />
             </Routes>
           </main>
-          <Footer />
           <SupportChat />
+          <Footer />
         </div>
       </Router>
     </GoogleOAuthProvider>
