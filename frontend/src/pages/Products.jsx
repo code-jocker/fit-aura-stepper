@@ -169,9 +169,12 @@ export default function Products() {
   return (
     <div className="min-h-screen bg-white">
       <Helmet>
-        <title>Shop All Products | MBABAZI CLOSET Rwanda</title>
-        <meta name="description" content="Browse our collection of premium sneakers, clothes, and accessories. Authentic brands including Nike, Jordan, and Adidas delivered across Rwanda." />
+        <title>Shop Authentic Sneakers & Fashion | MBABAZI CLOSET Rwanda</title>
+        <meta name="description" content="Browse our collection of 100% authentic sneakers, streetwear, and premium fashion in Rwanda. Nike, Jordan, Adidas and more." />
         <link rel="canonical" href="https://mbabazi-closet.onrender.com/products" />
+        <meta property="og:title" content="Shop Authentic Sneakers & Fashion | MBABAZI CLOSET Rwanda" />
+        <meta property="og:description" content="Browse our collection of 100% authentic sneakers, streetwear, and premium fashion in Rwanda." />
+        <meta property="og:url" content="https://mbabazi-closet.onrender.com/products" />
       </Helmet>
       {/* Category Header & Breadcrumbs */}
       <section className="bg-gray-50 pt-16 pb-8 border-b">

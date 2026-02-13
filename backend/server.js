@@ -114,6 +114,56 @@ try {
   app.use('/api/settings', require('./routes/settings'));
   app.use('/api/promotions', require('./routes/promotions'));
   app.use('/api/messages', require('./routes/messages'));
+  
+  // Dynamic Sitemap Route
+  app.get('/api/sitemap.xml', async (req, res) => {
+    try {
+      const Product = require('./models/Product');
+      const Category = require('./models/Category');
+      
+      const products = await Product.find({ isPublished: true }).select('_id updatedAt');
+      const categories = await Category.find().select('name updatedAt');
+      
+      const baseUrl = 'https://mbabazi-closet.onrender.com';
+      
+      let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+      
+      // Static Pages
+      const staticPages = [
+        { url: '', priority: '1.0', changefreq: 'daily' },
+        { url: '/products', priority: '0.9', changefreq: 'weekly' },
+        { url: '/categories', priority: '0.8', changefreq: 'weekly' },
+        { url: '/about', priority: '0.7', changefreq: 'monthly' },
+        { url: '/contact', priority: '0.7', changefreq: 'monthly' },
+        { url: '/track-order', priority: '0.5', changefreq: 'monthly' },
+        { url: '/portfolio', priority: '0.6', changefreq: 'monthly' }
+      ];
+      
+      staticPages.forEach(page => {
+        xml += `  <url>\n    <loc>${baseUrl}${page.url}</loc>\n    <priority>${page.priority}</priority>\n    <changefreq>${page.changefreq}</changefreq>\n  </url>\n`;
+      });
+      
+      // Category Pages
+      categories.forEach(cat => {
+        xml += `  <url>\n    <loc>${baseUrl}/products?category=${encodeURIComponent(cat.name)}</loc>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
+      });
+      
+      // Product Pages
+      products.forEach(prod => {
+        xml += `  <url>\n    <loc>${baseUrl}/product/${prod._id}</loc>\n    <lastmod>${prod.updatedAt.toISOString().split('T')[0]}</lastmod>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
+      });
+      
+      xml += '</urlset>';
+      
+      res.header('Content-Type', 'application/xml');
+      res.send(xml);
+    } catch (err) {
+      console.error('Sitemap Generation Error:', err);
+      res.status(500).end();
+    }
+  });
+
   console.log('✅ All routes loaded successfully');
 
   // Catch-all for unmatched /api routes

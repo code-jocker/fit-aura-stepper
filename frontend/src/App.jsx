@@ -48,6 +48,23 @@ function App() {
         <title>MBABAZI CLOSET | Premium Fashion & Authentic Sneakers Rwanda 🇷🇼</title>
         <meta name="description" content="MBABAZI CLOSET is Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali." />
         <link rel="canonical" href="https://mbabazi-closet.onrender.com/" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://mbabazi-closet.onrender.com/" />
+        <meta property="og:title" content="MBABAZI CLOSET | Premium Fashion & Authentic Sneakers Rwanda 🇷🇼" />
+        <meta property="og:description" content="Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali." />
+        <meta property="og:image" content="https://mbabazi-closet.onrender.com/MBABAZI.JPG" />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://mbabazi-closet.onrender.com/" />
+        <meta property="twitter:title" content="MBABAZI CLOSET | Premium Fashion & Authentic Sneakers Rwanda 🇷🇼" />
+        <meta property="twitter:description" content="Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali." />
+        <meta property="twitter:image" content="https://mbabazi-closet.onrender.com/MBABAZI.JPG" />
+        
+        <meta name="keywords" content="sneakers rwanda, authentic sneakers kigali, nike rwanda, jordan rwanda, fashion kigali, mbabazi closet" />
+        <meta name="robots" content="index, follow" />
       </Helmet>
       <Router>
         <div className="flex flex-col min-h-screen">

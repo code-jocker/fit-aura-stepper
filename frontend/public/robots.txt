@@ -15,4 +15,5 @@ Allow: /
 User-agent: bingbot
 Allow: /
 
-Sitemap: https://mbabazi-closet.onrender.com/sitemap.xml
+# Sitemap Location
+Sitemap: https://mbabazi-closet.onrender.com/api/sitemap.xml

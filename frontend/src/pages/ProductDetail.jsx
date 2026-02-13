@@ -105,6 +105,22 @@ export default function ProductDetail() {
         <title>{`${product.name} | MBABAZI CLOSET Rwanda`}</title>
         <meta name="description" content={product.description?.substring(0, 160)} />
         <link rel="canonical" href={`https://mbabazi-closet.onrender.com/product/${id}`} />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="product" />
+        <meta property="og:url" content={`https://mbabazi-closet.onrender.com/product/${id}`} />
+        <meta property="og:title" content={`${product.name} | MBABAZI CLOSET Rwanda`} />
+        <meta property="og:description" content={product.description?.substring(0, 160)} />
+        <meta property="og:image" content={product.images?.[0] || 'https://mbabazi-closet.onrender.com/MBABAZI.JPG'} />
+        <meta property="product:price:amount" content={product.salePrice || product.price} />
+        <meta property="product:price:currency" content="RWF" />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={`https://mbabazi-closet.onrender.com/product/${id}`} />
+        <meta property="twitter:title" content={`${product.name} | MBABAZI CLOSET Rwanda`} />
+        <meta property="twitter:description" content={product.description?.substring(0, 160)} />
+        <meta property="twitter:image" content={product.images?.[0] || 'https://mbabazi-closet.onrender.com/MBABAZI.JPG'} />
       </Helmet>
       {/* Breadcrumbs */}
       <nav className="max-w-7xl mx-auto px-4 py-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">

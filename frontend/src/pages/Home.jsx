@@ -70,6 +70,20 @@ export default function Home() {
         <meta name="description" content="MBABAZI CLOSET is Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali with express delivery. Elevate your style with the best fashion store in Rwanda." />
         <meta name="keywords" content="Sneakers Rwanda, Jordan Kigali, Nike Rwanda, MBABAZI CLOSET, Online Shopping Rwanda, Authentic Sneakers Kigali, Best Shoe Store Rwanda, Buy Jordan Rwanda, Nike Store Kigali, Fashion Rwanda, Athleisure Kigali" />
         <link rel="canonical" href="https://mbabazi-closet.onrender.com/" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://mbabazi-closet.onrender.com/" />
+        <meta property="og:title" content="MBABAZI CLOSET | Premium Fashion & Authentic Sneakers Rwanda 🇷🇼" />
+        <meta property="og:description" content="Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali." />
+        <meta property="og:image" content="https://mbabazi-closet.onrender.com/MBABAZI.JPG" />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://mbabazi-closet.onrender.com/" />
+        <meta property="twitter:title" content="MBABAZI CLOSET | Premium Fashion & Authentic Sneakers Rwanda 🇷🇼" />
+        <meta property="twitter:description" content="Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali." />
+        <meta property="twitter:image" content="https://mbabazi-closet.onrender.com/MBABAZI.JPG" />
       </Helmet>
       {/* Hero Section */}
       <section className="relative h-[80vh] overflow-hidden flex items-center">
