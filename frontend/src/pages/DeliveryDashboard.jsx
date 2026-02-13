@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import DeliveryMap from '../components/DeliveryMap';
-import { Send, MessageCircle, Heart, MapPin, Phone, CheckCircle2, Navigation, Bell } from 'lucide-react';
+import { Send, MessageCircle, Heart, MapPin, Phone, CheckCircle2, Navigation, Bell, Package } from 'lucide-react';
 
 const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
 

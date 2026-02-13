@@ -61,8 +61,6 @@ export default function Admin() {
   const [messages, setMessages] = useState([]);
   const [activeChatOrder, setActiveChatOrder] = useState(null);
   const [newAdminMessage, setNewAdminMessage] = useState('');
-  const chatEndRef = useRef(null);
-
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
