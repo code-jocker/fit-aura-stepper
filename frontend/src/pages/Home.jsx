@@ -87,15 +87,18 @@ export default function Home() {
       </Helmet>
       {/* Hero Section */}
       <section className="relative h-[80vh] overflow-hidden flex items-center">
-        <div
-          className="absolute inset-0 transition-transform duration-[20s] hover:scale-110"
-          style={{
-            backgroundImage: 'url(https://images.unsplash.com/photo-1556906781-9a412961c28c?w=1600&h=900&fit=crop)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-          aria-label="MBABAZI CLOSET Hero Image - Premium Sneakers in Rwanda"
-        />
+        <div className="absolute inset-0 w-full h-full">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/hero-background.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
         <div className="relative container px-4">
           <div className="max-w-3xl">
