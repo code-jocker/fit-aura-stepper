@@ -94,6 +94,17 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Robots.txt Route - Moved outside try-catch to ensure availability
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('User-agent: *\r\nAllow: /\r\nDisallow: /admin/\r\nDisallow: /delivery/\r\nDisallow: /login\r\nDisallow: /register\r\nDisallow: /checkout\r\nDisallow: /order-confirmation/\r\nDisallow: /profile\r\n\r\nSitemap: https://mbabazi-closet.onrender.com/api/sitemap.xml');
+});
+
+// Sitemap redirect for standard crawlers
+app.get('/sitemap.xml', (req, res) => {
+  res.redirect(301, '/api/sitemap.xml');
+});
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Routes
@@ -162,12 +173,6 @@ try {
       console.error('Sitemap Generation Error:', err);
       res.status(500).end();
     }
-  });
-
-  // Robots.txt Route
-  app.get('/robots.txt', (req, res) => {
-    res.type('text/plain');
-    res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /delivery\nDisallow: /login\nDisallow: /register\nDisallow: /checkout\nDisallow: /order-confirmation\nDisallow: /profile\n\nUser-agent: Googlebot\nAllow: /\nDisallow: /admin\nDisallow: /delivery\nDisallow: /login\nDisallow: /register\nDisallow: /checkout\nDisallow: /order-confirmation\nDisallow: /profile\n\nSitemap: https://mbabazi-closet.onrender.com/api/sitemap.xml`);
   });
 
   console.log('✅ All routes loaded successfully');

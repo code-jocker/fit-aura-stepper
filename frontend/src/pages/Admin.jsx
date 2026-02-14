@@ -2089,6 +2089,7 @@ export default function Admin() {
                   <DeliveryMap 
                     orders={orders.filter(o => o.status === 'shipped')} 
                     onMarkerClick={(order) => setSelectedOrderForMap(order)}
+                    onStatusUpdate={handleUpdateOrderStatus}
                   />
                   
                   {selectedOrderForMap && (
