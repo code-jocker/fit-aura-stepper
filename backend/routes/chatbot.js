@@ -2,11 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const Groq = require("groq-sdk");
+const OpenAI = require("openai");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
+// Initialize AI clients
+const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
+const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 const SYSTEM_INSTRUCTIONS = `You are 'MBABAZI AI', the premium AI shopping assistant for 'MBABAZI CLOSET' in Rwanda. 
 Your goal is to provide comprehensive, expert assistance on ALL topics related to our store and products.
@@ -45,8 +46,27 @@ router.post('/', async (req, res) => {
       dynamicSystemPrompt += `\n\nCURRENT DASHBOARD CONTEXT:\n${JSON.stringify(context, null, 2)}`;
     }
 
-    // Try Groq first if available
-    if (process.env.GROQ_API_KEY) {
+    // 1. Try OpenAI if available
+    if (openai) {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          messages: [
+            { role: "system", content: dynamicSystemPrompt },
+            ...messages.map(m => ({ role: m.role, content: m.content }))
+          ],
+        });
+
+        if (completion.choices[0]?.message?.content) {
+          return res.json({ content: completion.choices[0].message.content });
+        }
+      } catch (err) {
+        console.error('OpenAI Error:', err.message);
+      }
+    }
+
+    // 2. Try Groq if available
+    if (groq) {
       try {
         const groqMessages = [
           { role: "system", content: dynamicSystemPrompt },
@@ -58,17 +78,18 @@ router.post('/', async (req, res) => {
           model: "llama-3.3-70b-versatile",
         });
 
-        return res.json({
-          content: chatCompletion.choices[0]?.message?.content || ""
-        });
+        if (chatCompletion.choices[0]?.message?.content) {
+          return res.json({ content: chatCompletion.choices[0].message.content });
+        }
       } catch (err) {
-        console.error('Groq Error, falling back to Gemini:', err.message);
+        console.error('Groq Error:', err.message);
       }
     }
 
-    // Fallback to Gemini if available
-    if (process.env.GEMINI_API_KEY) {
+    // 3. Fallback to Gemini if available
+    if (genAI) {
       try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const history = messages.slice(0, -1).map(m => ({
           role: m.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: m.content }]
@@ -82,7 +103,7 @@ router.post('/', async (req, res) => {
             },
             {
               role: "model",
-              parts: [{ text: "Understood. I am MBABAZI AI, the MBABAZI CLOSET assistant. I have access to the store's current data and context. How can I help you manage the store today? 👟✨🇷🇼" }],
+              parts: [{ text: "Understood. I am MBABAZI AI, the MBABAZI CLOSET assistant. I have access to the store's current data and context. How can I help you today? 👟✨🇷🇼" }],
             },
             ...history
           ],
@@ -96,7 +117,7 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Final Fallback: If no AI is configured, provide a helpful static response
+    // Final Fallback: If no AI is configured or all fail
     return res.json({
       content: `Hello! I am MBABAZI AI. 👟✨ I am here to help you manage the ${context?.activeTab || "dashboard"}. How can I assist you today? 🇷🇼`
     });
