@@ -15,6 +15,7 @@ const app = express();
 
 // Sitemap Generation Helper
 const generateSitemap = async (req, res) => {
+  console.log(`🔍 Sitemap requested: ${req.url}`);
   let products = [];
   let categories = [];
   
@@ -22,18 +23,24 @@ const generateSitemap = async (req, res) => {
     const Product = require('./models/Product');
     const Category = require('./models/Category');
     
-    // Try to fetch data, but don't fail the whole sitemap if DB is slow
-    products = await Product.find({ isPublished: true }).select('_id updatedAt').timeout(5000).catch(() => []);
-    categories = await Category.find().select('name updatedAt').timeout(5000).catch(() => []);
+    // Use maxTimeMS instead of timeout for Mongoose queries
+    products = await Product.find({ isPublished: true }).select('_id updatedAt').maxTimeMS(5000).catch((e) => {
+      console.warn('⚠️ Product fetch failed for sitemap:', e.message);
+      return [];
+    });
+    categories = await Category.find().select('name updatedAt').maxTimeMS(5000).catch((e) => {
+      console.warn('⚠️ Category fetch failed for sitemap:', e.message);
+      return [];
+    });
   } catch (err) {
-    console.error('Sitemap DB Fetch Error:', err);
+    console.error('❌ Sitemap Data Error:', err.message);
   }
 
   const baseUrl = 'https://mbabazi-closet.onrender.com';
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
   
-  // Static Pages (Always include)
+  // Static Pages
   const staticPages = [
     { url: '', priority: '1.0', changefreq: 'daily' },
     { url: '/products', priority: '0.9', changefreq: 'weekly' },
@@ -48,23 +55,27 @@ const generateSitemap = async (req, res) => {
     xml += `  <url>\n    <loc>${baseUrl}${page.url}</loc>\n    <priority>${page.priority}</priority>\n    <changefreq>${page.changefreq}</changefreq>\n  </url>\n`;
   });
   
-  // Category Pages (if available)
-  categories.forEach(cat => {
-    xml += `  <url>\n    <loc>${baseUrl}/products?category=${encodeURIComponent(cat.name)}</loc>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
-  });
+  // Category Pages
+  if (categories && categories.length > 0) {
+    categories.forEach(cat => {
+      xml += `  <url>\n    <loc>${baseUrl}/products?category=${encodeURIComponent(cat.name)}</loc>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
+    });
+  }
   
-  // Product Pages (if available)
-  products.forEach(prod => {
-    const updatedAt = prod.updatedAt ? prod.updatedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-    xml += `  <url>\n    <loc>${baseUrl}/product/${prod._id}</loc>\n    <lastmod>${updatedAt}</lastmod>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
-  });
+  // Product Pages
+  if (products && products.length > 0) {
+    products.forEach(prod => {
+      const updatedAt = prod.updatedAt ? prod.updatedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      xml += `  <url>\n    <loc>${baseUrl}/product/${prod._id}</loc>\n    <lastmod>${updatedAt}</lastmod>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
+    });
+  }
   
   xml += '</urlset>';
   
-  res.header('Content-Type', 'application/xml');
+  res.header('Content-Type', 'text/xml');
   res.header('X-Robots-Tag', 'index, follow');
   res.header('Cache-Control', 'public, max-age=0, must-revalidate');
-  res.send(xml.trim());
+  res.status(200).send(xml.trim());
 };
 
 // Robots.txt Route - FIRST to avoid any middleware/blocking
@@ -72,7 +83,7 @@ app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
   res.header('Cache-Control', 'public, max-age=0, must-revalidate');
   res.header('Vary', 'User-Agent');
-  res.send('User-agent: *\r\nAllow: /\r\nDisallow: /admin\r\nDisallow: /delivery\r\nDisallow: /login\r\nDisallow: /register\r\nDisallow: /checkout\r\nDisallow: /order-confirmation\r\nDisallow: /profile\r\n\r\nSitemap: https://mbabazi-closet.onrender.com/sitemap.xml');
+  res.send('User-agent: *\r\nAllow: /\r\nAllow: /sitemap.xml\r\nDisallow: /admin\r\nDisallow: /delivery\r\nDisallow: /login\r\nDisallow: /register\r\nDisallow: /checkout\r\nDisallow: /order-confirmation\r\nDisallow: /profile\r\n\r\nSitemap: https://mbabazi-closet.onrender.com/sitemap.xml');
 });
 
 // Sitemap routes - also at the top

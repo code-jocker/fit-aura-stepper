@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Allow: /sitemap.xml
 Disallow: /admin
 Disallow: /delivery
 Disallow: /login
@@ -8,4 +9,4 @@ Disallow: /checkout
 Disallow: /order-confirmation
 Disallow: /profile
 
-Sitemap: https://mbabazi-closet.onrender.com/api/sitemap.xml
+Sitemap: https://mbabazi-closet.onrender.com/sitemap.xml
