@@ -13,18 +13,71 @@ dotenv.config();
 
 const app = express();
 
+// Sitemap Generation Helper
+const generateSitemap = async (req, res) => {
+  let products = [];
+  let categories = [];
+  
+  try {
+    const Product = require('./models/Product');
+    const Category = require('./models/Category');
+    
+    // Try to fetch data, but don't fail the whole sitemap if DB is slow
+    products = await Product.find({ isPublished: true }).select('_id updatedAt').timeout(5000).catch(() => []);
+    categories = await Category.find().select('name updatedAt').timeout(5000).catch(() => []);
+  } catch (err) {
+    console.error('Sitemap DB Fetch Error:', err);
+  }
+
+  const baseUrl = 'https://mbabazi-closet.onrender.com';
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+  
+  // Static Pages (Always include)
+  const staticPages = [
+    { url: '', priority: '1.0', changefreq: 'daily' },
+    { url: '/products', priority: '0.9', changefreq: 'weekly' },
+    { url: '/categories', priority: '0.8', changefreq: 'weekly' },
+    { url: '/about', priority: '0.7', changefreq: 'monthly' },
+    { url: '/contact', priority: '0.7', changefreq: 'monthly' },
+    { url: '/track-order', priority: '0.5', changefreq: 'monthly' },
+    { url: '/portfolio', priority: '0.6', changefreq: 'monthly' }
+  ];
+  
+  staticPages.forEach(page => {
+    xml += `  <url>\n    <loc>${baseUrl}${page.url}</loc>\n    <priority>${page.priority}</priority>\n    <changefreq>${page.changefreq}</changefreq>\n  </url>\n`;
+  });
+  
+  // Category Pages (if available)
+  categories.forEach(cat => {
+    xml += `  <url>\n    <loc>${baseUrl}/products?category=${encodeURIComponent(cat.name)}</loc>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
+  });
+  
+  // Product Pages (if available)
+  products.forEach(prod => {
+    const updatedAt = prod.updatedAt ? prod.updatedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    xml += `  <url>\n    <loc>${baseUrl}/product/${prod._id}</loc>\n    <lastmod>${updatedAt}</lastmod>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
+  });
+  
+  xml += '</urlset>';
+  
+  res.header('Content-Type', 'application/xml');
+  res.header('X-Robots-Tag', 'index, follow');
+  res.header('Cache-Control', 'public, max-age=0, must-revalidate');
+  res.send(xml.trim());
+};
+
 // Robots.txt Route - FIRST to avoid any middleware/blocking
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
   res.header('Cache-Control', 'public, max-age=0, must-revalidate');
   res.header('Vary', 'User-Agent');
-  res.send('User-agent: *\r\nAllow: /\r\nDisallow: /admin\r\nDisallow: /delivery\r\nDisallow: /login\r\nDisallow: /register\r\nDisallow: /checkout\r\nDisallow: /order-confirmation\r\nDisallow: /profile\r\n\r\nSitemap: https://mbabazi-closet.onrender.com/api/sitemap.xml');
+  res.send('User-agent: *\r\nAllow: /\r\nDisallow: /admin\r\nDisallow: /delivery\r\nDisallow: /login\r\nDisallow: /register\r\nDisallow: /checkout\r\nDisallow: /order-confirmation\r\nDisallow: /profile\r\n\r\nSitemap: https://mbabazi-closet.onrender.com/sitemap.xml');
 });
 
-// Sitemap redirect for standard crawlers
-app.get('/sitemap.xml', (req, res) => {
-  res.redirect(301, '/api/sitemap.xml');
-});
+// Sitemap routes - also at the top
+app.get('/sitemap.xml', generateSitemap);
+app.get('/api/sitemap.xml', generateSitemap);
 
 // Domain Redirection Middleware (Force mbabazi-closet.onrender.com)
 app.use((req, res, next) => {
@@ -133,59 +186,6 @@ try {
   app.use('/api/promotions', require('./routes/promotions'));
   app.use('/api/messages', require('./routes/messages'));
   
-  // Dynamic Sitemap Route
-  app.get('/api/sitemap.xml', async (req, res) => {
-    let products = [];
-    let categories = [];
-    
-    try {
-      const Product = require('./models/Product');
-      const Category = require('./models/Category');
-      
-      // Try to fetch data, but don't fail the whole sitemap if DB is slow
-      products = await Product.find({ isPublished: true }).select('_id updatedAt').timeout(5000).catch(() => []);
-      categories = await Category.find().select('name updatedAt').timeout(5000).catch(() => []);
-    } catch (err) {
-      console.error('Sitemap DB Fetch Error:', err);
-    }
-
-    const baseUrl = 'https://mbabazi-closet.onrender.com';
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-    
-    // Static Pages (Always include)
-    const staticPages = [
-      { url: '', priority: '1.0', changefreq: 'daily' },
-      { url: '/products', priority: '0.9', changefreq: 'weekly' },
-      { url: '/categories', priority: '0.8', changefreq: 'weekly' },
-      { url: '/about', priority: '0.7', changefreq: 'monthly' },
-      { url: '/contact', priority: '0.7', changefreq: 'monthly' },
-      { url: '/track-order', priority: '0.5', changefreq: 'monthly' },
-      { url: '/portfolio', priority: '0.6', changefreq: 'monthly' }
-    ];
-    
-    staticPages.forEach(page => {
-      xml += `  <url>\n    <loc>${baseUrl}${page.url}</loc>\n    <priority>${page.priority}</priority>\n    <changefreq>${page.changefreq}</changefreq>\n  </url>\n`;
-    });
-    
-    // Category Pages (if available)
-    categories.forEach(cat => {
-      xml += `  <url>\n    <loc>${baseUrl}/products?category=${encodeURIComponent(cat.name)}</loc>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
-    });
-    
-    // Product Pages (if available)
-    products.forEach(prod => {
-      const updatedAt = prod.updatedAt ? prod.updatedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-      xml += `  <url>\n    <loc>${baseUrl}/product/${prod._id}</loc>\n    <lastmod>${updatedAt}</lastmod>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
-    });
-    
-    xml += '</urlset>';
-    
-    res.header('Content-Type', 'application/xml');
-    res.header('X-Robots-Tag', 'index, follow');
-    res.send(xml);
-  });
-
   console.log('✅ All routes loaded successfully');
 
   // Catch-all for unmatched /api routes
