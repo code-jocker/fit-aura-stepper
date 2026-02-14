@@ -1,19 +1,23 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
-Disallow: /delivery/
+Disallow: /admin
+Disallow: /delivery
 Disallow: /login
 Disallow: /register
 Disallow: /checkout
-Disallow: /order-confirmation/
+Disallow: /order-confirmation
 Disallow: /profile
 
-# Official Bot Directives
+# Explicitly allow Googlebot to crawl the public site
 User-agent: Googlebot
 Allow: /
-
-User-agent: bingbot
-Allow: /
+Disallow: /admin
+Disallow: /delivery
+Disallow: /login
+Disallow: /register
+Disallow: /checkout
+Disallow: /order-confirmation
+Disallow: /profile
 
 # Sitemap Location
 Sitemap: https://mbabazi-closet.onrender.com/api/sitemap.xml

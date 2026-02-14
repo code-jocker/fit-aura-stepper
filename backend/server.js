@@ -164,6 +164,12 @@ try {
     }
   });
 
+  // Robots.txt Route
+  app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /delivery\nDisallow: /login\nDisallow: /register\nDisallow: /checkout\nDisallow: /order-confirmation\nDisallow: /profile\n\nUser-agent: Googlebot\nAllow: /\nDisallow: /admin\nDisallow: /delivery\nDisallow: /login\nDisallow: /register\nDisallow: /checkout\nDisallow: /order-confirmation\nDisallow: /profile\n\nSitemap: https://mbabazi-closet.onrender.com/api/sitemap.xml`);
+  });
+
   console.log('✅ All routes loaded successfully');
 
   // Catch-all for unmatched /api routes
