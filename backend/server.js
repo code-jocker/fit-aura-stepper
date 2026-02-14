@@ -13,6 +13,18 @@ dotenv.config();
 
 const app = express();
 
+// Robots.txt Route - FIRST to avoid any middleware/blocking
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.send('User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /delivery\nDisallow: /login\nDisallow: /register\nDisallow: /checkout\nDisallow: /order-confirmation\nDisallow: /profile\n\nSitemap: https://mbabazi-closet.onrender.com/api/sitemap.xml');
+});
+
+// Sitemap redirect for standard crawlers
+app.get('/sitemap.xml', (req, res) => {
+  res.redirect(301, '/api/sitemap.xml');
+});
+
 // Domain Redirection Middleware (Force mbabazi-closet.onrender.com)
 app.use((req, res, next) => {
   const host = req.get('host');
@@ -92,17 +104,6 @@ app.get('/api/health', (req, res) => {
     database: dbStatus,
     timestamp: new Date().toISOString()
   });
-});
-
-// Robots.txt Route - Moved outside try-catch to ensure availability
-app.get('/robots.txt', (req, res) => {
-  res.type('text/plain');
-  res.send('User-agent: *\r\nAllow: /\r\nDisallow: /admin/\r\nDisallow: /delivery/\r\nDisallow: /login\r\nDisallow: /register\r\nDisallow: /checkout\r\nDisallow: /order-confirmation/\r\nDisallow: /profile\r\n\r\nSitemap: https://mbabazi-closet.onrender.com/api/sitemap.xml');
-});
-
-// Sitemap redirect for standard crawlers
-app.get('/sitemap.xml', (req, res) => {
-  res.redirect(301, '/api/sitemap.xml');
 });
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
@@ -200,6 +201,8 @@ if (process.env.NODE_ENV === 'production') {
     // Only handle non-API routes
     if (!req.path.startsWith('/api')) {
       const indexPath = path.join(frontendBuildPath, 'index.html');
+      // Explicitly allow indexing for the main pages
+      res.header('X-Robots-Tag', 'index, follow');
       res.sendFile(indexPath, (err) => {
         if (err) {
           console.error('Error sending index.html:', err);

@@ -1,11 +1,11 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
-Disallow: /delivery/
+Disallow: /admin
+Disallow: /delivery
 Disallow: /login
 Disallow: /register
 Disallow: /checkout
-Disallow: /order-confirmation/
+Disallow: /order-confirmation
 Disallow: /profile
 
 Sitemap: https://mbabazi-closet.onrender.com/api/sitemap.xml
