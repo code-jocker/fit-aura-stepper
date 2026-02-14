@@ -87,22 +87,45 @@ export default function Admin() {
   const handleSendAdminMessage = async () => {
     if (!newAdminMessage.trim() || !activeChatOrder) return;
 
+    const messageContent = newAdminMessage;
+    const tempId = Date.now();
+    const receiverId = activeChatOrder.deliveryPerson?._id || activeChatOrder.deliveryPerson;
+
+    if (!receiverId) {
+      alert('Cannot send message: No delivery staff assigned to this order.');
+      return;
+    }
+
+    // Optimistic Update
+    const optimisticMessage = {
+      _id: tempId,
+      content: messageContent,
+      senderId: 'admin',
+      type: 'chat',
+      createdAt: new Date().toISOString(),
+      sending: true
+    };
+
+    setMessages(prev => [...prev, optimisticMessage]);
+    setNewAdminMessage('');
+
     try {
       const token = localStorage.getItem('token');
       await axios.post(`${API_URL}/messages`, {
         orderId: activeChatOrder._id,
-        content: newAdminMessage,
+        content: messageContent,
         type: 'chat',
-        receiverId: activeChatOrder.deliveryPerson?._id || activeChatOrder.deliveryPerson
+        receiverId
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      setNewAdminMessage('');
       fetchAdminMessages(activeChatOrder._id);
     } catch (err) {
       console.error('Error sending message:', err);
-      alert('Failed to send message');
+      setMessages(prev => prev.map(msg => 
+        msg._id === tempId ? { ...msg, sending: false, error: true } : msg
+      ));
     }
   };
 
@@ -3009,16 +3032,27 @@ export default function Admin() {
               {/* Chat Messages */}
               <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
                 {messages.length > 0 ? messages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.senderId === 'admin' || msg.type === 'motivation' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] p-5 rounded-[2rem] text-xs font-bold ${
+                  <div key={msg._id || i} className={`flex ${msg.senderId === 'admin' || msg.type === 'motivation' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-5 rounded-[2rem] text-xs font-bold relative ${
                       msg.senderId === 'admin' || msg.type === 'motivation'
                         ? 'bg-blue-600 text-white rounded-tr-none' 
                         : 'bg-gray-50 text-black rounded-tl-none border border-gray-100'
-                    }`}>
+                    } ${msg.error ? 'border-red-500 border-2' : ''}`}>
                       {msg.content}
-                      <p className={`text-[8px] mt-1 opacity-70 ${msg.senderId === 'admin' ? 'text-right' : 'text-left'}`}>
-                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                      <div className="flex items-center justify-between gap-2 mt-1">
+                        <p className={`text-[8px] opacity-70 ${msg.senderId === 'admin' ? 'text-right' : 'text-left'}`}>
+                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        {msg.sending && (
+                          <div className="w-2 h-2 bg-white/50 rounded-full animate-pulse"></div>
+                        )}
+                        {msg.error && (
+                          <div className="flex items-center gap-1">
+                            <AlertCircle size={10} className="text-red-200" />
+                            <span className="text-[8px] text-red-200 font-black uppercase">Failed</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )) : (
