@@ -46,7 +46,7 @@ router.post('/', async (req, res) => {
       dynamicSystemPrompt += `\n\nCURRENT DASHBOARD CONTEXT:\n${JSON.stringify(context, null, 2)}`;
     }
 
-    // 1. Try Groq first as requested
+    // 1. Try Groq first as requested - Using ultra-fast Llama 3 model
     if (groq) {
       try {
         const groqMessages = [
@@ -56,7 +56,9 @@ router.post('/', async (req, res) => {
 
         const chatCompletion = await groq.chat.completions.create({
           messages: groqMessages,
-          model: "llama-3.3-70b-versatile",
+          model: "llama3-70b-8192", // Fast and powerful
+          temperature: 0.7,
+          max_tokens: 1024,
         });
 
         if (chatCompletion.choices[0]?.message?.content) {
