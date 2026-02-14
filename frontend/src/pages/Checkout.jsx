@@ -116,6 +116,15 @@ export default function Checkout() {
       return;
     }
 
+    // MANDATORY: Check if location is captured
+    if (!location) {
+      alert('⚠️ Location capture is required! Please click the "📍 Auto-Locate" button to pin your exact delivery address before completing purchase.');
+      // Scroll to the location button
+      const locBtn = document.querySelector('button[onClick*="handleGetLocation"]');
+      if (locBtn) locBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
     setLoading(true);
     setPaymentStep('processing');
 
