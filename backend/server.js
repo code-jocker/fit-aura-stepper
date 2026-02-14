@@ -16,8 +16,9 @@ const app = express();
 // Robots.txt Route - FIRST to avoid any middleware/blocking
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.send('User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /delivery\nDisallow: /login\nDisallow: /register\nDisallow: /checkout\nDisallow: /order-confirmation\nDisallow: /profile\n\nSitemap: https://mbabazi-closet.onrender.com/api/sitemap.xml');
+  res.header('Cache-Control', 'public, max-age=0, must-revalidate');
+  res.header('Vary', 'User-Agent');
+  res.send('User-agent: *\r\nAllow: /\r\nDisallow: /admin\r\nDisallow: /delivery\r\nDisallow: /login\r\nDisallow: /register\r\nDisallow: /checkout\r\nDisallow: /order-confirmation\r\nDisallow: /profile\r\n\r\nSitemap: https://mbabazi-closet.onrender.com/api/sitemap.xml');
 });
 
 // Sitemap redirect for standard crawlers
@@ -74,8 +75,13 @@ app.use(limiter);
 
 // Database connection check middleware for API routes
 const dbCheckMiddleware = (req, res, next) => {
-  // Allow health check and flutterwave webhook even if DB is down
-  if (req.path === '/health' || req.path === '/payments/webhook/flutterwave') {
+  // Allow health check, sitemap, and flutterwave webhook even if DB is down
+  if (
+    req.path === '/health' || 
+    req.path === '/sitemap.xml' || 
+    req.path === '/api/sitemap.xml' || 
+    req.path === '/payments/webhook/flutterwave'
+  ) {
     return next();
   }
   
@@ -129,51 +135,55 @@ try {
   
   // Dynamic Sitemap Route
   app.get('/api/sitemap.xml', async (req, res) => {
+    let products = [];
+    let categories = [];
+    
     try {
       const Product = require('./models/Product');
       const Category = require('./models/Category');
       
-      const products = await Product.find({ isPublished: true }).select('_id updatedAt');
-      const categories = await Category.find().select('name updatedAt');
-      
-      const baseUrl = 'https://mbabazi-closet.onrender.com';
-      
-      let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-      xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-      
-      // Static Pages
-      const staticPages = [
-        { url: '', priority: '1.0', changefreq: 'daily' },
-        { url: '/products', priority: '0.9', changefreq: 'weekly' },
-        { url: '/categories', priority: '0.8', changefreq: 'weekly' },
-        { url: '/about', priority: '0.7', changefreq: 'monthly' },
-        { url: '/contact', priority: '0.7', changefreq: 'monthly' },
-        { url: '/track-order', priority: '0.5', changefreq: 'monthly' },
-        { url: '/portfolio', priority: '0.6', changefreq: 'monthly' }
-      ];
-      
-      staticPages.forEach(page => {
-        xml += `  <url>\n    <loc>${baseUrl}${page.url}</loc>\n    <priority>${page.priority}</priority>\n    <changefreq>${page.changefreq}</changefreq>\n  </url>\n`;
-      });
-      
-      // Category Pages
-      categories.forEach(cat => {
-        xml += `  <url>\n    <loc>${baseUrl}/products?category=${encodeURIComponent(cat.name)}</loc>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
-      });
-      
-      // Product Pages
-      products.forEach(prod => {
-        xml += `  <url>\n    <loc>${baseUrl}/product/${prod._id}</loc>\n    <lastmod>${prod.updatedAt.toISOString().split('T')[0]}</lastmod>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
-      });
-      
-      xml += '</urlset>';
-      
-      res.header('Content-Type', 'application/xml');
-      res.send(xml);
+      // Try to fetch data, but don't fail the whole sitemap if DB is slow
+      products = await Product.find({ isPublished: true }).select('_id updatedAt').timeout(5000).catch(() => []);
+      categories = await Category.find().select('name updatedAt').timeout(5000).catch(() => []);
     } catch (err) {
-      console.error('Sitemap Generation Error:', err);
-      res.status(500).end();
+      console.error('Sitemap DB Fetch Error:', err);
     }
+
+    const baseUrl = 'https://mbabazi-closet.onrender.com';
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+    
+    // Static Pages (Always include)
+    const staticPages = [
+      { url: '', priority: '1.0', changefreq: 'daily' },
+      { url: '/products', priority: '0.9', changefreq: 'weekly' },
+      { url: '/categories', priority: '0.8', changefreq: 'weekly' },
+      { url: '/about', priority: '0.7', changefreq: 'monthly' },
+      { url: '/contact', priority: '0.7', changefreq: 'monthly' },
+      { url: '/track-order', priority: '0.5', changefreq: 'monthly' },
+      { url: '/portfolio', priority: '0.6', changefreq: 'monthly' }
+    ];
+    
+    staticPages.forEach(page => {
+      xml += `  <url>\n    <loc>${baseUrl}${page.url}</loc>\n    <priority>${page.priority}</priority>\n    <changefreq>${page.changefreq}</changefreq>\n  </url>\n`;
+    });
+    
+    // Category Pages (if available)
+    categories.forEach(cat => {
+      xml += `  <url>\n    <loc>${baseUrl}/products?category=${encodeURIComponent(cat.name)}</loc>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
+    });
+    
+    // Product Pages (if available)
+    products.forEach(prod => {
+      const updatedAt = prod.updatedAt ? prod.updatedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      xml += `  <url>\n    <loc>${baseUrl}/product/${prod._id}</loc>\n    <lastmod>${updatedAt}</lastmod>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
+    });
+    
+    xml += '</urlset>';
+    
+    res.header('Content-Type', 'application/xml');
+    res.header('X-Robots-Tag', 'index, follow');
+    res.send(xml);
   });
 
   console.log('✅ All routes loaded successfully');
