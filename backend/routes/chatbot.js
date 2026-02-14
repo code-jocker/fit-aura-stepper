@@ -46,26 +46,7 @@ router.post('/', async (req, res) => {
       dynamicSystemPrompt += `\n\nCURRENT DASHBOARD CONTEXT:\n${JSON.stringify(context, null, 2)}`;
     }
 
-    // 1. Try OpenAI if available
-    if (openai) {
-      try {
-        const completion = await openai.chat.completions.create({
-          model: "gpt-3.5-turbo",
-          messages: [
-            { role: "system", content: dynamicSystemPrompt },
-            ...messages.map(m => ({ role: m.role, content: m.content }))
-          ],
-        });
-
-        if (completion.choices[0]?.message?.content) {
-          return res.json({ content: completion.choices[0].message.content });
-        }
-      } catch (err) {
-        console.error('OpenAI Error:', err.message);
-      }
-    }
-
-    // 2. Try Groq if available
+    // 1. Try Groq first as requested
     if (groq) {
       try {
         const groqMessages = [
@@ -83,6 +64,25 @@ router.post('/', async (req, res) => {
         }
       } catch (err) {
         console.error('Groq Error:', err.message);
+      }
+    }
+
+    // 2. Try OpenAI as fallback
+    if (openai) {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          messages: [
+            { role: "system", content: dynamicSystemPrompt },
+            ...messages.map(m => ({ role: m.role, content: m.content }))
+          ],
+        });
+
+        if (completion.choices[0]?.message?.content) {
+          return res.json({ content: completion.choices[0].message.content });
+        }
+      } catch (err) {
+        console.error('OpenAI Error:', err.message);
       }
     }
 
