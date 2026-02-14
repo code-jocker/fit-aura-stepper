@@ -34,7 +34,19 @@ router.get('/order/:orderId', auth, async (req, res) => {
 // Send a message
 router.post('/', auth, async (req, res) => {
   try {
-    const { receiverId, orderId, content, type } = req.body;
+    let { receiverId, orderId, content, type } = req.body;
+    
+    // Handle 'admin' receiver by finding the first admin
+    if (receiverId === 'admin') {
+      const User = require('../models/User');
+      const admin = await User.findOne({ role: 'admin' });
+      if (admin) {
+        receiverId = admin._id;
+      } else {
+        return res.status(404).json({ message: 'No admin found to receive message' });
+      }
+    }
+
     const message = new Message({
       senderId: req.user.id,
       receiverId,

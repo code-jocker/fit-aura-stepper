@@ -5,11 +5,11 @@ const { validateOrderUpdate } = require('../middleware/validation');
 const Order = require('../models/Order');
 const User = require('../models/User');
 
-// Create order
+    // Create order
 router.post('/', optionalAuth, async (req, res) => {
   try {
     console.log('📦 Creating new order:', req.body);
-    const { items, deliveryAddress, phone, paymentMethod, notes, customerName, email, paymentStatus, transactionId, location } = req.body;
+    const { items, deliveryAddress, phone, paymentMethod, notes, customerName, email, paymentStatus, transactionId, location, discount, couponCode } = req.body;
     
     if (!items || !items.length) {
       return res.status(400).json({ message: 'Cart is empty' });
@@ -36,7 +36,10 @@ router.post('/', optionalAuth, async (req, res) => {
     // Check if Kigali for free delivery
     const isFreeDelivery = deliveryAddress?.toLowerCase().includes('kigali');
     const deliveryFee = isFreeDelivery ? 0 : 5000;
-    const total = subtotal + deliveryFee;
+    
+    // Apply discount if any
+    const finalDiscount = Number(discount) || 0;
+    const total = Math.max(0, subtotal + deliveryFee - finalDiscount);
     
     const orderData = {
       customerName,
@@ -44,6 +47,8 @@ router.post('/', optionalAuth, async (req, res) => {
       items: formattedItems,
       subtotal,
       deliveryFee,
+      discount: finalDiscount,
+      couponCode,
       total,
       deliveryAddress,
       phone,
@@ -62,6 +67,19 @@ router.post('/', optionalAuth, async (req, res) => {
     const order = new Order(orderData);
     await order.save();
     console.log('✅ Order saved:', order._id);
+    
+    // Increment coupon usage count if applied
+    if (couponCode) {
+      try {
+        const Promotion = require('../models/Promotion');
+        await Promotion.findOneAndUpdate(
+          { code: couponCode.toUpperCase() },
+          { $inc: { usageCount: 1 } }
+        );
+      } catch (promoErr) {
+        console.error('Error incrementing coupon usage:', promoErr);
+      }
+    }
     
     // Clear cart if user is logged in
     if (req.user) {
@@ -331,6 +349,32 @@ router.put('/:orderId/note', auth, async (req, res) => {
     await order.save();
 
     res.json({ message: 'Delivery note updated successfully', order });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Start delivery (DELIVERY PERSON)
+router.put('/:orderId/start', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'delivery' && req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const order = await Order.findById(req.params.orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (req.user.role === 'delivery' && order.deliveryPerson?.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'Order not assigned to you' });
+    }
+
+    order.status = 'shipped';
+    order.updatedAt = Date.now();
+    await order.save();
+
+    res.json({ message: 'Delivery started', order });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

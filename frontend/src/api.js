@@ -87,4 +87,9 @@ export const testimonialService = {
     api.get('/testimonials'),
 };
 
+export const promotionService = {
+  validate: (code, items) => 
+    api.post('/promotions/validate', { code, items }),
+};
+
 export default api;

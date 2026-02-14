@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import DeliveryMap from '../components/DeliveryMap';
 import { Send, MessageCircle, Heart, MapPin, Phone, CheckCircle2, Navigation, Bell, Package } from 'lucide-react';
@@ -9,7 +9,6 @@ export default function DeliveryDashboard() {
   const [worker, setWorker] = useState(null);
   const [assignedOrders, setAssignedOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [updating, setUpdating] = useState(false);
   const [startLocation, setStartLocation] = useState(null);
   const [gettingStartLocation, setGettingStartLocation] = useState(false);
@@ -51,13 +50,7 @@ export default function DeliveryDashboard() {
     );
   };
 
-  useEffect(() => {
-    fetchWorkerData();
-    fetchAssignedOrders();
-    fetchMotivations();
-  }, []);
-
-  const fetchWorkerData = async () => {
+  const fetchWorkerData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(`${API_URL}/users/profile`, {
@@ -65,11 +58,23 @@ export default function DeliveryDashboard() {
       });
       setWorker(response.data);
     } catch (err) {
-      setError('Failed to fetch profile data');
+      console.error('Failed to fetch profile data:', err);
     }
-  };
+  }, []);
 
-  const fetchAssignedOrders = async () => {
+  const fetchOrderMessages = useCallback(async (orderId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/messages/order/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessages(prev => ({ ...prev, [orderId]: response.data }));
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+    }
+  }, []);
+
+  const fetchAssignedOrders = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(`${API_URL}/orders/assigned`, {
@@ -82,25 +87,13 @@ export default function DeliveryDashboard() {
         fetchOrderMessages(order._id);
       });
     } catch (err) {
-      setError('Failed to fetch assigned orders');
+      console.error('Failed to fetch assigned orders:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchOrderMessages]);
 
-  const fetchOrderMessages = async (orderId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/messages/order/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMessages(prev => ({ ...prev, [orderId]: response.data }));
-    } catch (err) {
-      console.error('Error fetching messages:', err);
-    }
-  };
-
-  const fetchMotivations = async () => {
+  const fetchMotivations = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(`${API_URL}/messages`, {
@@ -111,7 +104,13 @@ export default function DeliveryDashboard() {
     } catch (err) {
       console.error('Error fetching motivations:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchWorkerData();
+    fetchAssignedOrders();
+    fetchMotivations();
+  }, [fetchWorkerData, fetchAssignedOrders, fetchMotivations]);
 
   const sendMessage = async (orderId) => {
     if (!newMessage[orderId]?.trim()) return;
@@ -134,6 +133,37 @@ export default function DeliveryDashboard() {
     } catch (err) {
       console.error('Error sending message:', err);
       alert('Failed to send message');
+    }
+  };
+
+  const startDelivery = async (orderId) => {
+    try {
+      setUpdating(true);
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/orders/${orderId}/start`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Capture location when starting
+      captureStartLocation();
+      
+      // Send auto message to admin
+      await axios.post(`${API_URL}/messages`, {
+        orderId,
+        content: "I have started the delivery for this order! 🚀 On my way.",
+        type: 'chat',
+        receiverId: 'admin'
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      alert('Delivery started! Location captured and Admin notified. 🚀');
+      fetchAssignedOrders();
+    } catch (err) {
+      console.error('Error starting delivery:', err);
+      alert('Failed to start delivery');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -391,6 +421,27 @@ export default function DeliveryDashboard() {
                         </div>
                       </div>
 
+                      {/* Items Section */}
+                      <div className="bg-gray-50/50 p-6 md:p-8 rounded-[2rem] border border-gray-100">
+                        <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
+                          <Package size={14} /> Order Contents ({order.items?.length || 0} items)
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {order.items?.map((item, idx) => (
+                            <div key={idx} className="flex gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                              <div className="w-16 h-16 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
+                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-black uppercase truncate">{item.name}</p>
+                                <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">Size: {item.size} • Qty: {item.quantity}</p>
+                                <p className="text-[9px] text-amber-600 font-black mt-1">{item.price?.toLocaleString()} RWF</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
                       {/* Navigation Section */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className={`p-6 rounded-[2rem] border-2 transition-all ${startLocation ? 'bg-green-50/50 border-green-100' : 'bg-gray-50 border-dashed border-gray-200'}`}>
@@ -506,21 +557,50 @@ export default function DeliveryDashboard() {
                                   )}
                                   <div ref={chatEndRef} />
                                 </div>
-                                <div className="p-4 bg-white border-t border-gray-100 flex gap-2">
-                                  <input 
-                                    type="text"
-                                    value={newMessage[order._id] || ''}
-                                    onChange={(e) => setNewMessage(prev => ({ ...prev, [order._id]: e.target.value }))}
-                                    onKeyPress={(e) => e.key === 'Enter' && sendMessage(order._id)}
-                                    placeholder="Type message to admin..."
-                                    className="flex-grow bg-gray-50 border-none rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 ring-amber-500 transition-all"
-                                  />
-                                  <button 
-                                    onClick={() => sendMessage(order._id)}
-                                    className="bg-black text-white p-3 rounded-xl hover:bg-amber-500 transition-all shadow-lg"
-                                  >
-                                    <Send size={18} />
-                                  </button>
+                                <div className="p-4 bg-white border-t border-gray-100 space-y-3">
+                                  <div className="flex flex-wrap gap-2">
+                                    {[
+                                      "On my way! 🏍️", 
+                                      "Arrived at location 📍", 
+                                      "Traffic delay 🚦", 
+                                      "Almost there! ✨"
+                                    ].map(quickMsg => (
+                                      <button 
+                                        key={quickMsg}
+                                        onClick={async () => {
+                                          const token = localStorage.getItem('token');
+                                          await axios.post(`${API_URL}/messages`, {
+                                            orderId: order._id,
+                                            content: quickMsg,
+                                            type: 'chat',
+                                            receiverId: 'admin'
+                                          }, {
+                                            headers: { Authorization: `Bearer ${token}` }
+                                          });
+                                          fetchOrderMessages(order._id);
+                                        }}
+                                        className="text-[8px] font-black uppercase tracking-widest bg-gray-100 hover:bg-amber-500 hover:text-white px-3 py-1.5 rounded-lg transition-all"
+                                      >
+                                        {quickMsg}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <input 
+                                      type="text"
+                                      value={newMessage[order._id] || ''}
+                                      onChange={(e) => setNewMessage(prev => ({ ...prev, [order._id]: e.target.value }))}
+                                      onKeyPress={(e) => e.key === 'Enter' && sendMessage(order._id)}
+                                      placeholder="Type message to admin..."
+                                      className="flex-grow bg-gray-50 border-none rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 ring-amber-500 transition-all"
+                                    />
+                                    <button 
+                                      onClick={() => sendMessage(order._id)}
+                                      className="bg-black text-white p-3 rounded-xl hover:bg-amber-500 transition-all shadow-lg"
+                                    >
+                                      <Send size={18} />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             ) : (
@@ -546,14 +626,25 @@ export default function DeliveryDashboard() {
                       </div>
 
                       {/* Action Button */}
-                      <div className="flex gap-4 w-full">
+                      <div className="flex flex-col md:flex-row gap-4 w-full">
+                        {order.status !== 'shipped' && order.status !== 'delivered' && (
+                          <button 
+                            onClick={() => startDelivery(order._id)}
+                            disabled={updating}
+                            className="flex-grow py-6 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] transition-all shadow-2xl transform active:scale-95 flex items-center justify-center gap-3 bg-amber-500 text-black hover:bg-black hover:text-white shadow-amber-200"
+                          >
+                            <Navigation size={20} /> START DELIVERY
+                          </button>
+                        )}
                         <button 
                           onClick={() => markAsDelivered(order._id, order.deliveryNote)}
-                          disabled={updating || order.status === 'delivered'}
+                          disabled={updating || order.status === 'delivered' || order.status === 'pending'}
                           className={`flex-grow py-6 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] transition-all shadow-2xl transform active:scale-95 flex items-center justify-center gap-3 ${
                             order.status === 'delivered'
                               ? 'bg-green-100 text-green-600 cursor-default'
-                              : 'bg-black text-white hover:bg-amber-500 shadow-black/20'
+                              : order.status === 'pending'
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : 'bg-black text-white hover:bg-amber-500 shadow-black/20'
                           }`}
                         >
                           {order.status === 'delivered' ? <><CheckCircle2 size={20} /> COMPLETED</> : 'CONFIRM DELIVERY COMPLETE'}

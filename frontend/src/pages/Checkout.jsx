@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
-import { orderService, paymentService } from '../api';
+import { orderService, paymentService, promotionService } from '../api';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -21,6 +21,11 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [paymentStep, setPaymentStep] = useState('checkout'); // 'checkout', 'processing', 'success'
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [discount, setDiscount] = useState(0);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
 
   const validateRwandaPhone = (phone) => {
     // Basic Rwanda phone validation: starts with 078, 079, 072, 073 and is 10 digits
@@ -69,7 +74,25 @@ export default function Checkout() {
     return sum + (itemPrice * item.quantity);
   }, 0);
   const deliveryFee = formData.city.toLowerCase().includes('kigali') ? 0 : 5000;
-  const total = subtotal + deliveryFee;
+  const total = Math.max(0, subtotal + deliveryFee - discount);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const res = await promotionService.validate(couponCode, cart);
+      setAppliedCoupon(res.data.promotion);
+      setDiscount(res.data.discount);
+      alert(`Coupon applied! You saved ${res.data.discount.toLocaleString()} RWF`);
+    } catch (err) {
+      setCouponError(err.response?.data?.message || 'Invalid coupon code');
+      setAppliedCoupon(null);
+      setDiscount(0);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -119,6 +142,8 @@ export default function Checkout() {
         paymentMethod: formData.paymentMethod,
         subtotal: subtotal,
         deliveryFee: deliveryFee,
+        discount: discount,
+        couponCode: appliedCoupon?.code,
         total: total,
         notes: formData.notes,
         status: 'pending',
@@ -400,10 +425,55 @@ export default function Checkout() {
               </div>
 
               <div className="space-y-4 pt-6 border-t border-white/10 relative z-10">
+                {/* Coupon Code Input */}
+                <div className="space-y-2 mb-6">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Promo Code</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="ENTER CODE"
+                      disabled={appliedCoupon}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-amber-500 transition-all uppercase placeholder:text-gray-600 disabled:opacity-50"
+                    />
+                    {appliedCoupon ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAppliedCoupon(null);
+                          setDiscount(0);
+                          setCouponCode('');
+                        }}
+                        className="px-4 py-3 bg-red-500/20 text-red-500 rounded-xl text-[10px] font-black uppercase hover:bg-red-500/30 transition-all"
+                      >
+                        Remove
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={couponLoading || !couponCode}
+                        className="px-4 py-3 bg-white text-black rounded-xl text-[10px] font-black uppercase hover:bg-amber-500 transition-all disabled:opacity-50"
+                      >
+                        {couponLoading ? '...' : 'Apply'}
+                      </button>
+                    )}
+                  </div>
+                  {couponError && <p className="text-[9px] text-red-400 font-bold uppercase mt-1">{couponError}</p>}
+                  {appliedCoupon && <p className="text-[9px] text-green-400 font-bold uppercase mt-1">✓ {appliedCoupon.title} Applied</p>}
+                </div>
+
                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
                   <span>Subtotal</span>
                   <span className="text-white">{subtotal.toLocaleString()} RWF</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-green-400">
+                    <span>Discount</span>
+                    <span>-{discount.toLocaleString()} RWF</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
                   <span>Delivery</span>
                   <span className={deliveryFee === 0 ? 'text-green-400' : 'text-white'}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -29,7 +29,6 @@ import {
   Clock,
   AlertCircle,
   MessageSquare,
-  PieChart,
   CreditCard,
   Star,
   Ticket,
@@ -37,12 +36,9 @@ import {
   Shield,
   Globe,
   Palette,
-  Mail,
-  FileText,
-  Smartphone,
   Send,
-  Sparkles,
-  Bot
+  Bot,
+  Heart
 } from 'lucide-react';
 
 const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
@@ -61,15 +57,20 @@ export default function Admin() {
   const [messages, setMessages] = useState([]);
   const [activeChatOrder, setActiveChatOrder] = useState(null);
   const [newAdminMessage, setNewAdminMessage] = useState('');
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const staffChatEndRef = useRef(null);
+  const aiChatEndRef = useRef(null);
+
+  const scrollStaffChatToBottom = () => {
+    staffChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
     if (activeChatOrder) {
-      scrollToBottom();
+      scrollStaffChatToBottom();
     }
   }, [messages, activeChatOrder]);
+
+  const [selectedOrderForMap, setSelectedOrderForMap] = useState(null);
 
   const fetchAdminMessages = async (orderId) => {
     try {
@@ -105,7 +106,7 @@ export default function Admin() {
     }
   };
 
-  const handleSendMotivation = async (staffId) => {
+  const handleSendMotivation = async (staffId, customContent = null) => {
     const motivations = [
       "Keep up the great work! You're making customers happy! 🚀",
       "Excellent delivery speed today! Keep it up! ✨",
@@ -113,8 +114,12 @@ export default function Admin() {
       "Great job handling those deliveries. You're crushing it! 💪",
       "Thank you for your hard work and dedication! 🌟"
     ];
-    const randomMotivation = motivations[Math.floor(Math.random() * motivations.length)];
-    const content = window.prompt("Send a motivational message:", randomMotivation);
+    
+    let content = customContent;
+    if (!content) {
+      const randomMotivation = motivations[Math.floor(Math.random() * motivations.length)];
+      content = window.prompt("Send a motivational message:", randomMotivation);
+    }
     
     if (!content) return;
 
@@ -126,10 +131,49 @@ export default function Admin() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      // Also fetch messages if the chat is open for an order belonging to this staff
+      if (activeChatOrder && (activeChatOrder.deliveryPerson?._id === staffId || activeChatOrder.deliveryPerson === staffId)) {
+        fetchAdminMessages(activeChatOrder._id);
+      }
+      
       alert('Motivational message sent! 🚀');
     } catch (err) {
       console.error('Error sending motivation:', err);
       alert('Failed to send motivation');
+    }
+  };
+
+  const handleCreateDelivery = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/orders`, {
+        ...deliveryFormData,
+        status: 'pending'
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      alert('Delivery created successfully! 📦');
+      setDeliveryFormData({
+        customerName: '',
+        email: '',
+        phone: '',
+        address: '',
+        items: [],
+        total: '',
+        deliveryPerson: '',
+        notes: ''
+      });
+      setActiveTab('orders');
+      fetchData();
+    } catch (err) {
+      console.error('Error creating delivery:', err);
+      alert(err.response?.data?.message || 'Failed to create delivery');
+    } finally {
+      setLoading(false);
     }
   };
   const [adminStats, setAdminStats] = useState(null); // Added for dashboard charts
@@ -147,14 +191,13 @@ export default function Admin() {
   ]);
   const [userMessage, setUserMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const chatEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollAIChatToBottom = () => {
+    aiChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    scrollToBottom();
+    scrollAIChatToBottom();
   }, [chatMessages, isTyping]);
 
   const [formData, setFormData] = useState({
@@ -207,7 +250,19 @@ export default function Admin() {
     endDate: '',
     isActive: true,
     applicableTo: 'all',
-    products: []
+    products: [],
+    categories: []
+  });
+
+  const [deliveryFormData, setDeliveryFormData] = useState({
+    customerName: '',
+    email: '',
+    phone: '',
+    address: '',
+    items: [],
+    total: '',
+    deliveryPerson: '',
+    notes: ''
   });
 
   const [activeFormTab, setActiveFormTab] = useState('basic'); // 'basic', 'pricing', 'inventory', 'variants', 'shipping', 'seo'
@@ -237,7 +292,8 @@ export default function Admin() {
         endDate: '',
         isActive: true,
         applicableTo: 'all',
-        products: []
+        products: [],
+        categories: []
       });
       fetchPromotions();
       alert('Promotion saved successfully!');
@@ -249,7 +305,7 @@ export default function Admin() {
     }
   };
 
-  const fetchPromotions = async () => {
+  const fetchPromotions = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
@@ -258,7 +314,7 @@ export default function Admin() {
     } catch (err) {
       console.error('Fetch promotions error:', err);
     }
-  };
+  }, []);
 
   const handleStaffSubmit = async (e) => {
     e.preventDefault();
@@ -641,7 +697,7 @@ export default function Admin() {
   });
 
   // Fetch Data
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -670,7 +726,7 @@ export default function Admin() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchPromotions]);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -684,7 +740,7 @@ export default function Admin() {
       fetchData();
     };
     checkAdmin();
-  }, []);
+  }, [fetchData]);
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {
@@ -886,6 +942,15 @@ export default function Admin() {
           <SidebarItem id="payments" label="Payments" icon={CreditCard} />
           <SidebarItem id="reviews" label="Reviews" icon={Star} />
           <SidebarItem id="promotions" label="Promotions" icon={Ticket} />
+          <SidebarItem 
+            id="deliveries" 
+            label="Deliveries" 
+            icon={Truck} 
+            subItems={[
+              { id: 'tracking', label: 'Live Map' },
+              { id: 'create', label: 'Create Delivery' }
+            ]}
+          />
           <SidebarItem id="reports" label="Reports" icon={BarChart3} />
           <SidebarItem id="staff" label="Staff" icon={Shield} />
           <SidebarItem id="settings" label="Settings" icon={Settings} />
@@ -1498,13 +1563,25 @@ export default function Admin() {
                               ))}
                             </select>
                             {order.deliveryPerson && (
-                              <button 
-                                onClick={() => setActiveSubTab('tracking')}
-                                className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-amber-500 hover:text-black transition-colors"
-                              >
-                                <Globe size={10} />
-                                Track on Map
-                              </button>
+                              <div className="flex flex-col gap-1">
+                                <button 
+                                  onClick={() => setActiveSubTab('tracking')}
+                                  className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-amber-500 hover:text-black transition-colors"
+                                >
+                                  <Globe size={10} />
+                                  Track on Map
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    setActiveChatOrder(order);
+                                    fetchAdminMessages(order._id);
+                                  }}
+                                  className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-blue-500 hover:text-black transition-colors"
+                                >
+                                  <MessageSquare size={10} />
+                                  Chat with Staff
+                                </button>
+                              </div>
                             )}
                           </div>
                           {order.assignedAt && (
@@ -1779,7 +1856,8 @@ export default function Admin() {
                                   endDate: promo.endDate.split('T')[0],
                                   isActive: promo.isActive,
                                   applicableTo: promo.applicableTo,
-                                  products: promo.products
+                                  products: promo.products || [],
+                                  categories: promo.categories || []
                                 });
                                 setShowPromoForm(true);
                               }}
@@ -1871,12 +1949,63 @@ export default function Admin() {
                           </div>
                           <div>
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Applicable To</label>
-                            <select value={promoFormData.applicableTo} onChange={(e) => setPromoFormData({...promoFormData, applicableTo: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold">
+                            <select value={promoFormData.applicableTo} onChange={(e) => setPromoFormData({...promoFormData, applicableTo: e.target.value, products: [], categories: []})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold">
                               <option value="all">All Products</option>
                               <option value="categories">Specific Categories</option>
                               <option value="products">Specific Products</option>
                             </select>
                           </div>
+                          {promoFormData.applicableTo === 'categories' && (
+                            <div className="col-span-2">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Select Categories</label>
+                              <div className="flex flex-wrap gap-2">
+                                {categories.map(cat => (
+                                  <button
+                                    key={cat._id}
+                                    type="button"
+                                    onClick={() => {
+                                      const current = promoFormData.categories || [];
+                                      const updated = current.includes(cat.name) 
+                                        ? current.filter(n => n !== cat.name)
+                                        : [...current, cat.name];
+                                      setPromoFormData({...promoFormData, categories: updated});
+                                    }}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                      (promoFormData.categories || []).includes(cat.name)
+                                        ? 'bg-black text-white'
+                                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {cat.name}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {promoFormData.applicableTo === 'products' && (
+                            <div className="col-span-2">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Select Products</label>
+                              <div className="max-h-48 overflow-y-auto space-y-2 custom-scrollbar p-4 bg-gray-50 rounded-2xl">
+                                {products.map(prod => (
+                                  <label key={prod._id} className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded-xl transition-all">
+                                    <input
+                                      type="checkbox"
+                                      checked={(promoFormData.products || []).includes(prod._id)}
+                                      onChange={(e) => {
+                                        const current = promoFormData.products || [];
+                                        const updated = e.target.checked 
+                                          ? [...current, prod._id]
+                                          : current.filter(id => id !== prod._id);
+                                        setPromoFormData({...promoFormData, products: updated});
+                                      }}
+                                      className="w-4 h-4 rounded border-gray-200 text-amber-500 focus:ring-amber-500"
+                                    />
+                                    <span className="text-xs font-bold uppercase tracking-tight">{prod.name}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                           <div>
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Start Date</label>
                             <input required type="date" value={promoFormData.startDate} onChange={(e) => setPromoFormData({...promoFormData, startDate: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
@@ -1909,6 +2038,181 @@ export default function Admin() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {(activeTab === 'deliveries' && activeSubTab === 'tracking') && (
+            <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-between items-end">
+                <div>
+                  <h1 className="text-4xl font-black uppercase tracking-tighter">Live Fleet Tracking</h1>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Real-time Delivery Monitoring & Management</p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Fleet Active</span>
+                  </div>
+                  <div className="bg-black text-white px-6 py-4 rounded-2xl shadow-sm flex items-center gap-3">
+                    <Truck size={16} className="text-amber-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">{orders.filter(o => o.status === 'shipped').length} Active Deliveries</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+                {/* Live Map */}
+                <div className="xl:col-span-3 bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden h-[650px] relative">
+                  <DeliveryMap 
+                    orders={orders.filter(o => o.status === 'shipped')} 
+                    onMarkerClick={(order) => setSelectedOrderForMap(order)}
+                  />
+                  
+                  {selectedOrderForMap && (
+                    <div className="absolute bottom-8 left-8 right-8 bg-black/90 backdrop-blur-md text-white p-8 rounded-[2.5rem] border border-white/10 shadow-2xl animate-in slide-in-from-bottom-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-6">
+                          <div className="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center text-black font-black text-xl shadow-lg">
+                            {selectedOrderForMap.customerName?.charAt(0) || 'C'}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-3 mb-1">
+                              <h3 className="text-xl font-black uppercase tracking-tight">{selectedOrderForMap.customerName}</h3>
+                              <span className="px-3 py-1 bg-amber-500 text-black text-[8px] font-black uppercase tracking-widest rounded-full">
+                                {selectedOrderForMap.status}
+                              </span>
+                            </div>
+                            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                              <Truck size={12} className="text-amber-500" />
+                              Assigned to: {selectedOrderForMap.deliveryPerson?.name || 'Unassigned'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
+                          <button 
+                            onClick={() => {
+                              setActiveChatOrder(selectedOrderForMap);
+                              fetchAdminMessages(selectedOrderForMap._id);
+                            }}
+                            className="p-4 bg-white/10 hover:bg-amber-500 hover:text-black rounded-2xl transition-all"
+                            title="Chat with Driver"
+                          >
+                            <MessageSquare size={20} />
+                          </button>
+                          <button 
+                            onClick={() => setSelectedOrderForMap(null)}
+                            className="p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all"
+                          >
+                            <X size={20} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Active Deliveries List */}
+                <div className="space-y-6 overflow-y-auto max-h-[650px] pr-2 custom-scrollbar">
+                  <h3 className="text-sm font-black uppercase tracking-widest px-2">Active Deliveries</h3>
+                  {orders.filter(o => o.status === 'shipped').length > 0 ? (
+                    orders.filter(o => o.status === 'shipped').map(order => (
+                      <div 
+                        key={order._id}
+                        onClick={() => setSelectedOrderForMap(order)}
+                        className={`p-6 rounded-[2rem] border transition-all cursor-pointer ${
+                          selectedOrderForMap?._id === order._id 
+                            ? 'bg-black text-white border-black shadow-xl scale-[1.02]' 
+                            : 'bg-white text-black border-gray-100 hover:border-amber-500 shadow-sm'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs ${
+                            selectedOrderForMap?._id === order._id ? 'bg-amber-500 text-black' : 'bg-gray-100'
+                          }`}>
+                            {order.customerName?.charAt(0)}
+                          </div>
+                          <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+                            selectedOrderForMap?._id === order._id ? 'bg-white/10 text-white' : 'bg-gray-100'
+                          }`}>
+                            {order._id.slice(-6)}
+                          </span>
+                        </div>
+                        <p className="font-black uppercase text-[10px] tracking-tight mb-1">{order.customerName}</p>
+                        <p className={`text-[8px] font-bold uppercase tracking-widest mb-4 ${
+                          selectedOrderForMap?._id === order._id ? 'text-gray-400' : 'text-gray-400'
+                        }`}>{order.deliveryAddress}</p>
+                        
+                        <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-amber-500 rounded-lg flex items-center justify-center text-black font-black text-[8px]">
+                              {order.deliveryPerson?.name?.charAt(0) || 'D'}
+                            </div>
+                            <span className="text-[8px] font-black uppercase tracking-widest">
+                              {order.deliveryPerson?.name?.split(' ')[0] || 'Driver'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-green-500">
+                            <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div>
+                            On Route
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2rem] p-10 text-center">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">No active deliveries</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Messaging Quick Connect */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-black text-white p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[100px]"></div>
+                  <div className="relative z-10">
+                    <h3 className="text-xl font-black uppercase tracking-tight mb-6 flex items-center gap-3">
+                      <MessageSquare className="text-amber-500" />
+                      Team Communication
+                    </h3>
+                    <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-8 leading-relaxed">
+                      Instant bi-directional messaging with all active delivery staff for real-time coordination.
+                    </p>
+                    <div className="flex flex-wrap gap-4">
+                      {deliveryStaff.slice(0, 4).map(staff => (
+                        <div key={staff._id} className="group relative">
+                          <button 
+                            onClick={() => handleSendMotivation(staff._id)}
+                            className="w-12 h-12 bg-white/10 hover:bg-amber-500 rounded-2xl flex items-center justify-center transition-all"
+                          >
+                            <Heart size={18} className="group-hover:fill-black" />
+                          </button>
+                          <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[8px] font-black uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Motivate
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm">
+                  <h3 className="text-xl font-black uppercase tracking-tight mb-6 flex items-center gap-3">
+                    <Bot className="text-amber-500" />
+                    AI Fleet Optimizer
+                  </h3>
+                  <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-8 leading-relaxed">
+                    Our AI assistant can help you optimize delivery routes and predict delivery times based on current traffic and weather.
+                  </p>
+                  <button 
+                    onClick={() => setShowChat(true)}
+                    className="w-full bg-black text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 hover:text-black transition-all shadow-xl flex items-center justify-center gap-3"
+                  >
+                    Ask AI Assistant
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -2093,6 +2397,124 @@ export default function Admin() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'tracking' && (
+            <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-between items-end">
+                <div>
+                  <h1 className="text-4xl font-black uppercase tracking-tighter">Live Tracking</h1>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Real-time Delivery Fleet Monitoring</p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Fleet Active</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden h-[600px] relative">
+                <DeliveryMap orders={orders.filter(o => o.status === 'shipped')} />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-amber-500 p-8 rounded-[2.5rem] text-black">
+                  <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">In Transit</p>
+                  <h3 className="text-4xl font-black">{orders.filter(o => o.status === 'shipped').length}</h3>
+                </div>
+                <div className="bg-black p-8 rounded-[2.5rem] text-white">
+                  <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Pending Pickup</p>
+                  <h3 className="text-4xl font-black">{orders.filter(o => o.status === 'pending').length}</h3>
+                </div>
+                <div className="bg-gray-100 p-8 rounded-[2.5rem] text-black">
+                  <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Delivered Today</p>
+                  <h3 className="text-4xl font-black">{orders.filter(o => o.status === 'delivered' && new Date(o.updatedAt).toDateString() === new Date().toDateString()).length}</h3>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(activeTab === 'deliveries' && activeSubTab === 'create') && (
+            <div className="max-w-4xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+              <div>
+                <h1 className="text-4xl font-black uppercase tracking-tighter">Create Delivery</h1>
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Generate a new manual delivery order</p>
+              </div>
+
+              <div className="bg-white rounded-[3rem] p-12 shadow-sm border border-gray-100">
+                <form onSubmit={handleCreateDelivery} className="space-y-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-6">
+                      <h3 className="text-sm font-black uppercase tracking-widest text-amber-500 border-b border-amber-100 pb-4">Customer Details</h3>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Customer Name</label>
+                        <input required type="text" value={deliveryFormData.customerName} onChange={(e) => setDeliveryFormData({...deliveryFormData, customerName: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Email Address</label>
+                        <input required type="email" value={deliveryFormData.email} onChange={(e) => setDeliveryFormData({...deliveryFormData, email: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Phone Number</label>
+                        <input required type="text" value={deliveryFormData.phone} onChange={(e) => setDeliveryFormData({...deliveryFormData, phone: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Delivery Address</label>
+                        <textarea required value={deliveryFormData.address} onChange={(e) => setDeliveryFormData({...deliveryFormData, address: e.target.value})} rows="3" className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold resize-none"></textarea>
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <h3 className="text-sm font-black uppercase tracking-widest text-amber-500 border-b border-amber-100 pb-4">Order Details</h3>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Assign Delivery Staff</label>
+                        <select 
+                          value={deliveryFormData.deliveryPerson} 
+                          onChange={(e) => setDeliveryFormData({...deliveryFormData, deliveryPerson: e.target.value})}
+                          className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold appearance-none"
+                        >
+                          <option value="">Select Staff...</option>
+                          {deliveryStaff.map(s => (
+                            <option key={s._id} value={s._id}>{s.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Total Amount (RWF)</label>
+                        <input required type="number" value={deliveryFormData.total} onChange={(e) => setDeliveryFormData({...deliveryFormData, total: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Additional Notes</label>
+                        <textarea value={deliveryFormData.notes} onChange={(e) => setDeliveryFormData({...deliveryFormData, notes: e.target.value})} rows="4" className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold resize-none" placeholder="Special delivery instructions..."></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-10 flex gap-4">
+                    <button 
+                      type="submit" 
+                      disabled={loading}
+                      className="flex-1 bg-black text-white py-6 rounded-3xl font-black uppercase tracking-widest hover:bg-amber-500 hover:text-black transition-all shadow-xl disabled:opacity-50 flex items-center justify-center gap-3"
+                    >
+                      {loading ? 'Creating...' : (
+                        <>
+                          <Truck size={20} />
+                          Dispatch Delivery
+                        </>
+                      )}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setActiveSubTab('tracking')}
+                      className="px-10 bg-gray-100 text-black py-6 rounded-3xl font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           )}
@@ -2396,7 +2818,16 @@ export default function Admin() {
                                 </button>
                               </div>
                             ))}
-                            <label className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:border-amber-500 hover:bg-amber-50 transition-all text-gray-400 hover:text-amber-500">
+                            <label 
+                              onDragOver={handleDragOver}
+                              onDragLeave={handleDragLeave}
+                              onDrop={handleDrop}
+                              className={`aspect-square border-2 border-dashed rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all ${
+                                isDragging 
+                                  ? 'border-amber-500 bg-amber-50 text-amber-500' 
+                                  : 'bg-gray-50 border-gray-200 text-gray-400 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-500'
+                              }`}
+                            >
                               <Plus size={32} />
                               <span className="text-[10px] font-black uppercase mt-2">Upload</span>
                               <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" />
@@ -2546,6 +2977,84 @@ export default function Admin() {
           )}
         </div>
 
+        {/* Staff Chat Panel */}
+        {activeChatOrder && (
+          <div className="fixed bottom-10 right-[460px] z-[100]">
+            <div className="bg-white w-[400px] h-[600px] rounded-[3rem] shadow-2xl border border-gray-100 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
+              {/* Chat Header */}
+              <div className="bg-blue-600 p-8 text-white flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center">
+                    <Truck size={24} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest">Staff: {activeChatOrder.deliveryPerson?.name || 'Delivery'}</h3>
+                    <p className="text-[10px] font-bold text-blue-200 uppercase tracking-tighter">Order #{activeChatOrder._id.slice(-8).toUpperCase()}</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <button 
+                    onClick={() => handleSendMotivation(activeChatOrder.deliveryPerson?._id || activeChatOrder.deliveryPerson)}
+                    className="hover:text-amber-300 transition-colors"
+                    title="Send Motivation"
+                  >
+                    <Heart size={20} />
+                  </button>
+                  <button onClick={() => setActiveChatOrder(null)} className="hover:text-blue-200 transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+                {messages.length > 0 ? messages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.senderId === 'admin' || msg.type === 'motivation' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-5 rounded-[2rem] text-xs font-bold ${
+                      msg.senderId === 'admin' || msg.type === 'motivation'
+                        ? 'bg-blue-600 text-white rounded-tr-none' 
+                        : 'bg-gray-50 text-black rounded-tl-none border border-gray-100'
+                    }`}>
+                      {msg.content}
+                      <p className={`text-[8px] mt-1 opacity-70 ${msg.senderId === 'admin' ? 'text-right' : 'text-left'}`}>
+                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-10 space-y-4">
+                    <MessageSquare size={48} className="text-gray-100" />
+                    <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">No messages yet. Start the conversation!</p>
+                  </div>
+                )}
+                <div ref={staffChatEndRef} />
+              </div>
+
+              {/* Chat Input */}
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendAdminMessage();
+                }} 
+                className="p-8 border-t border-gray-50"
+              >
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    value={newAdminMessage}
+                    onChange={(e) => setNewAdminMessage(e.target.value)}
+                    placeholder="Type a message to delivery staff..."
+                    className="w-full bg-gray-50 border-none rounded-2xl py-4 pl-6 pr-14 text-xs font-bold focus:ring-2 ring-blue-500 outline-none transition-all"
+                  />
+                  <button type="submit" className="absolute right-2 top-2 w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:bg-blue-700 transition-all">
+                    <Send size={16} />
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* AI Chatbot Floating Button & Panel */}
         <div className="fixed bottom-10 right-10 z-[100]">
           {showChat ? (
@@ -2588,7 +3097,7 @@ export default function Admin() {
                     </div>
                   </div>
                 )}
-                <div ref={chatEndRef} />
+                <div ref={aiChatEndRef} />
               </div>
 
               {/* Chat Input */}
