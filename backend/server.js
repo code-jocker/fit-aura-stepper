@@ -9,6 +9,10 @@ const path = require('path');
 const connectDB = require('./config/db');
 const { swaggerUi, specs } = require('./config/swagger');
 
+// Models (Early load to prevent issues)
+const Product = require('./models/Product');
+const Category = require('./models/Category');
+
 dotenv.config();
 
 const app = express();
@@ -20,9 +24,6 @@ const generateSitemap = async (req, res) => {
   let categories = [];
   
   try {
-    const Product = require('./models/Product');
-    const Category = require('./models/Category');
-    
     // Use maxTimeMS instead of timeout for Mongoose queries
     products = await Product.find({ isPublished: true }).select('_id updatedAt').maxTimeMS(5000).catch((e) => {
       console.warn('⚠️ Product fetch failed for sitemap:', e.message);
@@ -179,37 +180,39 @@ app.get('/api/health', (req, res) => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Routes
-try {
-  // Apply dbCheckMiddleware to all /api routes except health check
-  app.use('/api', dbCheckMiddleware);
-  
-  app.use('/api/products', require('./routes/products'));
-  app.use('/api/categories', require('./routes/categories'));
-  app.use('/api/auth', require('./routes/auth'));
-  app.use('/api/user', require('./routes/user'));
-  app.use('/api/orders', require('./routes/orders'));
-  app.use('/api/subscribe', require('./routes/subscribe'));
-  app.use('/api/testimonials', require('./routes/testimonials'));
-  app.use('/api/reviews', require('./routes/reviews'));
-  app.use('/api/chatbot', require('./routes/chatbot'));
-  app.use('/api/contact', require('./routes/contact'));
-  app.use('/api/settings', require('./routes/settings'));
-  app.use('/api/promotions', require('./routes/promotions'));
-  app.use('/api/messages', require('./routes/messages'));
-  
-  console.log('✅ All routes loaded successfully');
+// Apply dbCheckMiddleware to all /api routes except health check
+app.use('/api', dbCheckMiddleware);
 
-  // Catch-all for unmatched /api routes
-  app.use('/api/*', (req, res) => {
-    console.warn(`⚠️ Unmatched API request: ${req.method} ${req.originalUrl}`);
-    res.status(400).json({
-      message: 'Invalid API endpoint',
-      error: 'Bad Request'
-    });
+const registerRoute = (path, modulePath) => {
+  try {
+    app.use(path, require(modulePath));
+    console.log(`✅ Route loaded: ${path}`);
+  } catch (err) {
+    console.error(`❌ Error loading route ${path}:`, err.message);
+  }
+};
+
+registerRoute('/api/products', './routes/products');
+registerRoute('/api/categories', './routes/categories');
+registerRoute('/api/auth', './routes/auth');
+registerRoute('/api/user', './routes/user');
+registerRoute('/api/orders', './routes/orders');
+registerRoute('/api/subscribe', './routes/subscribe');
+registerRoute('/api/testimonials', './routes/testimonials');
+registerRoute('/api/reviews', './routes/reviews');
+registerRoute('/api/chatbot', './routes/chatbot');
+registerRoute('/api/contact', './routes/contact');
+registerRoute('/api/promotions', './routes/promotions');
+registerRoute('/api/messages', './routes/messages');
+
+// Catch-all for unmatched /api routes
+app.use('/api/*', (req, res) => {
+  console.warn(`⚠️ Unmatched API request: ${req.method} ${req.originalUrl}`);
+  res.status(400).json({
+    message: 'Invalid API endpoint',
+    error: 'Bad Request'
   });
-} catch (err) {
-  console.error('❌ Error loading routes:', err.message);
-}
+});
 
 // Serve static assets in production
 const frontendBuildPath = path.resolve(__dirname, '..', 'frontend', 'build');
