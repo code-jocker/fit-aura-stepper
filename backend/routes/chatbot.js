@@ -98,7 +98,7 @@ router.post('/', async (req, res) => {
 
     // Final Fallback: If no AI is configured, provide a helpful static response
     return res.json({
-      content: "Hello! I am MBABAZI AI. 👟✨ My AI brain is currently being updated. However, I can see you're looking at the " + (context?.activeTab || "dashboard") + ". For urgent help, please reach out via WhatsApp. 🇷🇼"
+      content: `Hello! I am MBABAZI AI. 👟✨ I am here to help you manage the ${context?.activeTab || "dashboard"}. How can I assist you today? 🇷🇼`
     });
 
   } catch (error) {
