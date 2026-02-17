@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useStore } from '../store';
 import { orderService, paymentService, promotionService } from '../api';
 
@@ -217,6 +218,10 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-16 relative">
+      <Helmet>
+        <title>Checkout | MBABAZI CLOSET</title>
+        <meta name="description" content="Secure checkout at MBABAZI CLOSET. Complete your order for authentic sneakers and premium fashion." />
+      </Helmet>
       {/* Payment Processing Overlay */}
       {paymentStep !== 'checkout' && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-md transition-all duration-500">

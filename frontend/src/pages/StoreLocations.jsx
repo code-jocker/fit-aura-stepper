@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 
 export default function StoreLocations() {
   const stores = [
@@ -27,6 +28,10 @@ export default function StoreLocations() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Helmet>
+        <title>Store Locations | MBABAZI CLOSET</title>
+        <meta name="description" content="Find a MBABAZI CLOSET store near you in Rwanda. Visit our locations in Kigali and Muhanga for premium fashion." />
+      </Helmet>
       <div className="max-w-4xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-bold mb-4">Store Locations</h1>
         <p className="text-gray-600 mb-12">Visit us at one of our physical stores across Rwanda</p>

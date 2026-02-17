@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { GoogleLogin } from '@react-oauth/google';
 
@@ -127,6 +128,10 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center py-12 px-4">
+      <Helmet>
+        <title>Login | MBABAZI CLOSET</title>
+        <meta name="description" content="Login to your MBABAZI CLOSET account. Access your profile, orders, and exclusive offers." />
+      </Helmet>
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">

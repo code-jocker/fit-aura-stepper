@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Helmet } from 'react-helmet-async';
+import SplashScreen from './components/SplashScreen';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -33,14 +34,26 @@ import './index.css';
 
 function App() {
   const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "your-google-client-id-here.apps.googleusercontent.com";
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Simulate loading time
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2500);
+
     // Load Tailwind CSS dynamically
     const link = document.createElement('link');
     link.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap';
     link.rel = 'stylesheet';
     document.head.appendChild(link);
+
+    return () => clearTimeout(timer);
   }, []);
+
+  if (loading) {
+    return <SplashScreen />;
+  }
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>

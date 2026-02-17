@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 
 export default function Returns() {
   const [activeTab, setActiveTab] = useState('policy');
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Helmet>
+        <title>Returns & Exchanges | MBABAZI CLOSET</title>
+        <meta name="description" content="Easy returns and exchanges at MBABAZI CLOSET. Learn about our 30-day return policy and how to process a return." />
+      </Helmet>
       <div className="max-w-4xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-bold mb-4">Returns & Exchanges</h1>
         

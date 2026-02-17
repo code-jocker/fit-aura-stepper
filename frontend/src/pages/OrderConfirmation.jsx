@@ -1,5 +1,6 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { orderService } from '../api';
 
 export default function OrderConfirmation() {
@@ -32,6 +33,10 @@ export default function OrderConfirmation() {
 
   return (
     <div className="container py-16">
+      <Helmet>
+        <title>Order Confirmation | MBABAZI CLOSET</title>
+        <meta name="description" content="Order confirmation details for your purchase at MBABAZI CLOSET." />
+      </Helmet>
       <div className="max-w-2xl mx-auto text-center">
         <div className="text-6xl mb-6">✅</div>
         <h1 className="text-4xl font-bold mb-4">Order Confirmed!</h1>

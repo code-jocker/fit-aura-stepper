@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
+import { Helmet } from 'react-helmet-async';
 import DeliveryMap from '../components/DeliveryMap';
 import { Send, MessageCircle, Heart, MapPin, Phone, CheckCircle2, Navigation, Bell, Package } from 'lucide-react';
 
@@ -247,6 +248,11 @@ export default function DeliveryDashboard() {
 
   return (
     <div className="container py-12 bg-[#fafafa] min-h-screen">
+      <Helmet>
+        <title>Delivery Dashboard | MBABAZI CLOSET</title>
+        <meta name="description" content="Delivery partner dashboard for MBABAZI CLOSET. Manage assigned orders and deliveries." />
+        <meta name="robots" content="noindex" />
+      </Helmet>
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-12">
         <div>

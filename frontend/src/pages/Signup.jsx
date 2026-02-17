@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { GoogleLogin } from '@react-oauth/google';
 
@@ -98,6 +99,10 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center py-12 px-4">
+      <Helmet>
+        <title>Sign Up | MBABAZI CLOSET</title>
+        <meta name="description" content="Create an account at MBABAZI CLOSET. Join our community for exclusive access to authentic sneakers and premium fashion in Rwanda." />
+      </Helmet>
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">

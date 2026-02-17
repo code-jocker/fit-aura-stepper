@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 export default function Categories() {
   const categories = [
@@ -53,6 +54,10 @@ export default function Categories() {
 
   return (
     <div className="min-h-screen bg-white">
+      <Helmet>
+        <title>Categories | MBABAZI CLOSET</title>
+        <meta name="description" content="Shop by category at MBABAZI CLOSET. Men's and Women's shoes, clothing, and accessories." />
+      </Helmet>
       {/* Page Title Section */}
       <section className="bg-gray-50 py-20 border-b">
         <div className="max-w-7xl mx-auto px-4 text-center">

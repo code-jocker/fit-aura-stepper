@@ -1,8 +1,13 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 
 export default function Privacy() {
   return (
     <div className="bg-white min-h-screen">
+      <Helmet>
+        <title>Privacy Policy | MBABAZI CLOSET</title>
+        <meta name="description" content="Read our Privacy Policy at MBABAZI CLOSET. Learn how we collect, use, and protect your personal information." />
+      </Helmet>
       {/* Hero Banner */}
       <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white py-12">
         <div className="max-w-7xl mx-auto px-4">

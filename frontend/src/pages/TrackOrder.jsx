@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import DeliveryMap from '../components/DeliveryMap';
 
@@ -37,6 +38,10 @@ export default function TrackOrder() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20 pb-16">
+      <Helmet>
+        <title>Track Order | MBABAZI CLOSET</title>
+        <meta name="description" content="Track your order status at MBABAZI CLOSET. See real-time delivery updates for your authentic sneakers and fashion items." />
+      </Helmet>
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-black uppercase tracking-tight mb-4">Track Your Order</h1>

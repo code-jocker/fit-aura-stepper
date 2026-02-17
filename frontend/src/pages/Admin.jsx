@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
+import { Helmet } from 'react-helmet-async';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import DeliveryMap from '../components/DeliveryMap';
@@ -921,6 +922,11 @@ export default function Admin() {
 
   return (
     <div className={`min-h-screen flex ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-black'}`}>
+      <Helmet>
+        <title>Admin Dashboard | MBABAZI CLOSET</title>
+        <meta name="description" content="Admin dashboard for MBABAZI CLOSET. Manage products, orders, customers, and more." />
+        <meta name="robots" content="noindex" />
+      </Helmet>
       {/* Sidebar */}
       <aside 
         className={`fixed left-0 top-0 h-full bg-black transition-all duration-500 z-50 ${

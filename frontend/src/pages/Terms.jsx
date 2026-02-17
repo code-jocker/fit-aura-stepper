@@ -1,8 +1,13 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 
 export default function Terms() {
   return (
     <div className="bg-white min-h-screen">
+      <Helmet>
+        <title>Terms & Conditions | MBABAZI CLOSET</title>
+        <meta name="description" content="Read our Terms and Conditions at MBABAZI CLOSET. Understanding our policies ensures a smooth shopping experience." />
+      </Helmet>
       {/* Hero Banner */}
       <div className="bg-gradient-to-r from-slate-700 to-slate-800 text-white py-12">
         <div className="max-w-7xl mx-auto px-4">

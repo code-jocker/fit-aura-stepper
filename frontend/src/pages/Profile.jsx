@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 
 const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
@@ -76,6 +77,10 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      <Helmet>
+        <title>My Profile | MBABAZI CLOSET</title>
+        <meta name="description" content="Manage your MBABAZI CLOSET account, view orders, and update your profile." />
+      </Helmet>
       <div className="container max-w-2xl">
         {/* Profile Header */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">

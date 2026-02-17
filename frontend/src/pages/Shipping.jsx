@@ -1,8 +1,13 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 
 export default function Shipping() {
   return (
     <div className="min-h-screen bg-gray-50">
+      <Helmet>
+        <title>Shipping Information | MBABAZI CLOSET</title>
+        <meta name="description" content="Shipping information and delivery areas for MBABAZI CLOSET. Free delivery in Kigali and affordable rates across Rwanda." />
+      </Helmet>
       <div className="max-w-4xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-bold mb-4">Shipping Information</h1>
         <p className="text-gray-600 mb-12">Learn about our shipping options and delivery areas</p>

@@ -1,9 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 export default function About() {
   return (
     <div>
+      <Helmet>
+        <title>About Us | MBABAZI CLOSET</title>
+        <meta name="description" content="Learn about MBABAZI CLOSET, Rwanda's premier destination for authentic sneakers and premium fashion. Our story, mission, and commitment to quality." />
+      </Helmet>
       {/* Hero Section */}
       <section className="bg-black text-white py-16 mb-16">
         <div className="container text-center">

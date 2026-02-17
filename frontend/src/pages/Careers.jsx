@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 
 export default function Careers() {
   const [selectedJob, setSelectedJob] = useState(null);
@@ -48,6 +49,10 @@ export default function Careers() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Helmet>
+        <title>Careers | MBABAZI CLOSET</title>
+        <meta name="description" content="Join the MBABAZI CLOSET team! Explore career opportunities in fashion retail, marketing, and logistics in Rwanda." />
+      </Helmet>
       <div className="max-w-4xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-bold mb-4">Join Our Team</h1>
         <p className="text-gray-600 mb-12">We're always looking for passionate individuals to join MBABAZI CLOSET</p>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useStore } from '../store';
 
 export default function Cart() {
@@ -17,6 +18,10 @@ export default function Cart() {
   if (cart.length === 0) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
+        <Helmet>
+          <title>Shopping Cart | MBABAZI CLOSET</title>
+          <meta name="description" content="View your shopping cart at MBABAZI CLOSET. Secure checkout for authentic sneakers and premium fashion in Rwanda." />
+        </Helmet>
         <div className="w-24 h-24 bg-gray-50 rounded-[2rem] flex items-center justify-center mb-8">
           <span className="text-4xl">🛒</span>
         </div>
@@ -34,6 +39,10 @@ export default function Cart() {
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-16">
+      <Helmet>
+        <title>Shopping Cart | MBABAZI CLOSET</title>
+        <meta name="description" content="View your shopping cart at MBABAZI CLOSET. Secure checkout for authentic sneakers and premium fashion in Rwanda." />
+      </Helmet>
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between mb-12">
           <h1 className="text-4xl font-black uppercase tracking-tight">Shopping <span className="text-amber-500">Cart</span></h1>
