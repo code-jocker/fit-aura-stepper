@@ -151,6 +151,32 @@ export default function TrackOrder() {
             </div>
           </div>
         )}
+        {/* Shipping FAQ - Added for SEO and User Info */}
+        <div className="mt-24 border-t border-gray-100 pt-16">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-2xl font-black uppercase tracking-tight text-center mb-12">Shipping Information</h2>
+            <div className="grid gap-8">
+              <div className="bg-white p-6 rounded-2xl border border-gray-100">
+                <h3 className="text-sm font-black uppercase tracking-wider mb-2">How long does delivery take?</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  For local deliveries within Kigali, expect your order within 24 hours. Upcountry deliveries typically take 2-3 business days. International shipping times vary by destination.
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl border border-gray-100">
+                <h3 className="text-sm font-black uppercase tracking-wider mb-2">What if I'm not home?</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  Our delivery team will contact you before arrival. If you're unavailable, we can reschedule or leave the package with a designated person or at a secure location.
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl border border-gray-100">
+                <h3 className="text-sm font-black uppercase tracking-wider mb-2">Can I change my delivery address?</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  Yes, you can update your delivery address before the order is dispatched. Please contact our support team immediately with your Order ID.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

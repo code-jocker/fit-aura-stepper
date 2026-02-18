@@ -28,6 +28,18 @@ export default function Products() {
   const [filterOpen, setFilterOpen] = useState(false);
 
   useEffect(() => {
+    const category = searchParams.get('category');
+    const audience = searchParams.get('audience');
+    const search = searchParams.get('search');
+    const sale = searchParams.get('sale') === 'true';
+
+    setSelectedCategory(category || '');
+    setSelectedAudience(audience || '');
+    setSearchQuery(search || '');
+    setIsSaleOnly(sale);
+  }, [searchParams]);
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -166,15 +178,43 @@ export default function Products() {
     setShowQuickAdd(true);
   };
 
+  const getPageTitle = () => {
+    if (selectedCategory) {
+      const audience = selectedAudience ? `${selectedAudience}'s ` : '';
+      return `Shop ${audience}${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} | MBABAZI CLOSET Rwanda`;
+    }
+    if (searchQuery) {
+      return `Search Results for "${searchQuery}" | MBABAZI CLOSET Rwanda`;
+    }
+    return 'Shop Authentic Sneakers & Fashion | MBABAZI CLOSET Rwanda';
+  };
+
+  const getPageDescription = () => {
+    if (selectedCategory) {
+      return `Browse our collection of ${selectedAudience || ''} ${selectedCategory} at MBABAZI CLOSET. 100% authentic and premium quality available in Rwanda.`;
+    }
+    return 'Browse our collection of 100% authentic sneakers, streetwear, and premium fashion in Rwanda. Nike, Jordan, Adidas and more.';
+  };
+
+  const getCanonicalUrl = () => {
+    const baseUrl = 'https://mbabazi-closet.onrender.com/products';
+    const params = new URLSearchParams();
+    if (selectedCategory) params.append('category', selectedCategory);
+    if (selectedAudience) params.append('audience', selectedAudience);
+    
+    const queryString = params.toString();
+    return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Helmet>
-        <title>Shop Authentic Sneakers & Fashion | MBABAZI CLOSET Rwanda</title>
-        <meta name="description" content="Browse our collection of 100% authentic sneakers, streetwear, and premium fashion in Rwanda. Nike, Jordan, Adidas and more." />
-        <link rel="canonical" href="https://mbabazi-closet.onrender.com/products" />
-        <meta property="og:title" content="Shop Authentic Sneakers & Fashion | MBABAZI CLOSET Rwanda" />
-        <meta property="og:description" content="Browse our collection of 100% authentic sneakers, streetwear, and premium fashion in Rwanda." />
-        <meta property="og:url" content="https://mbabazi-closet.onrender.com/products" />
+        <title>{getPageTitle()}</title>
+        <meta name="description" content={getPageDescription()} />
+        <link rel="canonical" href={getCanonicalUrl()} />
+        <meta property="og:title" content={getPageTitle()} />
+        <meta property="og:description" content={getPageDescription()} />
+        <meta property="og:url" content={getCanonicalUrl()} />
       </Helmet>
       {/* Category Header & Breadcrumbs */}
       <section className="bg-gray-50 pt-16 pb-8 border-b">

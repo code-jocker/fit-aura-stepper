@@ -60,7 +60,6 @@ function App() {
       <Helmet>
         <title>MBABAZI CLOSET | Premium Fashion & Authentic Sneakers Rwanda 🇷🇼</title>
         <meta name="description" content="MBABAZI CLOSET is Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali." />
-        <link rel="canonical" href="https://mbabazi-closet.onrender.com/" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />

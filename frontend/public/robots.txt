@@ -1,6 +1,4 @@
 User-agent: *
-Allow: /
-Allow: /sitemap.xml
 Disallow: /admin
 Disallow: /delivery
 Disallow: /login

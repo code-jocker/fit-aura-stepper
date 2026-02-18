@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { productService, testimonialService, subscriptionService } from '../api';
 import ProductCard from '../components/ProductCard';
 import QuickAddModal from '../components/QuickAddModal';
+import AnimatedAdBanner from '../components/AnimatedAdBanner';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -85,6 +86,10 @@ export default function Home() {
         <meta property="twitter:description" content="Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali." />
         <meta property="twitter:image" content="https://mbabazi-closet.onrender.com/MBABAZI.JPG" />
       </Helmet>
+      
+      {/* Animated Ad Banner */}
+      <AnimatedAdBanner />
+
       {/* Hero Section */}
       <section className="relative h-[80vh] overflow-hidden flex items-center">
         <div className="absolute inset-0 w-full h-full">

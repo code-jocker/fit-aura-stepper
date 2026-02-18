@@ -36,6 +36,10 @@ router.get('/:id', async (req, res) => {
 // Create promotion (Admin)
 router.post('/', adminAuth, async (req, res) => {
   try {
+    // Handle empty code for ad_only or auto-generated promos
+    if (req.body.code === '') {
+      delete req.body.code;
+    }
     const promotion = new Promotion(req.body);
     await promotion.save();
     res.status(201).json(promotion);
@@ -47,6 +51,9 @@ router.post('/', adminAuth, async (req, res) => {
 // Update promotion (Admin)
 router.put('/:id', adminAuth, async (req, res) => {
   try {
+    if (req.body.code === '') {
+      delete req.body.code;
+    }
     const promotion = await Promotion.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!promotion) return res.status(404).json({ message: 'Promotion not found' });
     res.json(promotion);

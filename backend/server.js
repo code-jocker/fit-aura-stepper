@@ -84,7 +84,16 @@ app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
   res.header('Cache-Control', 'public, max-age=0, must-revalidate');
   res.header('Vary', 'User-Agent');
-  res.send('User-agent: *\r\nAllow: /\r\nAllow: /sitemap.xml\r\nDisallow: /admin\r\nDisallow: /delivery\r\nDisallow: /login\r\nDisallow: /register\r\nDisallow: /checkout\r\nDisallow: /order-confirmation\r\nDisallow: /profile\r\n\r\nSitemap: https://mbabazi-closet.onrender.com/sitemap.xml');
+  res.send(`User-agent: *
+Disallow: /admin
+Disallow: /delivery
+Disallow: /login
+Disallow: /register
+Disallow: /checkout
+Disallow: /order-confirmation
+Disallow: /profile
+
+Sitemap: https://mbabazi-closet.onrender.com/sitemap.xml`);
 });
 
 // Sitemap routes - also at the top

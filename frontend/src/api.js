@@ -88,6 +88,7 @@ export const testimonialService = {
 };
 
 export const promotionService = {
+  getAll: (params) => api.get('/promotions', { params }),
   validate: (code, items) => 
     api.post('/promotions/validate', { code, items }),
 };
