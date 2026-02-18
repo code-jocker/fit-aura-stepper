@@ -19,12 +19,12 @@ const promotionSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['percentage', 'fixed_amount', 'buy_x_get_y', 'free_shipping'],
+    enum: ['percentage', 'fixed_amount', 'buy_x_get_y', 'free_shipping', 'ad_only'],
     required: true
   },
   value: {
     type: Number,
-    required: function() { return this.type !== 'free_shipping' && this.type !== 'buy_x_get_y'; }
+    required: function() { return this.type !== 'free_shipping' && this.type !== 'buy_x_get_y' && this.type !== 'ad_only'; }
   },
   buyQuantity: {
     type: Number,

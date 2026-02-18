@@ -317,7 +317,8 @@ export default function Admin() {
         isActive: true,
         applicableTo: 'all',
         products: [],
-        categories: []
+        categories: [],
+        bannerImage: ''
       });
       fetchPromotions();
       alert('Promotion saved successfully!');
@@ -1851,7 +1852,8 @@ export default function Admin() {
                       endDate: '',
                       isActive: true,
                       applicableTo: 'all',
-                      products: []
+                      products: [],
+                      bannerImage: ''
                     });
                     setShowPromoForm(true);
                   }}
@@ -1970,11 +1972,18 @@ export default function Admin() {
                             <select value={promoFormData.type} onChange={(e) => setPromoFormData({...promoFormData, type: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold">
                               <option value="percentage">Percentage (%)</option>
                               <option value="fixed_amount">Fixed Amount (RWF)</option>
+                              <option value="ad_only">Ad Banner Only (No Code)</option>
                             </select>
                           </div>
-                          <div>
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Value</label>
-                            <input required type="number" value={promoFormData.value} onChange={(e) => setPromoFormData({...promoFormData, value: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                          {promoFormData.type !== 'ad_only' && (
+                            <div>
+                              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Value</label>
+                              <input required type="number" value={promoFormData.value} onChange={(e) => setPromoFormData({...promoFormData, value: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
+                            </div>
+                          )}
+                          <div className="col-span-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Banner Image URL (Optional)</label>
+                            <input type="text" value={promoFormData.bannerImage || ''} onChange={(e) => setPromoFormData({...promoFormData, bannerImage: e.target.value})} placeholder="https://..." className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" />
                           </div>
                           <div>
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Applicable To</label>
