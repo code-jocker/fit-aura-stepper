@@ -17,88 +17,9 @@ dotenv.config();
 
 const app = express();
 
-// Sitemap Generation Helper
-const generateSitemap = async (req, res) => {
-  console.log(`🔍 Sitemap requested: ${req.url}`);
-  let products = [];
-  let categories = [];
-  
-  try {
-    // Use maxTimeMS instead of timeout for Mongoose queries
-    products = await Product.find({ isPublished: true }).select('_id updatedAt').maxTimeMS(5000).catch((e) => {
-      console.warn('⚠️ Product fetch failed for sitemap:', e.message);
-      return [];
-    });
-    categories = await Category.find().select('name updatedAt').maxTimeMS(5000).catch((e) => {
-      console.warn('⚠️ Category fetch failed for sitemap:', e.message);
-      return [];
-    });
-  } catch (err) {
-    console.error('❌ Sitemap Data Error:', err.message);
-  }
-
-  const baseUrl = 'https://mbabazi-closet.onrender.com';
-  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-  xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-  
-  // Static Pages
-  const staticPages = [
-    { url: '', priority: '1.0', changefreq: 'daily' },
-    { url: '/products', priority: '0.9', changefreq: 'weekly' },
-    { url: '/categories', priority: '0.8', changefreq: 'weekly' },
-    { url: '/about', priority: '0.7', changefreq: 'monthly' },
-    { url: '/contact', priority: '0.7', changefreq: 'monthly' },
-    { url: '/track-order', priority: '0.5', changefreq: 'monthly' },
-    { url: '/portfolio', priority: '0.6', changefreq: 'monthly' }
-  ];
-  
-  staticPages.forEach(page => {
-    xml += `  <url>\n    <loc>${baseUrl}${page.url}</loc>\n    <priority>${page.priority}</priority>\n    <changefreq>${page.changefreq}</changefreq>\n  </url>\n`;
-  });
-  
-  // Category Pages
-  if (categories && categories.length > 0) {
-    categories.forEach(cat => {
-      xml += `  <url>\n    <loc>${baseUrl}/products?category=${encodeURIComponent(cat.name)}</loc>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
-    });
-  }
-  
-  // Product Pages
-  if (products && products.length > 0) {
-    products.forEach(prod => {
-      const updatedAt = prod.updatedAt ? prod.updatedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-      xml += `  <url>\n    <loc>${baseUrl}/product/${prod._id}</loc>\n    <lastmod>${updatedAt}</lastmod>\n    <priority>0.8</priority>\n    <changefreq>weekly</changefreq>\n  </url>\n`;
-    });
-  }
-  
-  xml += '</urlset>';
-  
-  res.header('Content-Type', 'text/xml');
-  res.header('X-Robots-Tag', 'index, follow');
-  res.header('Cache-Control', 'public, max-age=0, must-revalidate');
-  res.status(200).send(xml.trim());
-};
-
-// Robots.txt Route - FIRST to avoid any middleware/blocking
-app.get('/robots.txt', (req, res) => {
-  res.type('text/plain');
-  res.header('Cache-Control', 'public, max-age=0, must-revalidate');
-  res.header('Vary', 'User-Agent');
-  res.send(`User-agent: *
-Disallow: /admin
-Disallow: /delivery
-Disallow: /login
-Disallow: /register
-Disallow: /checkout
-Disallow: /order-confirmation
-Disallow: /profile
-
-Sitemap: https://mbabazi-closet.onrender.com/sitemap.xml`);
-});
-
-// Sitemap routes - also at the top
-app.get('/sitemap.xml', generateSitemap);
-app.get('/api/sitemap.xml', generateSitemap);
+// Sitemap and Robots.txt are served as static files in production
+// The dynamic generation caused timeouts and errors for Googlebot
+// See frontend/public/sitemap.xml and frontend/public/robots.txt
 
 // Domain Redirection Middleware (Force mbabazi-closet.onrender.com)
 app.use((req, res, next) => {
