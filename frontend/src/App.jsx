@@ -58,10 +58,11 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <Helmet>
-        <title>MBABAZI CLOSET | Premium Fashion & Authentic Sneakers Rwanda 🇷🇼</title>
+        <title>MBABAZI CLOSET – Premium Sneakers & Athleisure in Rwanda</title>
         <meta name="description" content="MBABAZI CLOSET is Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali." />
         
         {/* Open Graph / Facebook */}
+        <meta property="og:site_name" content="MBABAZI CLOSET" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://mbabazi-closet.onrender.com/" />
         <meta property="og:title" content="MBABAZI CLOSET | Premium Fashion & Authentic Sneakers Rwanda 🇷🇼" />
