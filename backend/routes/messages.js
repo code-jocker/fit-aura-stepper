@@ -60,6 +60,7 @@ router.get('/conversations', adminAuth, async (req, res) => {
       {
         $project: {
           _id: 1,
+          'user._id': 1,
           'user.name': 1,
           'user.email': 1,
           'user.role': 1,

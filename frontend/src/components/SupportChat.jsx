@@ -117,14 +117,12 @@ export default function SupportChat({ embedded = false }) {
     setInputMessage(''); // Clear input immediately
 
     // Optimistic UI update
-    /* 
     setMessages(prev => [...prev, {
       _id: tempId,
       senderId: { _id: user.id },
       content: content,
       createdAt: new Date().toISOString()
     }]);
-    */
 
     if (socket) {
       socket.emit('send_message', {
@@ -202,8 +200,13 @@ export default function SupportChat({ embedded = false }) {
                       }`}
                     >
                       {msg.content}
-                      <p className={`text-[8px] mt-2 font-black uppercase tracking-widest opacity-50 ${isMe ? 'text-right' : 'text-left'}`}>
+                      <p className={`text-[8px] mt-2 font-black uppercase tracking-widest opacity-50 flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {isMe && (
+                          <span className={msg.isRead ? 'text-blue-400' : 'text-gray-400'}>
+                            {msg.isRead ? '✓✓' : '✓'}
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -295,6 +298,14 @@ export default function SupportChat({ embedded = false }) {
                       }`}
                     >
                       {msg.content}
+                      <p className={`text-[8px] mt-2 font-black uppercase tracking-widest opacity-50 flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {isMe && (
+                          <span className={msg.isRead ? 'text-blue-400' : 'text-gray-400'}>
+                            {msg.isRead ? '✓✓' : '✓'}
+                          </span>
+                        )}
+                      </p>
                     </div>
                   </div>
                 );
