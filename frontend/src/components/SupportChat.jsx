@@ -15,7 +15,19 @@ export default function SupportChat({ embedded = false }) {
   const [socket, setSocket] = useState(null);
   const [user, setUser] = useState(null);
   const messagesEndRef = useRef(null);
+  const isOpenRef = useRef(isOpen);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+    
+    // If chat is opened and we have unread messages, mark them as read
+    if (isOpen && socket && user) {
+       // We can't know which messages are unread easily here without iterating, 
+       // but we can send a blanket mark_read for messages from admin
+       socket.emit('mark_read', { senderId: 'admin', receiverId: user.id });
+    }
+  }, [isOpen, socket, user]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -47,9 +59,19 @@ export default function SupportChat({ embedded = false }) {
         setMessages(prev => {
           // Avoid duplicates
           if (prev.some(m => m._id === message._id)) return prev;
+          
+          // If chat is open and message is from admin, mark as read
+          if (isOpenRef.current && (message.senderId._id === 'admin' || message.senderId.role === 'admin')) {
+             newSocket.emit('mark_read', { senderId: 'admin', receiverId: parsedUser.id });
+          }
+          
           return [...prev, message];
         });
         setTimeout(scrollToBottom, 100);
+      });
+      
+      newSocket.on('messages_read', () => {
+         setMessages(prev => prev.map(msg => ({ ...msg, isRead: true })));
       });
 
       setSocket(newSocket);

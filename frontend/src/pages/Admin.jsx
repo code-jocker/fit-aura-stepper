@@ -70,6 +70,11 @@ export default function Admin() {
   const [adminChatInput, setAdminChatInput] = useState('');
   const [socket, setSocket] = useState(null);
   const supportChatEndRef = useRef(null);
+  const activeSupportChatRef = useRef(activeSupportChat);
+
+  useEffect(() => {
+    activeSupportChatRef.current = activeSupportChat;
+  }, [activeSupportChat]);
 
   const scrollStaffChatToBottom = () => {
     staffChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -126,52 +131,96 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    if (activeTab === 'messages') {
+    // Connect to socket regardless of active tab to get notifications
+    const token = localStorage.getItem('token');
+    if (token && !socket) {
+      const newSocket = io(SOCKET_URL, {
+        auth: { token }
+      });
+
+      newSocket.on('connect', () => {
+        console.log('Admin connected to chat server');
+      });
+
+      setSocket(newSocket);
+      
+      return () => newSocket.disconnect();
+    }
+  }, [socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleReceiveMessage = (message) => {
+      // Update conversations list
       fetchSupportConversations();
       
-      const token = localStorage.getItem('token');
-      if (token) {
-        const newSocket = io(SOCKET_URL, {
-          auth: { token }
-        });
-
-        newSocket.on('connect', () => {
-          console.log('Admin connected to chat server');
-        });
-
-        newSocket.on('receive_message', (message) => {
-          setSupportConversations(prev => {
-             // Refresh conversations list to update last message and unread count
-             fetchSupportConversations(); 
-             return prev; 
-          });
-
-          setActiveSupportChat(current => {
-             if (current && (message.senderId._id === current._id || message.senderId === current._id || message.receiverId._id === current._id || message.receiverId === current._id)) {
-                setSupportMessages(msgs => [...msgs, message]);
-                setTimeout(scrollSupportChatToBottom, 100);
-             }
-             return current;
-          });
-        });
-
-        setSocket(newSocket);
-
-        return () => newSocket.disconnect();
+      const current = activeSupportChatRef.current;
+      
+      // Update active chat if open
+      if (current && (message.senderId._id === current._id || message.senderId === current._id || message.receiverId._id === current._id || message.receiverId._id === current._id)) {
+         setSupportMessages(msgs => {
+           const exists = msgs.some(m => m._id === message._id);
+           if (exists) return msgs;
+           return [...msgs, message];
+         });
+         setTimeout(scrollSupportChatToBottom, 100);
+         
+         // Mark as read immediately if chat is open AND message is from user
+         const isFromUser = message.senderId._id === current._id || message.senderId === current._id;
+         if (isFromUser) {
+            socket.emit('mark_read', { senderId: current._id, receiverId: 'admin' });
+         }
       }
+    };
+
+    const handleUpdateConversations = (data) => {
+      // If we receive a read receipt, we might want to update the UI
+      if (data && data.isReadUpdate && data.senderId) {
+          setSupportConversations(prev => prev.map(c => 
+             (c.user._id === data.senderId._id || c.user._id === data.senderId) ? { ...c, unreadCount: 0 } : c
+          ));
+      } else {
+          fetchSupportConversations();
+      }
+    };
+    
+    const handleMessagesRead = (data) => {
+       // Update message status in active chat
+       setSupportMessages(prev => prev.map(msg => ({ ...msg, isRead: true })));
+    };
+
+    socket.on('receive_message', handleReceiveMessage);
+    socket.on('update_conversations', handleUpdateConversations);
+    socket.on('messages_read', handleMessagesRead);
+
+    return () => {
+      socket.off('receive_message', handleReceiveMessage);
+      socket.off('update_conversations', handleUpdateConversations);
+      socket.off('messages_read', handleMessagesRead);
+    };
+  }, [socket, fetchSupportConversations]);
+
+  useEffect(() => {
+    if (activeTab === 'messages') {
+      fetchSupportConversations();
     }
   }, [activeTab, fetchSupportConversations]);
 
-  const handleSupportUserClick = (user) => {
-    // Determine user ID from conversation object (which has _id as the user ID)
-    const userId = user._id; 
-    // The user object is inside conversation.user which is an array after unwind? No, unwind makes it an object.
-    // Wait, let's check the aggregation result structure.
-    // _id is the user ID. user is the user object.
+  const handleSupportUserClick = (conversation) => {
+    // conversation.user is the user object from the aggregation
+    const user = conversation.user;
+    setActiveSupportChat(user); 
+    fetchSupportMessages(user._id);
     
-    // So user passed here is likely the whole conversation object from the map.
-    setActiveSupportChat(user.user); 
-    fetchSupportMessages(user.user._id);
+    // Mark messages as read
+    if (socket && conversation.unreadCount > 0) {
+      socket.emit('mark_read', { senderId: user._id, receiverId: 'admin' });
+      // Optimistically update unread count in list
+      setSupportConversations(prev => prev.map(c => 
+        c.user._id === user._id ? { ...c, unreadCount: 0 } : c
+      ));
+    }
   };
 
   const handleSendAdminSupportMessage = async () => {

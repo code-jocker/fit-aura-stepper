@@ -223,7 +223,6 @@ io.on('connection', (socket) => {
         if (admin) {
           finalReceiverId = admin._id.toString();
         } else {
-          // Fallback if no admin found (should not happen)
           return; 
         }
       }
@@ -232,11 +231,12 @@ io.on('connection', (socket) => {
         senderId: socket.user.id,
         receiverId: finalReceiverId,
         content,
-        type: type || 'chat'
+        type: type || 'chat',
+        isRead: false
       });
       await message.save();
       
-      const populatedMessage = await message.populate('senderId receiverId', 'name role');
+      const populatedMessage = await message.populate('senderId receiverId', 'name role email');
 
       // Emit to receiver's room
       io.to(finalReceiverId).emit('receive_message', populatedMessage);
@@ -244,13 +244,67 @@ io.on('connection', (socket) => {
       // Also emit back to sender (for confirmation/UI update)
       io.to(socket.user.id).emit('receive_message', populatedMessage);
 
-      // If sending to admin, also emit to admin_room just in case
+      // If sending to admin, also emit to admin_room
       if (receiverId === 'admin') {
         io.to('admin_room').emit('receive_message', populatedMessage);
+        io.to('admin_room').emit('update_conversations', populatedMessage);
+      } else {
+        // If admin sending to user, also update admin conversations to show latest message
+        // This ensures all admins see the sent message in their conversation list
+        io.to('admin_room').emit('update_conversations', populatedMessage);
       }
 
     } catch (err) {
       console.error('Message save error:', err);
+    }
+  });
+
+  // Mark messages as read
+  socket.on('mark_read', async (data) => {
+    const { senderId, receiverId } = data; // senderId is the person who sent the messages we are reading
+    const Message = require('./models/Message');
+    const User = require('./models/User');
+    
+    try {
+      // Update all unread messages from senderId to receiverId (socket.user.id)
+      
+      let actualReceiverId = socket.user.id;
+      let actualSenderId = senderId;
+
+      // Handle 'admin' sender (user marking admin messages as read)
+      if (senderId === 'admin') {
+        const admin = await User.findOne({ role: 'admin' });
+        if (admin) {
+          actualSenderId = admin._id;
+        }
+      }
+      
+      // If the user is admin reading user messages, receiverId passed might be 'admin'
+      // But actualReceiverId is the admin's personal ID (socket.user.id)
+      
+      await Message.updateMany(
+        { senderId: actualSenderId, receiverId: actualReceiverId, isRead: false },
+        { $set: { isRead: true } }
+      );
+      
+      // Notify the sender that their messages were read
+      if (senderId === 'admin') {
+         // If sender was 'admin' (virtual), notify all admins
+         io.to('admin_room').emit('messages_read', { by: socket.user.id });
+      } else {
+         io.to(senderId).emit('messages_read', { by: socket.user.id });
+      }
+      
+      // If admin read it, update admin conversations (clear unread count)
+      if (socket.user.role === 'admin') {
+         // Broadcast to all admins that this conversation is read
+         io.to('admin_room').emit('update_conversations', { 
+           senderId: { _id: senderId }, // To match structure used in frontend
+           isReadUpdate: true 
+         });
+      }
+    } catch (err) {
+      console.error('Mark read error:', err);
     }
   });
   
