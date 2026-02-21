@@ -110,12 +110,12 @@ export default function Home() {
             <span className="inline-block px-4 py-1.5 bg-amber-500 text-black text-xs font-black uppercase tracking-[0.2em] rounded-full mb-6 animate-fade-in">
               🇷🇼 Rwanda's Premium Fashion Destination
             </span>
-            <h1 className="text-5xl md:text-8xl font-black text-white mb-6 leading-[0.9] tracking-tighter animate-slide-up">
-              ELEVATE YOUR <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600">STYLE GAME</span>
+            <h1 className="text-4xl md:text-7xl font-black text-white mb-6 leading-[0.9] tracking-tighter animate-slide-up">
+              MBABAZI CLOSET <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600">FASHION RWANDA</span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-200 mb-10 max-w-xl font-medium leading-relaxed animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              Discover premium sneakers and athleisure that blend contemporary fashion with authentic Rwandan inspiration.
+              Mbabazi Closet is a leading fashion store in Rwanda offering modern dresses, women clothing, shoes, and accessories in Kigali at affordable prices.
             </p>
             <div className="flex flex-wrap gap-5 animate-slide-up" style={{ animationDelay: '0.4s' }}>
               <Link to="/products" className="px-10 py-4 bg-amber-500 text-black rounded-full font-black uppercase tracking-wider hover:bg-white hover:scale-105 transition-all shadow-2xl flex items-center gap-2 group">

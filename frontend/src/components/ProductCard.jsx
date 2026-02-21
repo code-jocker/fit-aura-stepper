@@ -18,7 +18,8 @@ export default function ProductCard({ product, onQuickAdd }) {
         <Link to={`/product/${product._id}`}>
           <img
             src={product.images?.[0] || 'https://via.placeholder.com/300x400?text=Product'}
-            alt={product.name}
+            alt={`${product.name} - Mbabazi Closet Rwanda Fashion`}
+            loading="lazy"
             className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-700"
             onError={(e) => {
               e.target.onerror = null;
