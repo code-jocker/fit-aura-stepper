@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
+import io from 'socket.io-client';
 import { Helmet } from 'react-helmet-async';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -43,6 +44,7 @@ import {
 } from 'lucide-react';
 
 const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
+const SOCKET_URL = API_URL.replace('/api', '');
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -60,9 +62,21 @@ export default function Admin() {
   const [newAdminMessage, setNewAdminMessage] = useState('');
   const staffChatEndRef = useRef(null);
   const aiChatEndRef = useRef(null);
+  
+  // Support Chat State
+  const [supportConversations, setSupportConversations] = useState([]);
+  const [activeSupportChat, setActiveSupportChat] = useState(null);
+  const [supportMessages, setSupportMessages] = useState([]);
+  const [adminChatInput, setAdminChatInput] = useState('');
+  const [socket, setSocket] = useState(null);
+  const supportChatEndRef = useRef(null);
 
   const scrollStaffChatToBottom = () => {
     staffChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const scrollSupportChatToBottom = () => {
+    supportChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -84,6 +98,98 @@ export default function Admin() {
       console.error('Error fetching messages:', err);
     }
   };
+
+  // Support Chat Logic
+  const fetchSupportConversations = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/messages/conversations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSupportConversations(res.data);
+    } catch (err) {
+      console.error('Error fetching conversations:', err);
+    }
+  }, []);
+
+  const fetchSupportMessages = async (userId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/messages/user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSupportMessages(res.data);
+      setTimeout(scrollSupportChatToBottom, 100);
+    } catch (err) {
+      console.error('Error fetching user messages:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'messages') {
+      fetchSupportConversations();
+      
+      const token = localStorage.getItem('token');
+      if (token) {
+        const newSocket = io(SOCKET_URL, {
+          auth: { token }
+        });
+
+        newSocket.on('connect', () => {
+          console.log('Admin connected to chat server');
+        });
+
+        newSocket.on('receive_message', (message) => {
+          setSupportConversations(prev => {
+             // Refresh conversations list to update last message and unread count
+             fetchSupportConversations(); 
+             return prev; 
+          });
+
+          setActiveSupportChat(current => {
+             if (current && (message.senderId._id === current._id || message.senderId === current._id || message.receiverId._id === current._id || message.receiverId === current._id)) {
+                setSupportMessages(msgs => [...msgs, message]);
+                setTimeout(scrollSupportChatToBottom, 100);
+             }
+             return current;
+          });
+        });
+
+        setSocket(newSocket);
+
+        return () => newSocket.disconnect();
+      }
+    }
+  }, [activeTab, fetchSupportConversations]);
+
+  const handleSupportUserClick = (user) => {
+    // Determine user ID from conversation object (which has _id as the user ID)
+    const userId = user._id; 
+    // The user object is inside conversation.user which is an array after unwind? No, unwind makes it an object.
+    // Wait, let's check the aggregation result structure.
+    // _id is the user ID. user is the user object.
+    
+    // So user passed here is likely the whole conversation object from the map.
+    setActiveSupportChat(user.user); 
+    fetchSupportMessages(user.user._id);
+  };
+
+  const handleSendAdminSupportMessage = async () => {
+    if (!adminChatInput.trim() || !activeSupportChat) return;
+
+    const content = adminChatInput;
+    setAdminChatInput('');
+
+    if (socket) {
+      socket.emit('send_message', {
+        receiverId: activeSupportChat._id,
+        content: content,
+        type: 'chat'
+      });
+      // No optimistic update to avoid duplication with socket event
+    }
+  };
+
 
   const handleSendAdminMessage = async () => {
     if (!newAdminMessage.trim() || !activeChatOrder) return;
@@ -983,15 +1089,7 @@ export default function Admin() {
           />
           <SidebarItem id="customers" label="Customers" icon={Users} />
           
-          <a 
-            href="https://dashboard.tawk.to/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="w-full flex items-center gap-4 px-6 py-4 text-gray-400 hover:bg-white/5 hover:text-white transition-all duration-300"
-          >
-            <MessageSquare size={20} />
-            {isSidebarOpen && <span className="uppercase tracking-widest text-xs font-bold">Live Chat</span>}
-          </a>
+          <SidebarItem id="messages" label="Messages" icon={MessageSquare} />
 
           <SidebarItem id="payments" label="Payments" icon={CreditCard} />
           <SidebarItem id="reviews" label="Reviews" icon={Star} />
@@ -2131,6 +2229,140 @@ export default function Admin() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'messages' && (
+            <div className="h-[calc(100vh-140px)] flex flex-col md:flex-row gap-6 animate-in fade-in duration-500">
+              {/* Conversations List */}
+              <div className="w-full md:w-80 bg-white rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+                  <h2 className="text-xl font-black uppercase tracking-tight">Inbox</h2>
+                  <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-1">Customer Support</p>
+                </div>
+                <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+                  {supportConversations.length === 0 ? (
+                    <div className="text-center p-8 text-gray-400 text-xs font-bold uppercase tracking-widest">
+                      No conversations yet
+                    </div>
+                  ) : (
+                    supportConversations.map((conv) => (
+                      <button
+                        key={conv._id}
+                        onClick={() => handleSupportUserClick(conv)}
+                        className={`w-full text-left p-4 rounded-2xl transition-all ${
+                          activeSupportChat?._id === conv.user._id
+                            ? 'bg-black text-white shadow-lg'
+                            : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="font-black text-xs uppercase tracking-tight line-clamp-1">
+                            {conv.user.name || 'Unknown User'}
+                          </span>
+                          {conv.unreadCount > 0 && (
+                            <span className="bg-amber-500 text-black text-[8px] font-black px-1.5 py-0.5 rounded-full">
+                              {conv.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        <p className={`text-[10px] line-clamp-1 ${
+                          activeSupportChat?._id === conv.user._id ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          {conv.lastMessage.content}
+                        </p>
+                        <p className={`text-[8px] mt-2 font-bold uppercase tracking-widest ${
+                           activeSupportChat?._id === conv.user._id ? 'text-gray-500' : 'text-gray-300'
+                        }`}>
+                          {new Date(conv.lastMessage.createdAt).toLocaleDateString()}
+                        </p>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Chat Area */}
+              <div className="flex-1 bg-white rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col overflow-hidden relative">
+                {!activeSupportChat ? (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-8 opacity-50">
+                    <MessageSquare size={48} className="text-gray-300 mb-4" />
+                    <h3 className="text-xl font-black uppercase tracking-tight text-gray-300">Select a conversation</h3>
+                    <p className="text-gray-300 text-xs font-bold uppercase tracking-widest mt-2">Start chatting with customers</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Chat Header */}
+                    <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-black font-black text-lg">
+                          {activeSupportChat.name?.charAt(0)}
+                        </div>
+                        <div>
+                          <h3 className="font-black text-sm uppercase tracking-tight">{activeSupportChat.name}</h3>
+                          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">{activeSupportChat.email}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setActiveSupportChat(null)}
+                        className="md:hidden p-2 hover:bg-gray-200 rounded-xl"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/30 custom-scrollbar">
+                      {supportMessages.map((msg, idx) => {
+                        const senderId = msg.senderId._id || msg.senderId;
+                        const isMe = senderId !== activeSupportChat._id;
+
+                        return (
+                          <div
+                            key={msg._id || idx}
+                            className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div
+                              className={`max-w-[70%] px-6 py-4 rounded-3xl text-xs font-bold leading-relaxed shadow-sm ${
+                                isMe
+                                  ? 'bg-black text-white rounded-tr-none'
+                                  : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
+                              }`}
+                            >
+                              {msg.content}
+                              <p className={`text-[8px] mt-2 font-black uppercase tracking-widest opacity-50 ${isMe ? 'text-right' : 'text-left'}`}>
+                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={supportChatEndRef} />
+                    </div>
+
+                    {/* Input */}
+                    <div className="p-6 bg-white border-t border-gray-100">
+                      <div className="flex gap-4 bg-gray-50 p-2 rounded-2xl border border-gray-100 focus-within:ring-2 ring-amber-500 transition-all">
+                        <input
+                          type="text"
+                          placeholder="Type your reply..."
+                          value={adminChatInput}
+                          onChange={(e) => setAdminChatInput(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleSendAdminSupportMessage()}
+                          className="flex-1 bg-transparent px-4 py-2 text-sm font-bold outline-none placeholder:text-gray-400"
+                        />
+                        <button
+                          onClick={handleSendAdminSupportMessage}
+                          disabled={!adminChatInput.trim()}
+                          className="bg-black text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all disabled:opacity-30 active:scale-95 shadow-lg"
+                        >
+                          <Send size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           )}
 

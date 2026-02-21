@@ -176,18 +176,82 @@ app.use((err, req, res, next) => {
   });
 });
 
+const jwt = require('jsonwebtoken');
+
 // WebSocket events
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) {
+    return next(new Error("Authentication error: Token required"));
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.user = decoded;
+    next();
+  } catch (err) {
+    next(new Error("Authentication error: Invalid token"));
+  }
+});
+
 io.on('connection', (socket) => {
-  console.log('🟢 User connected:', socket.id);
+  console.log('🟢 User connected:', socket.user.id);
+  
+  // Join user's personal room
+  socket.join(socket.user.id);
+
+  // If user is admin, join admin room
+  if (socket.user.role === 'admin') {
+    socket.join('admin_room');
+  }
   
   socket.on('disconnect', () => {
-    console.log('🔴 User disconnected:', socket.id);
+    console.log('🔴 User disconnected:', socket.user.id);
   });
   
-  // Support chat
-  socket.on('support_message', (message) => {
-    console.log('💬 Support message:', message);
-    io.emit('support_message', message);
+  // Send message
+  socket.on('send_message', async (data) => {
+    const { receiverId, content, type } = data;
+    const Message = require('./models/Message');
+    const User = require('./models/User');
+
+    try {
+      let finalReceiverId = receiverId;
+
+      // Handle sending to admin
+      if (receiverId === 'admin') {
+        const admin = await User.findOne({ role: 'admin' });
+        if (admin) {
+          finalReceiverId = admin._id.toString();
+        } else {
+          // Fallback if no admin found (should not happen)
+          return; 
+        }
+      }
+
+      const message = new Message({
+        senderId: socket.user.id,
+        receiverId: finalReceiverId,
+        content,
+        type: type || 'chat'
+      });
+      await message.save();
+      
+      const populatedMessage = await message.populate('senderId receiverId', 'name role');
+
+      // Emit to receiver's room
+      io.to(finalReceiverId).emit('receive_message', populatedMessage);
+      
+      // Also emit back to sender (for confirmation/UI update)
+      io.to(socket.user.id).emit('receive_message', populatedMessage);
+
+      // If sending to admin, also emit to admin_room just in case
+      if (receiverId === 'admin') {
+        io.to('admin_room').emit('receive_message', populatedMessage);
+      }
+
+    } catch (err) {
+      console.error('Message save error:', err);
+    }
   });
   
   // Stock updates

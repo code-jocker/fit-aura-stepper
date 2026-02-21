@@ -3,6 +3,99 @@ const router = express.Router();
 const Message = require('../models/Message');
 const { auth, adminAuth } = require('../middleware/auth');
 
+// Get list of conversations (Admin only)
+router.get('/conversations', adminAuth, async (req, res) => {
+  try {
+    // Find all messages where admin is sender or receiver
+    // Group by the other user
+    const conversations = await Message.aggregate([
+      {
+        $match: {
+          $or: [
+            { receiverId: req.user.id }, // Admin received
+            { senderId: req.user.id }    // Admin sent
+          ]
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      },
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $eq: ["$senderId", req.user.id] },
+              "$receiverId",
+              "$senderId"
+            ]
+          },
+          lastMessage: { $first: "$$ROOT" },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                { 
+                  $and: [
+                    { $eq: ["$receiverId", req.user.id] },
+                    { $eq: ["$isRead", false] }
+                  ]
+                },
+                1,
+                0
+              ]
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $project: {
+          _id: 1,
+          'user.name': 1,
+          'user.email': 1,
+          'user.role': 1,
+          lastMessage: 1,
+          unreadCount: 1
+        }
+      },
+      {
+        $sort: { 'lastMessage.createdAt': -1 }
+      }
+    ]);
+
+    res.json(conversations);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get messages between admin and a specific user
+router.get('/user/:userId', adminAuth, async (req, res) => {
+  try {
+    const messages = await Message.find({
+      $or: [
+        { senderId: req.user.id, receiverId: req.params.userId },
+        { senderId: req.params.userId, receiverId: req.user.id }
+      ]
+    })
+    .populate('senderId', 'name role')
+    .populate('receiverId', 'name role')
+    .sort({ createdAt: 1 });
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get messages for current user
 router.get('/', auth, async (req, res) => {
   try {

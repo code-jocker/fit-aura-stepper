@@ -144,7 +144,6 @@ function App() {
               />
             </Routes>
           </main>
-          <SupportChat />
           <Footer />
         </div>
       </Router>

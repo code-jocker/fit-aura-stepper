@@ -222,6 +222,12 @@ export default function Profile() {
             </div>
           )}
         </div>
+
+        {/* Support Chat Section */}
+        <div className="bg-white rounded-lg shadow p-6 mt-8">
+          <h2 className="text-2xl font-bold mb-6">💬 Customer Support</h2>
+          <SupportChat embedded={true} />
+        </div>
       </div>
     </div>
   );
