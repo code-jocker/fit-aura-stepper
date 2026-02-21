@@ -550,11 +550,20 @@ export default function Admin() {
       
       // Check if we are saving a category or a product
       if (activeTab === 'categories') {
+        let subcats = formData.subcategories;
+        if (typeof subcats === 'string') {
+          subcats = subcats.split(',').map(s => ({ name: s.trim() })).filter(s => s.name);
+        } else if (Array.isArray(subcats)) {
+          // Ensure they are in the correct format if they are already arrays but maybe strings?
+          // If it's already objects, we are good. If it's strings, map them.
+          subcats = subcats.map(s => typeof s === 'string' ? { name: s } : s);
+        }
+
         const catData = {
           name: formData.name,
           description: formData.description,
           image: formData.image,
-          subcategories: formData.subcategories
+          subcategories: subcats
         };
 
         if (editingId) {
@@ -1311,7 +1320,38 @@ export default function Admin() {
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Manage your inventory</p>
                 </div>
                 <button 
-                  onClick={() => setShowProductForm(true)}
+                  onClick={() => {
+                    setEditingId(null);
+                    setFormData({
+                      name: '', 
+                      brand: '', 
+                      category: 'shoes', 
+                      subcategory: '',
+                      audience: 'unisex',
+                      price: '', 
+                      salePrice: '', 
+                      description: '', 
+                      shortDescription: '',
+                      sku: '',
+                      tags: '',
+                      images: [],
+                      sizes: '', 
+                      colors: '', 
+                      stock: '', 
+                      lowStockThreshold: 5,
+                      weight: '',
+                      dimensions: { length: '', width: '', height: '' },
+                      isFeatured: false,
+                      isNew: true, 
+                      isPublished: true,
+                      metaTitle: '',
+                      metaDescription: '',
+                      slug: '',
+                      status: 'published',
+                      variants: []
+                    });
+                    setShowProductForm(true);
+                  }}
                   className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl"
                 >
                   + Create New Product
@@ -2715,8 +2755,15 @@ export default function Admin() {
                 <div className="p-10">
                   <div className="flex justify-between items-center mb-10">
                     <div>
-                      <h2 className="text-3xl font-black uppercase tracking-tighter">{editingId ? 'Edit Product' : 'New Product'}</h2>
-                      <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Add your luxury item to the collection</p>
+                      <h2 className="text-3xl font-black uppercase tracking-tighter">
+                        {editingId 
+                          ? (activeTab === 'categories' ? 'Edit Category' : 'Edit Product') 
+                          : (activeTab === 'categories' ? 'New Category' : 'New Product')
+                        }
+                      </h2>
+                      <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">
+                        {activeTab === 'categories' ? 'Organize your store structure' : 'Add your luxury item to the collection'}
+                      </p>
                     </div>
                     <button onClick={() => setShowProductForm(false)} className="p-4 hover:bg-gray-100 rounded-2xl transition-all">
                       <X size={24} />
@@ -2724,6 +2771,7 @@ export default function Admin() {
                   </div>
 
                   {/* Form Tabs */}
+                  {activeTab !== 'categories' && (
                   <div className="flex gap-2 mb-8 overflow-x-auto pb-2 custom-scrollbar">
                     {[
                       { id: 'basic', label: 'Basic Info' },
@@ -2747,8 +2795,72 @@ export default function Admin() {
                       </button>
                     ))}
                   </div>
+                  )}
 
                   <form onSubmit={handleSubmit} className="space-y-8">
+                    {activeTab === 'categories' ? (
+                      <div className="space-y-6 animate-in fade-in duration-300">
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Category Name</label>
+                          <input 
+                            required 
+                            type="text" 
+                            value={formData.name} 
+                            onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                            className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Description</label>
+                          <textarea 
+                            rows="4"
+                            value={formData.description} 
+                            onChange={(e) => setFormData({...formData, description: e.target.value})} 
+                            className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold resize-none" 
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Image URL</label>
+                          <input 
+                            type="text" 
+                            value={formData.image} 
+                            onChange={(e) => setFormData({...formData, image: e.target.value})} 
+                            className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Subcategories (comma separated)</label>
+                          <input 
+                            type="text" 
+                            placeholder="Sneakers, Boots, Sandals..."
+                            value={Array.isArray(formData.subcategories) ? formData.subcategories.map(s => s.name).join(', ') : formData.subcategories} 
+                            onChange={(e) => setFormData({
+                              ...formData, 
+                              subcategories: e.target.value.split(',').map(s => ({ name: s.trim() }))
+                            })} 
+                            className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                          />
+                        </div>
+                        
+                        <div className="pt-6 flex gap-4">
+                           <button 
+                             type="button" 
+                             onClick={() => setShowProductForm(false)}
+                             className="flex-1 bg-gray-100 text-black py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                           >
+                             Cancel
+                           </button>
+                           <button 
+                             type="submit" 
+                             disabled={loading} 
+                             className="flex-[2] bg-black text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-2xl disabled:opacity-50"
+                           >
+                             {loading ? 'Saving...' : (editingId ? 'Update Category' : 'Create Category')}
+                           </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
                     {activeFormTab === 'basic' && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-300">
                         <div className="space-y-6">
@@ -2996,6 +3108,8 @@ export default function Admin() {
                         </div>
                       </div>
                     )}
+                    </>
+                    )}
 
                     <div className="pt-10 flex gap-4">
                       <button 
@@ -3010,7 +3124,7 @@ export default function Admin() {
                         disabled={loading} 
                         className="flex-[2] bg-black text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-2xl disabled:opacity-50"
                       >
-                        {loading ? 'Processing...' : (editingId ? 'Update Product' : 'Create Product')}
+                        {loading ? 'Processing...' : (editingId ? (activeTab === 'categories' ? 'Update Category' : 'Update Product') : (activeTab === 'categories' ? 'Create Category' : 'Create Product'))}
                       </button>
                     </div>
                   </form>
