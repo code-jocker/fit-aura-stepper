@@ -79,9 +79,6 @@ export default function Footer() {
                 <Link to="/returns" className="hover:text-white transition-colors">Returns</Link>
               </div>
               <div className="flex flex-col gap-2">
-                <Link to="/login?admin=true" className="text-[10px] text-gray-600 hover:text-amber-500 transition-colors font-bold uppercase tracking-widest">
-                  Admin Login
-                </Link>
                 <Link to="/login?delivery=true" className="text-[10px] text-gray-600 hover:text-amber-500 transition-colors font-bold uppercase tracking-widest">
                   Delivery Login
                 </Link>

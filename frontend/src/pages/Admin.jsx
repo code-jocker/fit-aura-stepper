@@ -748,6 +748,10 @@ export default function Admin() {
       fetchPromotions();
     } catch (err) {
       console.error('Fetch error:', err);
+      if (err.response && err.response.status === 401) {
+        localStorage.clear();
+        window.location.href = '/login?admin=true';
+      }
     } finally {
       setLoading(false);
     }

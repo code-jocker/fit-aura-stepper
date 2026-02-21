@@ -45,7 +45,8 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
 
   // Not authenticated - redirect to login
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    const loginPath = requiredRole === 'admin' ? '/login?admin=true' : requiredRole === 'delivery' ? '/login?delivery=true' : '/login';
+    return <Navigate to={loginPath} replace />;
   }
 
   // Authenticated but doesn't have required role
