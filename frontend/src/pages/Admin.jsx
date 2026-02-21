@@ -982,6 +982,17 @@ export default function Admin() {
             ]}
           />
           <SidebarItem id="customers" label="Customers" icon={Users} />
+          
+          <a 
+            href="https://dashboard.tawk.to/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-4 px-6 py-4 text-gray-400 hover:bg-white/5 hover:text-white transition-all duration-300"
+          >
+            <MessageSquare size={20} />
+            {isSidebarOpen && <span className="uppercase tracking-widest text-xs font-bold">Live Chat</span>}
+          </a>
+
           <SidebarItem id="payments" label="Payments" icon={CreditCard} />
           <SidebarItem id="reviews" label="Reviews" icon={Star} />
           <SidebarItem id="promotions" label="Promotions" icon={Ticket} />
