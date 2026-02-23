@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '../store';
+import AdBanner from '../components/AdBanner';
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -133,6 +134,11 @@ export default function Cart() {
                   <p className="text-[9px] text-gray-400 font-bold uppercase">{badge.desc}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Ad Banner */}
+            <div className="mt-12 flex justify-center">
+              <AdBanner width={300} height={250} />
             </div>
           </div>
 

@@ -5,6 +5,7 @@ import { productService, testimonialService, subscriptionService } from '../api'
 import ProductCard from '../components/ProductCard';
 import QuickAddModal from '../components/QuickAddModal';
 import AnimatedAdBanner from '../components/AnimatedAdBanner';
+import AdBanner from '../components/AdBanner';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -278,6 +279,11 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Ad Banner */}
+      <div className="container py-8 flex justify-center">
+        <AdBanner width={300} height={250} />
+      </div>
 
       {/* New Arrivals Section */}
       <section className="container py-16">

@@ -210,7 +210,7 @@ io.on('connection', (socket) => {
   
   // Send message
   socket.on('send_message', async (data) => {
-    const { receiverId, content, type } = data;
+    const { receiverId, content, type, tempId } = data;
     const Message = require('./models/Message');
     const User = require('./models/User');
 
@@ -237,21 +237,25 @@ io.on('connection', (socket) => {
       await message.save();
       
       const populatedMessage = await message.populate('senderId receiverId', 'name role email');
+      
+      // Convert to object to append tempId if present
+      const responseData = populatedMessage.toObject();
+      if (tempId) responseData.tempId = tempId;
 
       // Emit to receiver's room
-      io.to(finalReceiverId).emit('receive_message', populatedMessage);
+      io.to(finalReceiverId).emit('receive_message', responseData);
       
       // Also emit back to sender (for confirmation/UI update)
-      io.to(socket.user.id).emit('receive_message', populatedMessage);
+      io.to(socket.user.id).emit('receive_message', responseData);
 
       // If sending to admin, also emit to admin_room
       if (receiverId === 'admin') {
-        io.to('admin_room').emit('receive_message', populatedMessage);
-        io.to('admin_room').emit('update_conversations', populatedMessage);
+        io.to('admin_room').emit('receive_message', responseData);
+        io.to('admin_room').emit('update_conversations', responseData);
       } else {
         // If admin sending to user, also update admin conversations to show latest message
         // This ensures all admins see the sent message in their conversation list
-        io.to('admin_room').emit('update_conversations', populatedMessage);
+        io.to('admin_room').emit('update_conversations', responseData);
       }
 
     } catch (err) {

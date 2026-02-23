@@ -5,6 +5,7 @@ import axios from 'axios';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../components/FilterSidebar';
 import QuickAddModal from '../components/QuickAddModal';
+import AdBanner from '../components/AdBanner';
 
 const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
 
@@ -301,6 +302,11 @@ export default function Products() {
 
           {/* Products Grid */}
           <main className="flex-grow">
+            {/* Top Ad Banner */}
+            <div className="mb-8 flex justify-center w-full">
+              <AdBanner width={300} height={250} />
+            </div>
+
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
                 {Array(6).fill(0).map((_, i) => (

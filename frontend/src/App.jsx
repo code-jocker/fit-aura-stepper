@@ -145,6 +145,7 @@ function App() {
             </Routes>
           </main>
           <Footer />
+          <SupportChat />
         </div>
       </Router>
     </GoogleOAuthProvider>

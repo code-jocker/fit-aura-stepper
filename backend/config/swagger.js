@@ -2,7 +2,7 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
 const options = {
-  definition: {
+  swaggerDefinition: {
     openapi: '3.0.0',
     info: {
       title: 'MBABAZI CLOSET API Documentation',
@@ -33,7 +33,8 @@ const options = {
       },
     ],
   },
-  apis: ['./routes/*.js'], // Path to the API docs
+  // apis: ['./routes/*.js'], // Path to the API docs (Temporarily disabled for Windows compatibility)
+  apis: [],
 };
 
 const specs = swaggerJsdoc(options);

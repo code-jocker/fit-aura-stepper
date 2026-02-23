@@ -133,7 +133,7 @@ export default function Admin() {
   useEffect(() => {
     // Connect to socket regardless of active tab to get notifications
     const token = localStorage.getItem('token');
-    if (token && !socket) {
+    if (token) {
       const newSocket = io(SOCKET_URL, {
         auth: { token }
       });
@@ -146,7 +146,7 @@ export default function Admin() {
       
       return () => newSocket.disconnect();
     }
-  }, [socket]);
+  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -158,7 +158,7 @@ export default function Admin() {
       const current = activeSupportChatRef.current;
       
       // Update active chat if open
-      if (current && (message.senderId._id === current._id || message.senderId === current._id || message.receiverId._id === current._id || message.receiverId._id === current._id)) {
+      if (current && (message.senderId._id === current._id || message.senderId === current._id || message.receiverId._id === current._id || message.receiverId === current._id)) {
          setSupportMessages(msgs => {
            const exists = msgs.some(m => m._id === message._id);
            if (exists) return msgs;

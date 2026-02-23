@@ -6,6 +6,7 @@ import { productService } from '../api';
 import ProductCard from '../components/ProductCard';
 import QuickAddModal from '../components/QuickAddModal';
 import { useStore } from '../store';
+import AdBanner from '../components/AdBanner';
 
 const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
 
@@ -416,6 +417,11 @@ export default function ProductDetail() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Ad Banner */}
+        <div className="flex justify-center mt-16 mb-16">
+          <AdBanner width={300} height={250} />
         </div>
 
         {/* Related Products Section */}

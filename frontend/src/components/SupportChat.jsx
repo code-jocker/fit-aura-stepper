@@ -57,6 +57,11 @@ export default function SupportChat({ embedded = false }) {
 
       newSocket.on('receive_message', (message) => {
         setMessages(prev => {
+          // If message has tempId, replace the optimistic message
+          if (message.tempId) {
+             return prev.map(m => m._id === message.tempId ? message : m);
+          }
+
           // Avoid duplicates
           if (prev.some(m => m._id === message._id)) return prev;
           
@@ -128,7 +133,8 @@ export default function SupportChat({ embedded = false }) {
       socket.emit('send_message', {
         receiverId: 'admin',
         content: content,
-        type: 'chat'
+        type: 'chat',
+        tempId: tempId
       });
     } else {
       // Fallback if socket fails
