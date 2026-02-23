@@ -1534,11 +1534,17 @@ export default function Admin() {
                       <tr key={product._id} className="hover:bg-gray-50 transition-all group">
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-gray-100 rounded-2xl overflow-hidden shadow-sm flex items-center justify-center">
-                              {product.images?.[0] ? (
-                                <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
+                            <div className="flex -space-x-4 hover:space-x-1 transition-all duration-300">
+                              {product.images && product.images.length > 0 ? (
+                                product.images.slice(0, 5).map((img, i) => (
+                                  <div key={i} className="w-14 h-14 bg-gray-100 rounded-2xl overflow-hidden shadow-sm flex-shrink-0 border-2 border-white hover:z-10 relative transition-all">
+                                    <img src={img} alt="" className="w-full h-full object-cover" />
+                                  </div>
+                                ))
                               ) : (
-                                <Package className="text-gray-300" size={24} />
+                                <div className="w-14 h-14 bg-gray-100 rounded-2xl overflow-hidden shadow-sm flex items-center justify-center">
+                                  <Package className="text-gray-300" size={24} />
+                                </div>
                               )}
                             </div>
                             <div>
