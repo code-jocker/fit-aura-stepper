@@ -240,4 +240,27 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// Admin cleanup old data
+router.delete('/cleanup', adminAuth, async (req, res) => {
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // Delete old messages
+    const Message = require('../models/Message');
+    await Message.deleteMany({ createdAt: { $lt: thirtyDaysAgo } });
+
+    // Delete old orders (completed/cancelled)
+    const Order = require('../models/Order');
+    await Order.deleteMany({ 
+      status: { $in: ['delivered', 'cancelled'] },
+      createdAt: { $lt: thirtyDaysAgo }
+    });
+
+    res.json({ message: 'Old data cleaned up successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

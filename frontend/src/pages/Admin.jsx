@@ -40,7 +40,8 @@ import {
   Palette,
   Send,
   Bot,
-  Heart
+  Heart,
+  Download
 } from 'lucide-react';
 
 const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
@@ -91,6 +92,11 @@ export default function Admin() {
   }, [messages, activeChatOrder]);
 
   const [selectedOrderForMap, setSelectedOrderForMap] = useState(null);
+
+  // Password change states
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const fetchAdminMessages = async (orderId) => {
     try {
@@ -699,7 +705,27 @@ export default function Admin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
     try {
+      // Validation
+      if (!formData.name || !formData.price || !formData.description) {
+        alert('Please fill in all required fields: name, price, description');
+        setLoading(false);
+        return;
+      }
+      
+      if (isNaN(formData.price) || formData.price <= 0) {
+        alert('Please enter a valid price');
+        setLoading(false);
+        return;
+      }
+      
+      if (formData.images.length === 0) {
+        alert('Please add at least one product image');
+        setLoading(false);
+        return;
+      }
+
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
@@ -1038,6 +1064,70 @@ export default function Admin() {
     e.preventDefault();
     alert('Settings saved successfully!');
     // In a real app, you would save this to the backend
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      alert('New passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      alert('New password must be at least 6 characters long');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/auth/change-password`, {
+        currentPassword,
+        newPassword
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      alert('Password changed successfully!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      console.error('Change password error:', err);
+      alert(err.response?.data?.message || 'Failed to change password');
+    }
+  };
+
+  const exportToExcel = () => {
+    // Simple CSV export for now
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Orders,Revenue,Customers,Products\n" +
+      `${orders.length},${adminStats?.totalRevenue || 0},${customers.length},${products.length}`;
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "reports.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    alert('Report exported successfully!');
+  };
+
+  const deleteOldData = async () => {
+    if (!window.confirm('Are you sure you want to delete old data? This action cannot be undone.')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/admin/cleanup`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Old data deleted successfully!');
+      fetchData();
+    } catch (err) {
+      console.error('Delete data error:', err);
+      alert('Failed to delete old data');
+    }
   };
 
   const handleLogout = () => {
@@ -2604,6 +2694,22 @@ export default function Admin() {
                   <h1 className="text-4xl font-black uppercase tracking-tighter">Reports</h1>
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-2">Analytics & Performance</p>
                 </div>
+                <div className="flex gap-4">
+                  <button 
+                    onClick={exportToExcel}
+                    className="bg-black text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl flex items-center gap-2"
+                  >
+                    <Download size={16} />
+                    Export Excel
+                  </button>
+                  <button 
+                    onClick={deleteOldData}
+                    className="bg-red-500 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-xl flex items-center gap-2"
+                  >
+                    <Trash2 size={16} />
+                    Delete Old Data
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -2924,23 +3030,40 @@ export default function Admin() {
                 </div>
 
                 <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100">
-                  <h3 className="text-xl font-black uppercase tracking-tight mb-8">System Status</h3>
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between p-6 bg-green-50 rounded-3xl border border-green-100">
-                      <div className="flex items-center gap-4">
-                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs font-black uppercase tracking-widest text-green-700">API Server Operational</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-green-600">99.9% Uptime</span>
+                  <h3 className="text-xl font-black uppercase tracking-tight mb-8">Change Password</h3>
+                  <form onSubmit={handleChangePassword} className="space-y-6">
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Current Password</label>
+                      <input 
+                        type="password" 
+                        value={currentPassword} 
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                        required
+                      />
                     </div>
-                    <div className="flex items-center justify-between p-6 bg-blue-50 rounded-3xl border border-blue-100">
-                      <div className="flex items-center gap-4">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span className="text-xs font-black uppercase tracking-widest text-blue-700">Database Connected</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-blue-600">Atlas Cluster 0</span>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">New Password</label>
+                      <input 
+                        type="password" 
+                        value={newPassword} 
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                        required
+                      />
                     </div>
-                  </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Confirm New Password</label>
+                      <input 
+                        type="password" 
+                        value={confirmPassword} 
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                        required
+                      />
+                    </div>
+                    <button type="submit" className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl">Change Password</button>
+                  </form>
                 </div>
               </div>
             </div>

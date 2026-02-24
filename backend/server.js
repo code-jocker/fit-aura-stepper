@@ -204,6 +204,16 @@ io.on('connection', (socket) => {
     socket.join('admin_room');
   }
   
+  // If user is delivery, join delivery room
+  if (socket.user.role === 'delivery') {
+    socket.join('delivery_room');
+  }
+  
+  // If user is support, join support room
+  if (socket.user.role === 'support') {
+    socket.join('support_room');
+  }
+  
   socket.on('disconnect', () => {
     console.log('🔴 User disconnected:', socket.user.id);
   });
@@ -222,6 +232,26 @@ io.on('connection', (socket) => {
         const admin = await User.findOne({ role: 'admin' });
         if (admin) {
           finalReceiverId = admin._id.toString();
+        } else {
+          return; 
+        }
+      }
+
+      // Handle sending to delivery
+      if (receiverId === 'delivery') {
+        const delivery = await User.findOne({ role: 'delivery' });
+        if (delivery) {
+          finalReceiverId = delivery._id.toString();
+        } else {
+          return; 
+        }
+      }
+
+      // Handle sending to support
+      if (receiverId === 'support') {
+        const support = await User.findOne({ role: 'support' });
+        if (support) {
+          finalReceiverId = support._id.toString();
         } else {
           return; 
         }
@@ -252,10 +282,19 @@ io.on('connection', (socket) => {
       if (receiverId === 'admin') {
         io.to('admin_room').emit('receive_message', responseData);
         io.to('admin_room').emit('update_conversations', responseData);
+      } else if (receiverId === 'delivery') {
+        io.to('delivery_room').emit('receive_message', responseData);
+        io.to('delivery_room').emit('update_conversations', responseData);
+      } else if (receiverId === 'support') {
+        io.to('support_room').emit('receive_message', responseData);
+        io.to('support_room').emit('update_conversations', responseData);
       } else {
         // If admin sending to user, also update admin conversations to show latest message
         // This ensures all admins see the sent message in their conversation list
         io.to('admin_room').emit('update_conversations', responseData);
+        // Also for delivery and support
+        io.to('delivery_room').emit('update_conversations', responseData);
+        io.to('support_room').emit('update_conversations', responseData);
       }
 
     } catch (err) {
@@ -282,6 +321,22 @@ io.on('connection', (socket) => {
           actualSenderId = admin._id;
         }
       }
+
+      // Handle 'delivery' sender
+      if (senderId === 'delivery') {
+        const delivery = await User.findOne({ role: 'delivery' });
+        if (delivery) {
+          actualSenderId = delivery._id;
+        }
+      }
+
+      // Handle 'support' sender
+      if (senderId === 'support') {
+        const support = await User.findOne({ role: 'support' });
+        if (support) {
+          actualSenderId = support._id;
+        }
+      }
       
       // If the user is admin reading user messages, receiverId passed might be 'admin'
       // But actualReceiverId is the admin's personal ID (socket.user.id)
@@ -295,6 +350,10 @@ io.on('connection', (socket) => {
       if (senderId === 'admin') {
          // If sender was 'admin' (virtual), notify all admins
          io.to('admin_room').emit('messages_read', { by: socket.user.id });
+      } else if (senderId === 'delivery') {
+         io.to('delivery_room').emit('messages_read', { by: socket.user.id });
+      } else if (senderId === 'support') {
+         io.to('support_room').emit('messages_read', { by: socket.user.id });
       } else {
          io.to(senderId).emit('messages_read', { by: socket.user.id });
       }
@@ -304,6 +363,20 @@ io.on('connection', (socket) => {
          // Broadcast to all admins that this conversation is read
          io.to('admin_room').emit('update_conversations', { 
            senderId: { _id: senderId }, // To match structure used in frontend
+           isReadUpdate: true 
+         });
+      }
+      // If delivery read it, update delivery conversations
+      if (socket.user.role === 'delivery') {
+         io.to('delivery_room').emit('update_conversations', { 
+           senderId: { _id: senderId },
+           isReadUpdate: true 
+         });
+      }
+      // If support read it, update support conversations
+      if (socket.user.role === 'support') {
+         io.to('support_room').emit('update_conversations', { 
+           senderId: { _id: senderId },
            isReadUpdate: true 
          });
       }

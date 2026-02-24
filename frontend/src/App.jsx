@@ -17,6 +17,7 @@ import OrderConfirmation from './pages/OrderConfirmation';
 import Admin from './pages/Admin';
 import Profile from './pages/Profile';
 import DeliveryDashboard from './pages/DeliveryDashboard';
+import Support from './pages/Support';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Portfolio from './pages/Portfolio';
@@ -139,6 +140,16 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <Admin />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Support Only Routes */}
+              <Route 
+                path="/support" 
+                element={
+                  <ProtectedRoute requiredRole="support">
+                    <Support />
                   </ProtectedRoute>
                 } 
               />

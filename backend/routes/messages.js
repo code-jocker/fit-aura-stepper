@@ -182,4 +182,26 @@ router.put('/:id/read', auth, async (req, res) => {
   }
 });
 
+// Resolve problem
+router.post('/resolve', auth, async (req, res) => {
+  try {
+    const { conversationId, problemType, resolutionNotes } = req.body;
+    
+    // Create a system message about resolution
+    const resolutionMessage = new Message({
+      senderId: req.user.id,
+      receiverId: conversationId,
+      content: `Problem resolved: ${problemType}\nResolution: ${resolutionNotes}`,
+      type: 'system',
+      isRead: false
+    });
+    
+    await resolutionMessage.save();
+    
+    res.json({ message: 'Problem resolved successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
