@@ -11,3 +11,4 @@ dist/
 .vscode/
 .idea/
 *.local
+backend/config/client_secret_*.json
