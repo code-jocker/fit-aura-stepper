@@ -249,7 +249,8 @@ Your e-commerce platform is ready to:
 ---
 
 ### 📞 Support
-- Email: support@mbabazicloset.rw
-- Phone: +250 (0) 798 000 000
+- Email: mbabaziannet28@gmail.com
+- Phone: Airtel: 0798643148, MTN: 0739990834
+- Location: lkimironko kimihururra, Rwanda
 
 ### 📝 Next: Read [SUMMARY.md](SUMMARY.md)
