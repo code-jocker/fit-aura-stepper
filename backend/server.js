@@ -33,12 +33,13 @@ app.use((req, res, next) => {
 });
 
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST']
-  }
-});
+// const io = socketIo(server, {
+//   cors: {
+//     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+//     methods: ['GET', 'POST']
+//   }
+// });
+const io = null; // Temporarily disabled
 
 // Middleware
 app.use(cors({
@@ -203,6 +204,8 @@ io.use((socket, next) => {
   }
 });
 
+// Temporarily disable socket.io
+/*
 io.on('connection', (socket) => {
   console.log('🟢 User connected:', socket.user.id);
   
@@ -400,6 +403,7 @@ io.on('connection', (socket) => {
     // Emit stock updates in real-time
   });
 });
+*/
 
 const startServer = async () => {
   const PORT = process.env.PORT || 5000;
