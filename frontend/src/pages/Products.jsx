@@ -44,7 +44,7 @@ export default function Products() {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       // Fetch products
@@ -76,17 +76,17 @@ export default function Products() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData();
   }, [isComingSoon]);
 
   useEffect(() => {
-    applyFilters();
-  }, [products, selectedCategory, selectedAudience, searchQuery, priceRange, sortBy, selectedSizes, selectedColors, isSaleOnly, isComingSoon]);
+    fetchData();
+  }, [fetchData]);
 
-  const applyFilters = () => {
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
+
+  const applyFilters = useCallback(() => {
     let filtered = [...products];
 
     // Admin vs Public View logic is handled by the API, but we can double check here
@@ -172,7 +172,7 @@ export default function Products() {
     });
 
     setFilteredProducts(filtered);
-  };
+  }, [products, selectedCategory, selectedAudience, searchQuery, priceRange, sortBy, selectedSizes, selectedColors, isSaleOnly, isComingSoon]);
 
   const handleQuickAdd = (product) => {
     setSelectedProduct(product);

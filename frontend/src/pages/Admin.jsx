@@ -334,7 +334,7 @@ export default function Admin() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_URL}/orders`, {
+      await axios.post(`${API_URL}/orders`, {
         ...deliveryFormData,
         status: 'pending'
       }, {
@@ -3503,6 +3503,7 @@ export default function Admin() {
                                   src={img} 
                                   alt="" 
                                   className="w-full h-full object-cover" 
+                                  onError={(e) => { e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2NjYyIvPjwvc3ZnPg=='; }}
                                 />
                                 <button type="button" onClick={() => removeImage(img)} className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
                                   <Trash2 size={24} />
