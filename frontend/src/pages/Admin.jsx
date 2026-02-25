@@ -830,7 +830,7 @@ export default function Admin() {
   const stats = [
     { 
       label: 'Total Revenue', 
-      value: `${(adminStats?.totalRevenue || 0).toLocaleString()} RWF`, 
+      value: `${((adminStats?.totalRevenue || 0)).toLocaleString()} RWF`, 
       icon: DollarSign, 
       trend: '+12.5%', 
       color: 'bg-black', 
@@ -838,7 +838,7 @@ export default function Admin() {
     },
     { 
       label: 'Total Orders', 
-      value: orders.length, 
+      value: (orders || []).length, 
       icon: ShoppingBag, 
       trend: '+8.2%', 
       color: 'bg-amber-500', 
@@ -846,7 +846,7 @@ export default function Admin() {
     },
     { 
       label: 'Delivered', 
-      value: orders.filter(o => o.status === 'delivered').length, 
+      value: (orders || []).filter(o => o.status === 'delivered').length, 
       icon: CheckCircle2, 
       trend: '+15%', 
       color: 'bg-zinc-800', 
@@ -1434,7 +1434,7 @@ export default function Admin() {
                     <button className="text-amber-500 text-xs font-black uppercase tracking-widest hover:underline">View All</button>
                   </div>
                   <div className="space-y-6">
-                    {orders.slice(0, 5).map((order, i) => (
+                    {(orders || []).slice(0, 5).map((order, i) => (
                       <div key={i} className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-3xl transition-all group">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center font-black text-xs uppercase">
@@ -1442,15 +1442,15 @@ export default function Admin() {
                           </div>
                           <div>
                             <p className="font-black uppercase text-xs tracking-tight">{order.customerName || 'Guest'}</p>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{order._id.slice(-8)} • {new Date(order.createdAt).toLocaleDateString()}</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{order._id?.slice(-8)} • {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-black text-xs">{order.total.toLocaleString()} RWF</p>
+                          <p className="font-black text-xs">{order.total?.toLocaleString() || 0} RWF</p>
                           <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
                             order.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                           }`}>
-                            {order.status}
+                            {order.status || 'pending'}
                           </span>
                         </div>
                       </div>
@@ -1496,7 +1496,7 @@ export default function Admin() {
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {promotions.filter(p => p.isActive).slice(0, 3).map((promo) => (
+                  {(promotions || []).filter(p => p.isActive).slice(0, 3).map((promo) => (
                     <div key={promo._id} className="bg-gray-50 p-6 rounded-3xl border border-gray-100 relative overflow-hidden group">
                       <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/10 rounded-full -mr-8 -mt-8"></div>
                       <div className="relative z-10">
@@ -1506,16 +1506,16 @@ export default function Admin() {
                         </p>
                         <div className="flex justify-between items-center">
                           <p className="text-sm font-black">
-                            {promo.type === 'percentage' ? `${promo.value}% OFF` : `${promo.value.toLocaleString()} RWF OFF`}
+                            {promo.type === 'percentage' ? `${promo.value}% OFF` : `${promo.value?.toLocaleString() || 0} RWF OFF`}
                           </p>
                           <p className="text-xs text-gray-500 font-bold">
-                            {new Date(promo.endDate).toLocaleDateString()}
+                            {promo.endDate ? new Date(promo.endDate).toLocaleDateString() : 'N/A'}
                           </p>
                         </div>
                       </div>
                     </div>
                   ))}
-                  {promotions.filter(p => p.isActive).length === 0 && (
+                  {((promotions || []).filter(p => p.isActive).length === 0) && (
                     <div className="col-span-3 text-center py-8">
                       <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No active promotions</p>
                       <button 
@@ -1578,7 +1578,7 @@ export default function Admin() {
                     </div>
                     <div className="h-[600px] rounded-[2rem] overflow-hidden border border-gray-100 shadow-inner">
                       <DeliveryMap 
-                        orders={orders} 
+                        orders={orders || []} 
                         onMarkerClick={(order) => {
                           setSearchTerm(order._id);
                           setActiveSubTab('all');
