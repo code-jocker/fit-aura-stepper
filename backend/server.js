@@ -56,6 +56,15 @@ requiredEnvVars.forEach(varName => {
   }
 });
 
+// Health check (before rate limiter so it's always accessible)
+app.get('/', (req, res) => {
+  res.status(200).send('Server is running');
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // Flutterwave Webhook (Must be before dbCheckMiddleware if you want it to always work)
 // Note: We use the router directly to handle the specific path
 app.use('/api/payments', require('./routes/payments'));
@@ -99,14 +108,6 @@ const dbCheckMiddleware = (req, res, next) => {
 };
 
 // Health check (before middleware so it's always accessible)
-app.get('/', (req, res) => {
-  res.status(200).send('Server is running');
-});
-
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
-
 app.get('/api/health', (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
   res.json({ 
