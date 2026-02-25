@@ -94,7 +94,9 @@ export default function Footer() {
               © 2026 MBABAZI CLOSET. Crafted for Rwanda 🇷🇼
             </p>
             <p className="text-gray-600 font-bold text-[10px] mt-1 uppercase tracking-widest">
-              Prepared by Dalphine
+              <a href="#" onClick={(e) => { e.preventDefault(); alert('Developer studying at KAGEYO TSS'); }} className="hover:text-amber-500 transition-colors">
+                Prepared by Dalphine
+              </a>
             </p>
           </div>
           
