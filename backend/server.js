@@ -4,7 +4,6 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
 const http = require('http');
-const socketIo = require('socket.io');
 const path = require('path');
 const connectDB = require('./config/db');
 const { swaggerUi, specs } = require('./config/swagger');
@@ -33,13 +32,6 @@ app.use((req, res, next) => {
 });
 
 const server = http.createServer(app);
-// const io = socketIo(server, {
-//   cors: {
-//     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-//     methods: ['GET', 'POST']
-//   }
-// });
-const io = null; // Temporarily disabled
 
 // Middleware
 app.use(cors({
@@ -187,27 +179,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-const jwt = require('jsonwebtoken');
 
-// WebSocket events
-// io.use((socket, next) => {
-//   const token = socket.handshake.auth.token;
-//   if (!token) {
-//     return next(new Error("Authentication error: Token required"));
-//   }
-//   try {
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//     socket.user = decoded;
-//     next();
-//   } catch (err) {
-//     next(new Error("Authentication error: Invalid token"));
-//   }
-// });
 
-// Temporarily disable socket.io
+
 /*
-io.on('connection', (socket) => {
-  console.log('🟢 User connected:', socket.user.id);
   
   // Join user's personal room
   socket.join(socket.user.id);
@@ -425,4 +400,4 @@ const startServer = async () => {
 
 startServer();
 
-module.exports = { app, io };
+module.exports = { app };
