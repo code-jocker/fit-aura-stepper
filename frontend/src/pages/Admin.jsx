@@ -493,9 +493,7 @@ export default function Admin() {
 
   const fetchPromotions = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const res = await axios.get(`${API_URL}/promotions`, config);
+      const res = await axios.get(`${API_URL}/promotions`);
       setPromotions(res.data || []);
     } catch (err) {
       console.error('Fetch promotions error:', err);
@@ -3388,7 +3386,12 @@ export default function Admin() {
                           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                             {formData.images.map((img, i) => (
                               <div key={i} className="aspect-square bg-gray-100 rounded-3xl overflow-hidden relative group shadow-sm">
-                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                <img 
+                                  src={img} 
+                                  alt="" 
+                                  className="w-full h-full object-cover" 
+                                  onError={(e) => { e.target.src = '/placeholder-image.png'; }} // Add placeholder if image fails to load
+                                />
                                 <button type="button" onClick={() => removeImage(img)} className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
                                   <Trash2 size={24} />
                                 </button>

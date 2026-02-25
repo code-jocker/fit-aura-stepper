@@ -42,7 +42,7 @@ export default function Login() {
         localStorage.setItem('user', JSON.stringify(response.data.user));
         localStorage.setItem('userType', response.data.user.role || 'user');
         alert('Login successful!');
-        navigate(response.data.user.role === 'admin' ? '/admin' : '/products');
+        navigate(response.data.user.role === 'admin' ? '/admin' : response.data.user.role === 'delivery' ? '/delivery' : '/profile');
       }
     } catch (err) {
       console.error('Google login error:', err);
@@ -84,7 +84,7 @@ export default function Login() {
           
           if (user.role === 'admin') navigate('/admin');
           else if (user.role === 'delivery') navigate('/delivery');
-          else navigate('/products');
+          else navigate('/profile');
         }
       } catch (err) {
         setError(err.response?.data?.message || 'Login failed');
