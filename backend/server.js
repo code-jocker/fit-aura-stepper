@@ -72,6 +72,7 @@ app.use(limiter);
 const dbCheckMiddleware = (req, res, next) => {
   // Allow health check, sitemap, and flutterwave webhook even if DB is down
   if (
+    req.path === '/' ||
     req.path === '/health' || 
     req.path === '/sitemap.xml' || 
     req.path === '/api/sitemap.xml' || 
@@ -98,6 +99,14 @@ const dbCheckMiddleware = (req, res, next) => {
 };
 
 // Health check (before middleware so it's always accessible)
+app.get('/', (req, res) => {
+  res.status(200).send('Server is running');
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 app.get('/api/health', (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
   res.json({ 
@@ -395,7 +404,7 @@ const startServer = async () => {
   const PORT = process.env.PORT || 5000;
   
   // 1. Start Express server immediately to satisfy Render's port binding requirement
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Server running on port ${PORT}`);
     console.log(`📊 API Health: http://localhost:${PORT}/api/health\n`);
     
