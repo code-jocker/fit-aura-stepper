@@ -353,7 +353,7 @@ export default function Admin() {
         notes: ''
       });
       setActiveTab('orders');
-      fetchData();
+      fetchOrdersData();
     } catch (err) {
       console.error('Error creating delivery:', err);
       alert(err.response?.data?.message || 'Failed to create delivery');
@@ -519,7 +519,7 @@ export default function Admin() {
         phone: '',
         location: ''
       });
-      fetchData();
+      fetchUsersData();
       alert('Staff member created successfully!');
     } catch (err) {
       console.error('Staff submit error:', err);
@@ -694,7 +694,7 @@ export default function Admin() {
        await axios.delete(`${API_URL}/products/${id}`, {
          headers: { Authorization: `Bearer ${token}` }
        });
-       fetchData();
+       fetchProductsData();
      } catch (err) {
        console.error('Delete error:', err);
        alert('Failed to delete product');
@@ -812,7 +812,7 @@ export default function Admin() {
         status: 'published',
         variants: []
       });
-      fetchData();
+      fetchProductsData();
       alert(editingId ? 'Updated successfully!' : 'Created successfully!');
     } catch (err) {
       console.error('Submit error:', err);
@@ -1033,7 +1033,7 @@ export default function Admin() {
       await axios.put(`${API_URL}/orders/${orderId}`, { status: newStatus }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchData();
+      fetchOrdersData();
     } catch (err) {
       console.error('Update order error:', err);
       alert('Failed to update order status');
@@ -1046,7 +1046,7 @@ export default function Admin() {
       await axios.put(`${API_URL}/orders/${orderId}`, { paymentStatus: newStatus }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchData();
+      fetchOrdersData();
     } catch (err) {
       console.error('Update payment error:', err);
       alert('Failed to update payment status');
@@ -1066,7 +1066,7 @@ export default function Admin() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchData();
+      fetchOrdersData();
       alert('Order assigned and status updated to shipped');
     } catch (err) {
       console.error('Assign delivery error:', err);
@@ -1081,7 +1081,7 @@ export default function Admin() {
       await axios.delete(`${API_URL}/orders/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchData();
+      fetchOrdersData();
     } catch (err) {
       console.error('Delete order error:', err);
       alert('Failed to delete order');
@@ -1102,7 +1102,7 @@ export default function Admin() {
       ));
       
       setSelectedOrders([]);
-      fetchData();
+      fetchOrdersData();
       alert('Orders updated successfully');
     } catch (err) {
       console.error('Bulk update error:', err);
@@ -1119,7 +1119,7 @@ export default function Admin() {
       await axios.delete(`${API_URL}/user/${customerId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchData();
+      fetchUsersData();
     } catch (err) {
       console.error('Delete customer error:', err);
       alert('Failed to delete customer');
@@ -1189,7 +1189,7 @@ export default function Admin() {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Old data deleted successfully!');
-      fetchData();
+      fetchDashboardData();
     } catch (err) {
       console.error('Delete data error:', err);
       alert('Failed to delete old data');
@@ -1652,7 +1652,7 @@ export default function Admin() {
                                   await axios.delete(`${API_URL}/categories/${cat._id}`, {
                                     headers: { Authorization: `Bearer ${token}` }
                                   });
-                                  fetchData();
+                                  fetchCategoriesData();
                                 } catch (err) {
                                   alert('Failed to delete category');
                                 }
@@ -2973,7 +2973,7 @@ export default function Admin() {
                                   await axios.delete(`${API_URL}/user/${member._id}`, {
                                     headers: { Authorization: `Bearer ${token}` }
                                   });
-                                  fetchData();
+                                  fetchUsersData();
                                   alert('Staff member deleted successfully');
                                 } catch (err) {
                                   alert(err.response?.data?.message || 'Failed to delete staff member');
