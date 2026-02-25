@@ -365,6 +365,7 @@ export default function Admin() {
   const [selectedOrders, setSelectedOrders] = useState([]); // Added for bulk actions
   const [isDragging, setIsDragging] = useState(false); // Added for drag & drop
   const [loading, setLoading] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -591,7 +592,7 @@ export default function Admin() {
 
     if (validFiles.length === 0) return;
 
-    setLoading(true);
+    setImageUploading(true);
     try {
       const token = localStorage.getItem('token');
       const formDataUpload = new FormData();
@@ -612,9 +613,9 @@ export default function Admin() {
       }));
     } catch (err) {
       console.error('Upload error:', err);
-      alert('Failed to upload images');
+      alert('Failed to upload images. Please try again.');
     } finally {
-      setLoading(false);
+      setImageUploading(false);
     }
   };
 
@@ -702,6 +703,12 @@ export default function Admin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (imageUploading) {
+      alert('Please wait for image upload to complete before submitting.');
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -910,32 +917,22 @@ export default function Admin() {
   });
 
   // Fetch Data
-  const fetchData = useCallback(async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      const [prodRes, orderRes, staffRes, customerRes, allStaffRes, catRes, statsRes] = await Promise.all([
-        axios.get(`${API_URL}/products?limit=all&adminView=true`),
-        axios.get(`${API_URL}/orders`, config),
-        axios.get(`${API_URL}/user?role=delivery`, config),
-        axios.get(`${API_URL}/user?role=customer`, config),
-        axios.get(`${API_URL}/user?role=admin`, config), // Fetch admin/staff
-        axios.get(`${API_URL}/categories`, config), // Fetch categories
+      const [orderRes, statsRes] = await Promise.all([
+        axios.get(`${API_URL}/orders?limit=20`, config), // Recent orders only
         axios.get(`${API_URL}/orders/stats/summary`, config) // Fetch dashboard stats
       ]);
 
-      setProducts(prodRes.data || []);
       setOrders(orderRes.data || []);
-      setDeliveryStaff(staffRes.data || []);
-      setCustomers(customerRes.data || []);
-      setStaff(allStaffRes.data || []);
-      setCategories(catRes.data || []);
       setAdminStats(statsRes.data || null);
       fetchPromotions();
     } catch (err) {
-      console.error('Fetch error:', err);
+      console.error('Fetch dashboard error:', err);
       if (err.response && err.response.status === 401) {
         localStorage.clear();
         window.location.href = '/login?admin=true';
@@ -944,6 +941,52 @@ export default function Admin() {
       setLoading(false);
     }
   }, [fetchPromotions]);
+
+  const fetchProductsData = useCallback(async () => {
+    try {
+      const prodRes = await axios.get(`${API_URL}/products?limit=all&adminView=true`);
+      setProducts(prodRes.data || []);
+    } catch (err) {
+      console.error('Fetch products error:', err);
+    }
+  }, []);
+
+  const fetchCategoriesData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const catRes = await axios.get(`${API_URL}/categories`, { headers: { Authorization: `Bearer ${token}` } });
+      setCategories(catRes.data || []);
+    } catch (err) {
+      console.error('Fetch categories error:', err);
+    }
+  }, []);
+
+  const fetchUsersData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const [staffRes, customerRes, allStaffRes] = await Promise.all([
+        axios.get(`${API_URL}/user?role=delivery`, config),
+        axios.get(`${API_URL}/user?role=customer`, config),
+        axios.get(`${API_URL}/user?role=admin`, config)
+      ]);
+      setDeliveryStaff(staffRes.data || []);
+      setCustomers(customerRes.data || []);
+      setStaff(allStaffRes.data || []);
+    } catch (err) {
+      console.error('Fetch users error:', err);
+    }
+  }, []);
+
+  const fetchOrdersData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const orderRes = await axios.get(`${API_URL}/orders`, { headers: { Authorization: `Bearer ${token}` } });
+      setOrders(orderRes.data || []);
+    } catch (err) {
+      console.error('Fetch orders error:', err);
+    }
+  }, []);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -954,10 +997,35 @@ export default function Admin() {
         window.location.href = '/login';
         return;
       }
-      fetchData();
+      fetchDashboardData();
     };
     checkAdmin();
-  }, [fetchData]);
+  }, [fetchDashboardData]);
+
+  // Fetch data when tabs become active
+  useEffect(() => {
+    if (activeTab === 'products' && products.length === 0) {
+      fetchProductsData();
+    }
+  }, [activeTab, products.length, fetchProductsData]);
+
+  useEffect(() => {
+    if (activeTab === 'categories' && categories.length === 0) {
+      fetchCategoriesData();
+    }
+  }, [activeTab, categories.length, fetchCategoriesData]);
+
+  useEffect(() => {
+    if (activeTab === 'orders' && orders.length === 0) {
+      fetchOrdersData();
+    }
+  }, [activeTab, orders.length, fetchOrdersData]);
+
+  useEffect(() => {
+    if (activeTab === 'users' && (deliveryStaff.length === 0 || customers.length === 0 || staff.length === 0)) {
+      fetchUsersData();
+    }
+  }, [activeTab, deliveryStaff.length, customers.length, staff.length, fetchUsersData]);
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {
@@ -3452,7 +3520,9 @@ export default function Admin() {
                               }`}
                             >
                               <Plus size={32} />
-                              <span className="text-[10px] font-black uppercase mt-2">Upload</span>
+                              <span className="text-[10px] font-black uppercase mt-2">
+                                {imageUploading ? 'Uploading...' : 'Upload'}
+                              </span>
                               <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" />
                             </label>
                           </div>
