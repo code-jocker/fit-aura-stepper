@@ -11,8 +11,6 @@ export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [comingSoon, setComingSoon] = useState([]);
-  const [hotDeals, setHotDeals] = useState([]);
-  const [testimonials, setTestimonials] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [subscribeEmail, setSubscribeEmail] = useState('');
@@ -24,24 +22,19 @@ export default function Home() {
 
   const fetchData = async () => {
     try {
-      const [arrivalsRes, dealsRes, testimonialsRes, featuredRes, comingSoonRes] = await Promise.all([
+      const [arrivalsRes, dealsRes, featuredRes, comingSoonRes] = await Promise.all([
         productService.getAll({ isNew: true, limit: 6 }).catch(() => ({ data: [] })),
         productService.getAll({ sale: true, limit: 6 }).catch(() => ({ data: [] })),
-        testimonialService.getAll().catch(() => ({ data: [] })),
         productService.getAll({ featured: true, limit: 3 }).catch(() => ({ data: [] })),
         // Fetch coming soon products for the special section
         productService.getAll({ comingSoon: true, limit: 3 }).catch(() => ({ data: [] }))
       ]);
       setNewArrivals(arrivalsRes?.data || []);
-      setHotDeals(dealsRes?.data || []);
-      setTestimonials(testimonialsRes?.data?.slice(0, 5) || []);
       setFeaturedProducts(featuredRes?.data || []);
       setComingSoon(comingSoonRes?.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       setNewArrivals([]);
-      setHotDeals([]);
-      setTestimonials([]);
       setFeaturedProducts([]);
     }
   };
