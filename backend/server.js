@@ -1,131 +1,39 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
-const rateLimit = require('express-rate-limit');
-const http = require('http');
 const path = require('path');
 const connectDB = require('./config/db');
-const { swaggerUi, specs } = require('./config/swagger');
 
 // Models (Early load to prevent issues)
 const Product = require('./models/Product');
 const Category = require('./models/Category');
 
-dotenv.config();
-
 const app = express();
 
-// Sitemap and Robots.txt are served as static files in production
-// The dynamic generation caused timeouts and errors for Googlebot
-// See frontend/public/sitemap.xml and frontend/public/robots.txt
-
-const server = http.createServer(app);
-
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
-}));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Validate critical environment variables
-const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET'];
-requiredEnvVars.forEach(varName => {
-  if (!process.env[varName] && process.env.NODE_ENV === 'production') {
-    console.warn(`⚠️ Warning: ${varName} is not defined in environment variables`);
-  }
-});
-
-// Health check (before rate limiter so it's always accessible)
-app.get('/', (req, res) => {
-  res.status(200).send('Server is running');
-});
-
+// Health check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// Flutterwave Webhook (Must be before dbCheckMiddleware if you want it to always work)
-// Note: We use the router directly to handle the specific path
+// API routes
 app.use('/api/payments', require('./routes/payments'));
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 2000, // Increase to 2000 requests per window
-  message: 'Too many requests from this IP, please try again after 15 minutes'
-});
-app.use(limiter);
-
-// Database connection check middleware for API routes
-const dbCheckMiddleware = (req, res, next) => {
-  // Allow health check, sitemap, and flutterwave webhook even if DB is down
-  if (
-    req.path === '/' ||
-    req.path === '/health' || 
-    req.path === '/sitemap.xml' || 
-    req.path === '/api/sitemap.xml' || 
-    req.path === '/payments/webhook/flutterwave'
-  ) {
-    return next();
-  }
-  
-  const state = mongoose.connection.readyState;
-  if (state !== 1) {
-    const states = {
-      0: 'disconnected',
-      1: 'connected',
-      2: 'connecting',
-      3: 'disconnecting',
-    };
-    return res.status(503).json({
-      message: `Database is ${states[state] || 'unknown'}. Please ensure your IP is whitelisted in MongoDB Atlas (0.0.0.0/0).`,
-      status: 'error',
-      dbStatus: state
-    });
-  }
-  next();
-};
-
-// Health check (before middleware so it's always accessible)
-app.get('/api/health', (req, res) => {
-  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-  res.json({ 
-    status: 'Server is running',
-    database: dbStatus,
-    timestamp: new Date().toISOString()
-  });
-});
-
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-
-// Routes
-// Apply dbCheckMiddleware to all /api routes except health check
-app.use('/api', dbCheckMiddleware);
-
-const registerRoute = (path, modulePath) => {
-  try {
-    app.use(path, require(modulePath));
-    console.log(`✅ Route loaded: ${path}`);
-  } catch (err) {
-    console.error(`❌ Error loading route ${path}:`, err.message);
-  }
-};
-
-registerRoute('/api/products', './routes/products');
-registerRoute('/api/categories', './routes/categories');
-registerRoute('/api/auth', './routes/auth');
-registerRoute('/api/user', './routes/user');
-registerRoute('/api/orders', './routes/orders');
-registerRoute('/api/subscribe', './routes/subscribe');
-registerRoute('/api/testimonials', './routes/testimonials');
-registerRoute('/api/reviews', './routes/reviews');
-registerRoute('/api/chatbot', './routes/chatbot');
-registerRoute('/api/contact', './routes/contact');
-registerRoute('/api/promotions', './routes/promotions');
-registerRoute('/api/messages', './routes/messages');
+app.use('/api/products', require('./routes/products'));
+app.use('/api/categories', require('./routes/categories'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/user', require('./routes/user'));
+app.use('/api/orders', require('./routes/orders'));
+app.use('/api/subscribe', require('./routes/subscribe'));
+app.use('/api/testimonials', require('./routes/testimonials'));
+app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/chatbot', require('./routes/chatbot'));
+app.use('/api/contact', require('./routes/contact'));
+app.use('/api/promotions', require('./routes/promotions'));
+app.use('/api/messages', require('./routes/messages'));
 
 // Catch-all for unmatched /api routes
 app.use('/api/*', (req, res) => {
@@ -372,17 +280,11 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   const PORT = process.env.PORT || 5000;
   
-  // 1. Start Express server immediately to satisfy Render's port binding requirement
-  server.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 Server running on port ${PORT}`);
-    console.log(`📊 API Health: http://localhost:${PORT}/api/health\n`);
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
     
-    // 2. Connect to Database in the background
     connectDB().catch(err => {
-      console.error('❌ Background Database Connection Error:', err.message);
-      if (process.env.NODE_ENV === 'production') {
-        console.warn('⚠️ Server is running but database connection failed. Some features will be unavailable.');
-      }
+      console.error('Database connection error:', err.message);
     });
   });
 };
