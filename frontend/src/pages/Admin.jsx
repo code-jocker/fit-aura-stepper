@@ -1415,6 +1415,51 @@ export default function Admin() {
                   </div>
                 </div>
               </div>
+
+              {/* Active Promotions */}
+              <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100">
+                <div className="flex justify-between items-center mb-8">
+                  <h2 className="text-xl font-black uppercase tracking-tight">Active Promotions</h2>
+                  <button 
+                    onClick={() => setActiveTab('promotions')}
+                    className="text-amber-500 text-xs font-black uppercase tracking-widest hover:underline"
+                  >
+                    Manage All
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {promotions.filter(p => p.isActive).slice(0, 3).map((promo) => (
+                    <div key={promo._id} className="bg-gray-50 p-6 rounded-3xl border border-gray-100 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/10 rounded-full -mr-8 -mt-8"></div>
+                      <div className="relative z-10">
+                        <h3 className="text-lg font-black tracking-tight mb-2 uppercase">{promo.title}</h3>
+                        <p className="text-amber-500 text-xs font-black uppercase tracking-widest mb-4">
+                          {promo.code || 'No Code'}
+                        </p>
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm font-black">
+                            {promo.type === 'percentage' ? `${promo.value}% OFF` : `${promo.value.toLocaleString()} RWF OFF`}
+                          </p>
+                          <p className="text-xs text-gray-500 font-bold">
+                            {new Date(promo.endDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {promotions.filter(p => p.isActive).length === 0 && (
+                    <div className="col-span-3 text-center py-8">
+                      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No active promotions</p>
+                      <button 
+                        onClick={() => setActiveTab('promotions')}
+                        className="mt-4 text-amber-500 text-xs font-black uppercase tracking-widest hover:underline"
+                      >
+                        Create One
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -3383,14 +3428,13 @@ export default function Admin() {
                               </button>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {formData.images.map((img, i) => (
-                              <div key={i} className="aspect-square bg-gray-100 rounded-3xl overflow-hidden relative group shadow-sm">
+                              <div key={i} className="aspect-square bg-gray-100 rounded-3xl overflow-hidden relative group shadow-sm border border-gray-200">
                                 <img 
                                   src={img} 
                                   alt="" 
                                   className="w-full h-full object-cover" 
-                                  onError={(e) => { e.target.src = '/placeholder-image.png'; }} // Add placeholder if image fails to load
                                 />
                                 <button type="button" onClick={() => removeImage(img)} className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
                                   <Trash2 size={24} />
