@@ -611,8 +611,8 @@ export default function Admin() {
         formDataUpload.append('images', file);
       });
 
-      // Try the main API URL first, then fallback
-      let uploadUrl = `${API_URL}/products/upload`;
+      // Use relative API path - in production this goes through nginx proxy
+      const uploadUrl = `/api/products/upload`;
       
       try {
         const response = await axios.post(uploadUrl, formDataUpload, {
@@ -620,7 +620,7 @@ export default function Admin() {
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${token}` 
           },
-          timeout: 30000 // 30 seconds timeout for image uploads
+          timeout: 60000 // 60 seconds timeout for image uploads
         });
 
         setFormData(prev => ({
@@ -631,30 +631,29 @@ export default function Admin() {
       } catch (uploadErr) {
         console.error('Upload error:', uploadErr);
         
-        // Try fallback URL if main one fails
-        if (uploadErr.code === 'ECONNABORTED' || uploadErr.code === 'ERR_NETWORK') {
-          // Try localhost as fallback
-          try {
-            const fallbackUrl = 'http://localhost:5000/api/products/upload';
-            const response = await axios.post(fallbackUrl, formDataUpload, {
-              headers: { 
-                'Content-Type': 'multipart/form-data',
-                Authorization: `Bearer ${token}` 
-              },
-              timeout: 30000
-            });
+        // Try alternative URL
+        try {
+          const altUrl = process.env.NODE_ENV === 'production' 
+            ? 'https://mbabazi-closet.onrender.com/api/products/upload'
+            : 'http://localhost:5000/api/products/upload';
             
-            setFormData(prev => ({
-              ...prev,
-              images: [...prev.images, ...response.data.urls]
-            }));
-            alert('Images uploaded successfully! ✅');
-          } catch (fallbackErr) {
-            console.error('Fallback upload error:', fallbackErr);
-            alert(`Failed to upload images: ${fallbackErr.response?.data?.message || fallbackErr.message || 'Network error. Please check your connection.'}`);
-          }
-        } else {
-          alert(`Failed to upload images: ${uploadErr.response?.data?.message || uploadErr.message || 'Please try again.'}`);
+          const response = await axios.post(altUrl, formDataUpload, {
+            headers: { 
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${token}` 
+            },
+            timeout: 60000
+          });
+          
+          setFormData(prev => ({
+            ...prev,
+            images: [...prev.images, ...response.data.urls]
+          }));
+          alert('Images uploaded successfully! ✅');
+        } catch (altErr) {
+          console.error('Alternative upload error:', altErr);
+          const errorMsg = altErr.response?.data?.message || altErr.message || 'Unknown error';
+          alert(`Failed to upload images: ${errorMsg}`);
         }
       }
     } catch (err) {
