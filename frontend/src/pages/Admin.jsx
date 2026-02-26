@@ -1035,14 +1035,20 @@ export default function Admin() {
 
   useEffect(() => {
     const checkAdmin = async () => {
-      const token = localStorage.getItem('token');
-      const user = JSON.parse(localStorage.getItem('user'));
-      
-      if (!token || !user || user.role !== 'admin') {
-        window.location.href = '/login';
-        return;
+      try {
+        const token = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        
+        if (!token || !user || user.role !== 'admin') {
+          window.location.href = '/login?admin=true';
+          return;
+        }
+        fetchDashboardData();
+      } catch (err) {
+        console.error('Error checking admin:', err);
+        window.location.href = '/login?admin=true';
       }
-      fetchDashboardData();
     };
     checkAdmin();
   }, [fetchDashboardData]);
