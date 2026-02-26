@@ -822,10 +822,14 @@ export default function Admin() {
           await axios.post(`${API_URL}/categories`, catData, config);
         }
       } else {
+        // Ensure images is always an array with at least one valid URL
+        const validImages = Array.isArray(formData.images) 
+          ? formData.images.filter(img => img && typeof img === 'string' && img.trim())
+          : [];
+        
         const data = {
           ...formData,
-          // Filter out any empty strings from images array
-          images: formData.images.filter(img => img && img.trim()),
+          images: validImages,
           price: Number(formData.price),
           salePrice: formData.salePrice ? Number(formData.salePrice) : undefined,
           stock: Number(formData.stock),

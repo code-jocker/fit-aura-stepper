@@ -2,8 +2,17 @@ const Joi = require('joi');
 
 const validateProduct = (req, res, next) => {
   // Filter out empty strings from images array before validation
-  if (req.body.images && Array.isArray(req.body.images)) {
-    req.body.images = req.body.images.filter(img => img && img.trim());
+  if (req.body.images) {
+    // Ensure images is an array
+    if (Array.isArray(req.body.images)) {
+      req.body.images = req.body.images.filter(img => img && typeof img === 'string' && img.trim());
+    } else if (typeof req.body.images === 'string' && req.body.images.trim()) {
+      // Single image string - convert to array
+      req.body.images = [req.body.images.trim()];
+    } else {
+      // Invalid format - set to empty array
+      req.body.images = [];
+    }
   }
   
   const schema = Joi.object({
