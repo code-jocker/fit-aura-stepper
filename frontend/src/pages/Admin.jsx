@@ -1067,6 +1067,12 @@ export default function Admin() {
   }, [activeTab, orders.length, fetchOrdersData]);
 
   useEffect(() => {
+    if (activeTab === 'promotions') {
+      fetchPromotions();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
     if (activeTab === 'users' && (deliveryStaff.length === 0 || customers.length === 0 || staff.length === 0)) {
       fetchUsersData();
     }
