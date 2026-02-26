@@ -258,9 +258,15 @@ router.post('/', adminAuth, validateProduct, async (req, res) => {
       isFeatured, isNew, isPublished, metaTitle, metaDescription, slug, status 
     } = req.body;
 
-    // Validation
-    if (!name || !brand || !category || !price || !description || !images || !images.length) {
+    // Validation - use processed images from middleware
+    if (!name || !brand || !category || !price || !description) {
       return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Images should already be validated and processed by middleware
+    const productImages = req.body.images || [];
+    if (productImages.length === 0) {
+      return res.status(400).json({ message: 'At least one product image is required' });
     }
 
     const product = new Product({
@@ -275,7 +281,7 @@ router.post('/', adminAuth, validateProduct, async (req, res) => {
       shortDescription,
       sku,
       tags: tags || [],
-      images,
+      images: productImages,
       sizes: sizes || [],
       colors: colors || [],
       variants: variants || [],

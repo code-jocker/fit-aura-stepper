@@ -1,8 +1,10 @@
 const Joi = require('joi');
 
 const validateProduct = (req, res, next) => {
+  console.log('Raw images from request:', req.body.images, typeof req.body.images);
+  
   // Filter out empty strings from images array before validation
-  if (req.body.images) {
+  if (req.body.images !== undefined && req.body.images !== null) {
     // Ensure images is an array
     if (Array.isArray(req.body.images)) {
       req.body.images = req.body.images.filter(img => img && typeof img === 'string' && img.trim());
@@ -13,7 +15,11 @@ const validateProduct = (req, res, next) => {
       // Invalid format - set to empty array
       req.body.images = [];
     }
+  } else {
+    req.body.images = [];
   }
+  
+  console.log('Processed images:', req.body.images);
   
   const schema = Joi.object({
     name: Joi.string().required().messages({
@@ -29,7 +35,10 @@ const validateProduct = (req, res, next) => {
     shortDescription: Joi.string().allow('', null),
     sku: Joi.string().allow('', null),
     tags: Joi.array().items(Joi.string()).default([]),
-    images: Joi.array().items(Joi.string().min(1)).min(1).required().messages({
+    images: Joi.alternatives().try(
+      Joi.array().items(Joi.string().min(1)).min(1),
+      Joi.string().min(1)
+    ).messages({
       'array.min': 'At least one product image is required',
       'string.min': 'Image URL cannot be empty',
     }),
