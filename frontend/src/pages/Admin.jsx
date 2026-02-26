@@ -1541,7 +1541,7 @@ export default function Admin() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-black text-xs">{order.total?.toLocaleString() || 0} RWF</p>
+                          <p className="font-black text-xs">{(order.total || 0).toLocaleString()} RWF</p>
                           <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
                             order.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                           }`}>
@@ -1601,7 +1601,7 @@ export default function Admin() {
                         </p>
                         <div className="flex justify-between items-center">
                           <p className="text-sm font-black">
-                            {promo.type === 'percentage' ? `${promo.value}% OFF` : `${promo.value?.toLocaleString() || 0} RWF OFF`}
+                            {promo.type === 'percentage' ? `${promo.value || 0}% OFF` : `${(promo.value || 0).toLocaleString()} RWF OFF`}
                           </p>
                           <p className="text-xs text-gray-500 font-bold">
                             {promo.endDate ? new Date(promo.endDate).toLocaleDateString() : 'N/A'}
@@ -1852,7 +1852,7 @@ export default function Admin() {
                         <td className="px-8 py-6">
                           <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-gray-100 rounded-full">{product.category}</span>
                         </td>
-                        <td className="px-8 py-6 font-black text-xs">{product.price.toLocaleString()} RWF</td>
+                        <td className="px-8 py-6 font-black text-xs">{(product.price || 0).toLocaleString()} RWF</td>
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${product.stock > 10 ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -1971,8 +1971,8 @@ export default function Admin() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-8 py-6 text-xs font-bold">{customer.ordersCount} Orders</td>
-                        <td className="px-8 py-6 font-black text-xs">{customer.totalSpent.toLocaleString()} RWF</td>
+                        <td className="px-8 py-6 text-xs font-bold">{customer.ordersCount || 0} Orders</td>
+                        <td className="px-8 py-6 font-black text-xs">{(customer.totalSpent || 0).toLocaleString()} RWF</td>
                         <td className="px-8 py-6 text-[10px] font-bold uppercase text-gray-400">
                           {new Date(customer.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </td>
@@ -2133,7 +2133,7 @@ export default function Admin() {
                             {order.status}
                           </span>
                         </td>
-                        <td className="px-8 py-6 font-black text-xs">{order.total.toLocaleString()} RWF</td>
+                        <td className="px-8 py-6 font-black text-xs">{(order.total || 0).toLocaleString()} RWF</td>
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] font-black uppercase">{order.paymentMethod}</span>
@@ -2430,7 +2430,7 @@ export default function Admin() {
                           <div>
                             <p className="text-gray-300 text-[8px] font-black uppercase tracking-widest mb-1">Value</p>
                             <p className="text-xs font-black">
-                              {promo.type === 'percentage' ? `${promo.value}% OFF` : `${promo.value.toLocaleString()} RWF OFF`}
+                              {promo.type === 'percentage' ? `${promo.value || 0}% OFF` : `${(promo.value || 0).toLocaleString()} RWF OFF`}
                             </p>
                           </div>
                           <div className="text-right">
@@ -3645,10 +3645,10 @@ export default function Admin() {
                           {formData.price && formData.salePrice ? (
                             <div>
                               <p className="text-4xl font-black text-black">
-                                {Math.round(((formData.price - formData.salePrice) / formData.price) * 100)}% OFF
+                                {Math.round((((formData.price || 0) - (formData.salePrice || 0)) / (formData.price || 1)) * 100)}% OFF
                               </p>
                               <p className="text-[10px] font-bold text-amber-500 uppercase mt-1 tracking-widest">
-                                Save {(formData.price - formData.salePrice).toLocaleString()} RWF per item
+                                Save {((formData.price || 0) - (formData.salePrice || 0)).toLocaleString()} RWF per item
                               </p>
                             </div>
                           ) : (
