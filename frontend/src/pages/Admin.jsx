@@ -1067,6 +1067,7 @@ export default function Admin() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const checkAdmin = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -1110,6 +1111,7 @@ export default function Admin() {
 
   useEffect(() => {
     if (activeTab === 'promotions') {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       fetchPromotions();
     }
   }, [activeTab]);
