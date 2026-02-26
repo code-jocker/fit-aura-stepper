@@ -1,15 +1,32 @@
 import axios from 'axios';
 
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? '/api' 
-  : 'http://localhost:5000/api';
+// Get the base API URL - check multiple sources for flexibility
+const getApiUrl = () => {
+  // In production, use relative /api path (served by reverse proxy)
+  if (process.env.NODE_ENV === 'production') {
+    return '/api';
+  }
+  // In development, check for custom API URL first, then fallback to localhost
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  // Also check for any other env variables that might be set
+  if (process.env.API_URL) {
+    return process.env.API_URL;
+  }
+  // Default to localhost
+  return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
 
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 10000
+  timeout: 15000, // Increased timeout for slower connections
+  withCredentials: false // Allow credentials
 });
 
 // Add token to requests
@@ -21,11 +38,27 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle errors
+// Handle errors with detailed logging
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API Error:', error.message);
+    if (error.response) {
+      // Server responded with error status
+      console.error('API Error:', error.response.status, error.response.data);
+    } else if (error.request) {
+      // Request made but no response received
+      console.error('Network Error: No response from server. API URL:', API_URL);
+      console.error('This might be a CORS issue or server is not running');
+      
+      // Try to provide helpful message based on error code
+      if (error.code === 'ECONNABORTED') {
+        console.error('Request timed out - the server took too long to respond');
+      } else if (error.code === 'ERR_NETWORK') {
+        console.error('Network error - check if the server is running');
+      }
+    } else {
+      console.error('API Error:', error.message);
+    }
     return Promise.reject(error);
   }
 );

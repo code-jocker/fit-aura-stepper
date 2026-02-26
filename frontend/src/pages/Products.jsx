@@ -7,7 +7,21 @@ import FilterSidebar from '../components/FilterSidebar';
 import QuickAddModal from '../components/QuickAddModal';
 import AdBanner from '../components/AdBanner';
 
-const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
+// Get the base API URL - check multiple sources for flexibility
+const getApiUrl = () => {
+  // In production, use relative /api path (served by reverse proxy)
+  if (process.env.NODE_ENV === 'production') {
+    return '/api';
+  }
+  // In development, check for custom API URL first, then fallback to localhost
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  // Default to localhost
+  return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
 
 export default function Products() {
   const [searchParams] = useSearchParams();
@@ -27,6 +41,7 @@ export default function Products() {
   const [isSaleOnly, setIsSaleOnly] = useState(searchParams.get('sale') === 'true');
   const [isComingSoon, setIsComingSoon] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const category = searchParams.get('category');
@@ -47,6 +62,8 @@ export default function Products() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       // Fetch products
       const token = localStorage.getItem('token');
       const userType = localStorage.getItem('userType');
@@ -65,14 +82,22 @@ export default function Products() {
       
       const queryString = params.toString();
       const res = await axios.get(`${url}${queryString ? `?${queryString}` : ''}`);
-      if (res.data) {
+      
+      if (res.data && Array.isArray(res.data)) {
         setProducts(res.data);
+      } else {
+        // Handle unexpected response format
+        console.warn('Unexpected API response:', res.data);
+        setProducts([]);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
-      // Don't clear products on error if we already have some, 
-      // just show the error in console. 
-      // If it's the first load and it fails, products will stay [] which is correct.
+      setError(error.message || 'Failed to load products');
+      // Don't clear products on error - keep existing products if any
+      // This prevents white screen
+      if (products.length === 0) {
+        setProducts([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -316,6 +341,18 @@ export default function Products() {
                     <div className="h-4 w-1/3 bg-gray-100 rounded animate-pulse" />
                   </div>
                 ))}
+              </div>
+            ) : error ? (
+              <div className="text-center py-32 border-2 border-dashed border-gray-100 rounded-3xl">
+                <span className="text-6xl mb-6 block">⚠️</span>
+                <h3 className="text-2xl font-black uppercase tracking-tight mb-2">Failed to load products</h3>
+                <p className="text-gray-500 mb-8 font-medium">{error}</p>
+                <button
+                  onClick={() => fetchData()}
+                  className="bg-black text-white px-10 py-4 rounded-full font-black uppercase tracking-widest text-xs hover:bg-amber-500 transition-colors"
+                >
+                  Try Again
+                </button>
               </div>
             ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">

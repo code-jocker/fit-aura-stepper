@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
@@ -8,7 +8,21 @@ import QuickAddModal from '../components/QuickAddModal';
 import { useStore } from '../store';
 import AdBanner from '../components/AdBanner';
 
-const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
+// Get the base API URL - check multiple sources for flexibility
+const getApiUrl = () => {
+  // In production, use relative /api path (served by reverse proxy)
+  if (process.env.NODE_ENV === 'production') {
+    return '/api';
+  }
+  // In development, check for custom API URL first, then fallback to localhost
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  // Default to localhost
+  return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -25,25 +39,56 @@ export default function ProductDetail() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const { addToCart, user } = useStore();
 
+  // Error state to prevent white screen
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     const fetchProductAndRelated = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
+        // Check if id is valid
+        if (!id) {
+          setError('Product ID is missing');
+          setLoading(false);
+          return;
+        }
+        
         const response = await productService.getById(id);
         const productData = response?.data || null;
-        setProduct(productData);
-        setSelectedImage(0);
+        
+        if (!productData) {
+          setError('Product not found');
+          setProduct(null);
+        } else {
+          setProduct(productData);
+          setSelectedImage(0);
 
-        if (productData?.category) {
-          const relatedRes = await axios.get(`${API_URL}/products?category=${productData.category}&limit=4`);
-          setRelatedProducts(relatedRes.data.filter(p => p._id !== id));
+          if (productData?.category) {
+            try {
+              const relatedRes = await axios.get(`${API_URL}/products?category=${productData.category}&limit=4`);
+              if (relatedRes.data) {
+                setRelatedProducts(relatedRes.data.filter(p => p._id !== id));
+              }
+            } catch (relatedError) {
+              console.warn('Failed to fetch related products:', relatedError);
+            }
+          }
+
+          // Fetch reviews (non-critical, don't fail if this errors)
+          try {
+            const reviewsRes = await axios.get(`${API_URL}/reviews/product/${id}`);
+            if (reviewsRes.data) {
+              setReviews(reviewsRes.data);
+            }
+          } catch (reviewsError) {
+            console.warn('Failed to fetch reviews:', reviewsError);
+          }
         }
-
-        // Fetch reviews
-        const reviewsRes = await axios.get(`${API_URL}/reviews/product/${id}`);
-        setReviews(reviewsRes.data);
-      } catch (error) {
-        console.error('Error fetching product details:', error);
+      } catch (err) {
+        console.error('Error fetching product details:', err);
+        setError(err.message || 'Failed to load product');
         setProduct(null);
       } finally {
         setLoading(false);
@@ -84,15 +129,34 @@ export default function ProductDetail() {
   };
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
     </div>
   );
   
+  if (error) return (
+    <div className="min-h-screen flex flex-col items-center justify-center text-center p-4 bg-white">
+      <div className="text-6xl mb-4">⚠️</div>
+      <h2 className="text-3xl font-black uppercase mb-4">Something went wrong</h2>
+      <p className="text-gray-500 mb-6 font-medium">{error}</p>
+      <div className="flex gap-4">
+        <button 
+          onClick={() => window.location.reload()}
+          className="bg-amber-500 text-black px-8 py-3 rounded-full font-black uppercase tracking-widest text-xs hover:bg-black hover:text-white transition-all"
+        >
+          Retry
+        </button>
+        <Link to="/products" className="bg-black text-white px-8 py-3 rounded-full font-black uppercase tracking-widest text-xs">Back to Shop</Link>
+      </div>
+    </div>
+  );
+  
   if (!product) return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center text-center p-4 bg-white">
+      <div className="text-6xl mb-4">🛒</div>
       <h2 className="text-3xl font-black uppercase mb-4">Product Not Found</h2>
-      <Link to="/products" className="bg-black text-white px-8 py-3 rounded-full font-black uppercase tracking-widest text-xs">Back to Shop</Link>
+      <p className="text-gray-500 mb-8 font-medium">This product may have been removed or is unavailable.</p>
+      <Link to="/products" className="bg-black text-white px-8 py-3 rounded-full font-black uppercase tracking-widest text-xs">Browse Products</Link>
     </div>
   );
 
@@ -140,14 +204,14 @@ export default function ProductDetail() {
           <div className="lg:col-span-7">
             <div className="flex flex-col md:flex-row-reverse gap-6">
               {/* Main Image Container */}
-              <div className="flex-grow aspect-[4/5] bg-white rounded-[2rem] overflow-hidden group cursor-zoom-in shadow-2xl border border-gray-100">
+              <div className="flex-grow aspect-[4/5] bg-gray-100 rounded-[2rem] overflow-hidden group cursor-zoom-in shadow-2xl border border-gray-200">
                 <img
-                  src={product.images?.[selectedImage] || 'https://via.placeholder.com/800x1000?text=Product+Image'}
+                  src={(product.images && product.images[selectedImage]) || 'https://placehold.co/800x1000/f5f5f5/999999?text=No+Image'}
                   alt={product.name}
-                  className="w-full h-full object-contain md:object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = 'https://via.placeholder.com/800x1000?text=Image+Not+Available';
+                    e.target.src = 'https://placehold.co/800x1000/f5f5f5/999999?text=Image+Error';
                   }}
                 />
               </div>
@@ -158,10 +222,10 @@ export default function ProductDetail() {
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`relative w-20 h-24 md:w-24 md:h-28 rounded-2xl overflow-hidden flex-shrink-0 transition-all duration-300 bg-white border ${
+                    className={`relative w-20 h-24 md:w-24 md:h-28 rounded-2xl overflow-hidden flex-shrink-0 transition-all duration-300 bg-gray-100 border ${
                       selectedImage === idx 
                         ? 'ring-4 ring-amber-500 ring-offset-4 scale-95 border-transparent shadow-lg' 
-                        : 'opacity-40 hover:opacity-100 hover:scale-105 border-gray-100'
+                        : 'opacity-40 hover:opacity-100 hover:scale-105 border-gray-200'
                     }`}
                   >
                     <img 
@@ -170,7 +234,7 @@ export default function ProductDetail() {
                       className="w-full h-full object-contain" 
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = 'https://via.placeholder.com/200?text=No+Img';
+                        e.target.src = 'https://placehold.co/200x250/f5f5f5/999999?text=No+Img';
                       }}
                     />
                   </button>

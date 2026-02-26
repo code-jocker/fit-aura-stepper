@@ -437,7 +437,8 @@ export default function Admin() {
     isActive: true,
     applicableTo: 'all',
     products: [],
-    categories: []
+    categories: [],
+    bannerImage: ''
   });
 
   const [deliveryFormData, setDeliveryFormData] = useState({
@@ -498,6 +499,8 @@ export default function Admin() {
       setPromotions(res.data || []);
     } catch (err) {
       console.error('Fetch promotions error:', err);
+      // Don't show alert for every error - just log it
+      setPromotions([]);
     }
   }, []);
 
@@ -595,22 +598,65 @@ export default function Admin() {
     setImageUploading(true);
     try {
       const token = localStorage.getItem('token');
+      
+      // Check if token exists
+      if (!token) {
+        alert('You are not logged in. Please log in again.');
+        setImageUploading(false);
+        return;
+      }
+      
       const formDataUpload = new FormData();
       validFiles.forEach(file => {
         formDataUpload.append('images', file);
       });
 
-      const response = await axios.post(`${API_URL}/products/upload`, formDataUpload, {
-        headers: { 
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}` 
-        }
-      });
+      // Try the main API URL first, then fallback
+      let uploadUrl = `${API_URL}/products/upload`;
+      
+      try {
+        const response = await axios.post(uploadUrl, formDataUpload, {
+          headers: { 
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}` 
+          },
+          timeout: 30000 // 30 seconds timeout for image uploads
+        });
 
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, ...response.data.urls]
-      }));
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, ...response.data.urls]
+        }));
+        alert('Images uploaded successfully! ✅');
+      } catch (uploadErr) {
+        console.error('Upload error:', uploadErr);
+        
+        // Try fallback URL if main one fails
+        if (uploadErr.code === 'ECONNABORTED' || uploadErr.code === 'ERR_NETWORK') {
+          // Try localhost as fallback
+          try {
+            const fallbackUrl = 'http://localhost:5000/api/products/upload';
+            const response = await axios.post(fallbackUrl, formDataUpload, {
+              headers: { 
+                'Content-Type': 'multipart/form-data',
+                Authorization: `Bearer ${token}` 
+              },
+              timeout: 30000
+            });
+            
+            setFormData(prev => ({
+              ...prev,
+              images: [...prev.images, ...response.data.urls]
+            }));
+            alert('Images uploaded successfully! ✅');
+          } catch (fallbackErr) {
+            console.error('Fallback upload error:', fallbackErr);
+            alert(`Failed to upload images: ${fallbackErr.response?.data?.message || fallbackErr.message || 'Network error. Please check your connection.'}`);
+          }
+        } else {
+          alert(`Failed to upload images: ${uploadErr.response?.data?.message || uploadErr.message || 'Please try again.'}`);
+        }
+      }
     } catch (err) {
       console.error('Upload error:', err);
       alert('Failed to upload images. Please try again.');
@@ -2262,6 +2308,7 @@ export default function Admin() {
                       isActive: true,
                       applicableTo: 'all',
                       products: [],
+                      categories: [],
                       bannerImage: ''
                     });
                     setShowPromoForm(true);
@@ -2289,15 +2336,16 @@ export default function Admin() {
                                 setPromoFormData({
                                   title: promo.title,
                                   description: promo.description,
-                                  code: promo.code,
-                                  type: promo.type,
-                                  value: promo.value,
-                                  startDate: promo.startDate.split('T')[0],
-                                  endDate: promo.endDate.split('T')[0],
+                                  code: promo.code || '',
+                                  type: promo.type || 'percentage',
+                                  value: promo.value || '',
+                                  startDate: promo.startDate ? promo.startDate.split('T')[0] : '',
+                                  endDate: promo.endDate ? promo.endDate.split('T')[0] : '',
                                   isActive: promo.isActive,
-                                  applicableTo: promo.applicableTo,
+                                  applicableTo: promo.applicableTo || 'all',
                                   products: promo.products || [],
-                                  categories: promo.categories || []
+                                  categories: promo.categories || [],
+                                  bannerImage: promo.bannerImage || ''
                                 });
                                 setShowPromoForm(true);
                               }}

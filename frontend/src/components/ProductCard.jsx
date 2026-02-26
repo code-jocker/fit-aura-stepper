@@ -3,6 +3,23 @@ import { Link } from 'react-router-dom';
 
 export default function ProductCard({ product, onQuickAdd }) {
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  
+  // Prevent white screen by ensuring product exists
+  if (!product) {
+    return (
+      <div className="bg-white rounded-[2.5rem] shadow-xl shadow-black/5 border border-gray-100 flex flex-col h-full animate-pulse">
+        <div className="aspect-[4/5] bg-gray-100 rounded-t-[2.5rem]" />
+        <div className="p-8 flex flex-col flex-grow">
+          <div className="h-4 w-20 bg-gray-100 rounded mb-3" />
+          <div className="h-6 w-3/4 bg-gray-100 rounded mb-3" />
+          <div className="mt-auto pt-4 border-t border-gray-50">
+            <div className="h-8 w-24 bg-gray-100 rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   const discount = product.salePrice
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
@@ -11,20 +28,25 @@ export default function ProductCard({ product, onQuickAdd }) {
   const inStock = product.stock > 0;
   const lowStock = product.stock > 0 && product.stock <= 5;
 
+  // Get image source with fallback
+  const getImageSrc = () => {
+    if (imageError || !product.images || !product.images[0]) {
+      return 'https://placehold.co/400x500/f5f5f5/999999?text=No+Image';
+    }
+    return product.images[0];
+  };
+
   return (
     <div className="bg-white rounded-[2.5rem] shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-black/10 transition-all duration-500 overflow-hidden group border border-gray-100 flex flex-col h-full">
       {/* Image Container */}
-      <div className="relative bg-white aspect-[4/5] overflow-hidden">
+      <div className="relative bg-gray-100 aspect-[4/5] overflow-hidden">
         <Link to={`/product/${product._id}`}>
           <img
-            src={product.images?.[0] || 'https://via.placeholder.com/300x400?text=Product'}
+            src={getImageSrc()}
             alt={`${product.name} - Mbabazi Closet Rwanda Fashion`}
             loading="lazy"
-            className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-700"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = 'https://via.placeholder.com/300x400?text=Image+Not+Found';
-            }}
+            className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+            onError={() => setImageError(true)}
           />
         </Link>
         
