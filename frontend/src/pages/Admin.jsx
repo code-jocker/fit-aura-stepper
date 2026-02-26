@@ -3570,42 +3570,46 @@ export default function Admin() {
                         </div>
 
                         <div className="md:col-span-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 block">Product Images</label>
-                          <div className="mb-6">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Add Image URL</label>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 block">Product Images * (At least one required)</label>
+                          <div className="mb-6 bg-amber-50 p-4 rounded-2xl border border-amber-200">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-2 block">Add Image from URL</label>
                             <div className="flex gap-2">
                               <input 
                                 type="text" 
                                 id="imageUrlInput"
-                                placeholder="https://example.com/image.jpg" 
-                                className="flex-1 bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
+                                placeholder="Paste image URL here (https://...)" 
+                                className="flex-1 bg-white border-2 border-amber-200 rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
                               />
                               <button 
                                 type="button"
                                 onClick={() => {
                                   const input = document.getElementById('imageUrlInput');
-                                  if (input.value && input.value.trim()) {
+                                  if (input.value && input.value.trim() && (input.value.trim().startsWith('http://') || input.value.trim().startsWith('https://'))) {
                                     setFormData(prev => ({...prev, images: [...prev.images, input.value.trim()]}));
                                     input.value = '';
                                   } else {
-                                    alert('Please enter a valid image URL');
+                                    alert('Please enter a valid image URL starting with http:// or https://');
                                   }
                                 }}
-                                className="bg-black text-white px-6 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-lg text-[10px]"
+                                className="bg-amber-500 text-white px-6 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-600 transition-all shadow-lg text-[10px]"
                               >
-                                Add URL
+                                Add
                               </button>
                             </div>
+                            <p className="text-[10px] text-amber-600 mt-2">💡 Tip: Right-click any image on the internet → Copy Image Link</p>
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {formData.images.map((img, i) => (
-                              <div key={i} className="aspect-square bg-gray-100 rounded-3xl overflow-hidden relative group shadow-sm border border-gray-200">
+                              <div key={i} className="aspect-square bg-gray-100 rounded-3xl overflow-hidden relative group shadow-sm border-2 border-gray-200 hover:border-amber-500 transition-all">
                                 <img 
                                   src={img} 
-                                  alt="" 
-                                  className="w-full h-full object-cover" 
+                                  alt={`Product ${i + 1}`}
+                                  className="w-full h-full object-contain bg-white"
                                   onError={(e) => { e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2NjYyIvPjwvc3ZnPg=='; }}
                                 />
+                                <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] font-black px-2 py-1 rounded-full">
+                                  {i + 1}
+                                </div>
                                 <button type="button" onClick={() => removeImage(img)} className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
                                   <Trash2 size={24} />
                                 </button>
@@ -3623,11 +3627,14 @@ export default function Admin() {
                             >
                               <Plus size={32} />
                               <span className="text-[10px] font-black uppercase mt-2">
-                                {imageUploading ? 'Uploading...' : 'Upload'}
+                                {imageUploading ? 'Uploading...' : 'Upload Files'}
                               </span>
                               <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" />
                             </label>
                           </div>
+                          {formData.images.length === 0 && (
+                            <p className="text-red-500 text-xs font-bold mt-2">⚠️ Please add at least one product image</p>
+                          )}
                         </div>
                       </div>
                     )}

@@ -54,12 +54,20 @@ export default function DeliveryDashboard() {
   const fetchWorkerData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/users/profile`, {
+      if (!token) {
+        window.location.href = '/login?delivery=true';
+        return;
+      }
+      const response = await axios.get(`${API_URL}/user/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setWorker(response.data);
     } catch (err) {
       console.error('Failed to fetch profile data:', err);
+      if (err.response?.status === 401) {
+        localStorage.clear();
+        window.location.href = '/login?delivery=true';
+      }
     }
   }, []);
 
