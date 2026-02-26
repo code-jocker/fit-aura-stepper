@@ -108,10 +108,12 @@ export default function Products() {
   }, [fetchData]);
 
   useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
+    if (products.length > 0) {
+      applyFilters();
+    }
+  }, [products, selectedCategory, selectedAudience, searchQuery, priceRange, sortBy, selectedSizes, selectedColors, isSaleOnly, isComingSoon]);
 
-  const applyFilters = useCallback(() => {
+  const applyFilters = () => {
     let filtered = [...products];
 
     // Admin vs Public View logic is handled by the API, but we can double check here
@@ -197,7 +199,7 @@ export default function Products() {
     });
 
     setFilteredProducts(filtered);
-  }, [products, selectedCategory, selectedAudience, searchQuery, priceRange, sortBy, selectedSizes, selectedColors, isSaleOnly, isComingSoon]);
+  };
 
   const handleQuickAdd = (product) => {
     setSelectedProduct(product);
