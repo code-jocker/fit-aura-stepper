@@ -1,6 +1,11 @@
 const Joi = require('joi');
 
 const validateProduct = (req, res, next) => {
+  // Filter out empty strings from images array before validation
+  if (req.body.images && Array.isArray(req.body.images)) {
+    req.body.images = req.body.images.filter(img => img && img.trim());
+  }
+  
   const schema = Joi.object({
     name: Joi.string().required().messages({
       'string.empty': 'Product name is required',
@@ -15,8 +20,9 @@ const validateProduct = (req, res, next) => {
     shortDescription: Joi.string().allow('', null),
     sku: Joi.string().allow('', null),
     tags: Joi.array().items(Joi.string()).default([]),
-    images: Joi.array().items(Joi.string()).min(1).required().messages({
+    images: Joi.array().items(Joi.string().min(1)).min(1).required().messages({
       'array.min': 'At least one product image is required',
+      'string.min': 'Image URL cannot be empty',
     }),
     sizes: Joi.array().items(Joi.string()).default([]),
     colors: Joi.array().items(Joi.string()).default([]),
