@@ -5,29 +5,37 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasRequiredRole, setHasRequiredRole] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simulate checking auth status
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    const userType = localStorage.getItem('userType');
+    try {
+      // Simulate checking auth status
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      const userType = localStorage.getItem('userType');
 
-    if (token && user) {
-      setIsAuthenticated(true);
+      if (token && user) {
+        setIsAuthenticated(true);
 
-      // Check role if required
-      if (requiredRole) {
-        if (userType === requiredRole || (user && user.role === requiredRole)) {
-          setHasRequiredRole(true);
-        } else {
-          setHasRequiredRole(false);
+        // Check role if required
+        if (requiredRole) {
+          if (userType === requiredRole || (user && user.role === requiredRole)) {
+            setHasRequiredRole(true);
+          } else {
+            setHasRequiredRole(false);
+          }
         }
+      } else {
+        setIsAuthenticated(false);
       }
-    } else {
+    } catch (err) {
+      console.error('ProtectedRoute auth check error:', err);
+      setError(err.message);
       setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }, [requiredRole]);
 
   if (isLoading) {

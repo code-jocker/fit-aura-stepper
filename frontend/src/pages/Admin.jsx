@@ -140,17 +140,33 @@ export default function Admin() {
     // Connect to socket regardless of active tab to get notifications
     const token = localStorage.getItem('token');
     if (token) {
-      const newSocket = io(SOCKET_URL, {
-        auth: { token }
-      });
+      try {
+        const newSocket = io(SOCKET_URL, {
+          auth: { token },
+          timeout: 5000,
+          reconnectionAttempts: 3
+        });
 
-      newSocket.on('connect', () => {
-        console.log('Admin connected to chat server');
-      });
+        newSocket.on('connect', () => {
+          console.log('Admin connected to chat server');
+        });
 
-      setSocket(newSocket);
-      
-      return () => newSocket.disconnect();
+        newSocket.on('connect_error', (err) => {
+          console.error('Socket connection error:', err.message);
+        });
+
+        setSocket(newSocket);
+        
+        return () => {
+          try {
+            newSocket.disconnect();
+          } catch (e) {
+            // Ignore disconnect errors
+          }
+        };
+      } catch (err) {
+        console.error('Failed to initialize socket:', err);
+      }
     }
   }, []);
 
@@ -495,7 +511,10 @@ export default function Admin() {
 
   const fetchPromotions = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/promotions`);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/promotions`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       setPromotions(res.data || []);
     } catch (err) {
       console.error('Fetch promotions error:', err);
@@ -968,14 +987,25 @@ export default function Admin() {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      const [orderRes, statsRes] = await Promise.all([
-        axios.get(`${API_URL}/orders?limit=20`, config), // Recent orders only
-        axios.get(`${API_URL}/orders/stats/summary`, config) // Fetch dashboard stats
-      ]);
-
-      setOrders(orderRes.data || []);
-      setAdminStats(statsRes.data || null);
-      fetchPromotions();
+      try {
+        const [orderRes, statsRes] = await Promise.all([
+          axios.get(`${API_URL}/orders?limit=20`, config),
+          axios.get(`${API_URL}/orders/stats/summary`, config)
+        ]);
+        setOrders(orderRes.data || []);
+        setAdminStats(statsRes.data || null);
+      } catch (apiErr) {
+        console.error('API error in fetchDashboardData:', apiErr);
+        // Continue even if API fails - show available data
+      }
+      
+      // Fetch promotions separately - it's less critical
+      try {
+        await fetchPromotions();
+      } catch (promoErr) {
+        console.error('Error fetching promotions:', promoErr);
+        setPromotions([]);
+      }
     } catch (err) {
       console.error('Fetch dashboard error:', err);
       if (err.response && err.response.status === 401) {
@@ -993,6 +1023,7 @@ export default function Admin() {
       setProducts(prodRes.data || []);
     } catch (err) {
       console.error('Fetch products error:', err);
+      setProducts([]);
     }
   }, []);
 
@@ -1003,6 +1034,7 @@ export default function Admin() {
       setCategories(catRes.data || []);
     } catch (err) {
       console.error('Fetch categories error:', err);
+      setCategories([]);
     }
   }, []);
 
@@ -1020,6 +1052,7 @@ export default function Admin() {
       setStaff(allStaffRes.data || []);
     } catch (err) {
       console.error('Fetch users error:', err);
+      // Don't clear existing data on error
     }
   }, []);
 
@@ -1044,14 +1077,17 @@ export default function Admin() {
           window.location.href = '/login?admin=true';
           return;
         }
-        fetchDashboardData();
+        // Only call fetchDashboardData if it's defined
+        if (typeof fetchDashboardData === 'function') {
+          fetchDashboardData();
+        }
       } catch (err) {
         console.error('Error checking admin:', err);
         window.location.href = '/login?admin=true';
       }
     };
     checkAdmin();
-  }, [fetchDashboardData]);
+  }, []); // Run only on mount
 
   // Fetch data when tabs become active
   useEffect(() => {

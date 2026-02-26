@@ -9,6 +9,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: REACT_APP_API_URL
+        value: /api
       - key: MONGODB_URI
         value: mongodb+srv://princeshyakaclever_db_user:rfa3CabGkUIzn92X@cluster0.akflul6.mongodb.net/mbabazi_closet_db?retryWrites=true&w=majority
       - key: JWT_SECRET
