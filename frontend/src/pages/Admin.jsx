@@ -824,6 +824,8 @@ export default function Admin() {
       } else {
         const data = {
           ...formData,
+          // Filter out any empty strings from images array
+          images: formData.images.filter(img => img && img.trim()),
           price: Number(formData.price),
           salePrice: formData.salePrice ? Number(formData.salePrice) : undefined,
           stock: Number(formData.stock),
@@ -3582,9 +3584,11 @@ export default function Admin() {
                                 type="button"
                                 onClick={() => {
                                   const input = document.getElementById('imageUrlInput');
-                                  if (input.value) {
-                                    setFormData(prev => ({...prev, images: [...prev.images, input.value]}));
+                                  if (input.value && input.value.trim()) {
+                                    setFormData(prev => ({...prev, images: [...prev.images, input.value.trim()]}));
                                     input.value = '';
+                                  } else {
+                                    alert('Please enter a valid image URL');
                                   }
                                 }}
                                 className="bg-black text-white px-6 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-lg text-[10px]"
