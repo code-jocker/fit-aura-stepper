@@ -385,6 +385,7 @@ export default function Admin() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [imageUrlInput, setImageUrlInput] = useState('');
   
   // Chatbot State
   const [showChat, setShowChat] = useState(false);
@@ -3525,17 +3526,17 @@ export default function Admin() {
                             <div className="flex gap-3">
                               <input 
                                 type="text" 
-                                id="imageUrlInput"
+                                value={imageUrlInput}
+                                onChange={(e) => setImageUrlInput(e.target.value)}
                                 placeholder="Paste image URL here (https://...) - Right-click any image → Copy Image Link" 
                                 className="flex-1 bg-white border-2 border-amber-200 rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold" 
                               />
                               <button 
                                 type="button"
                                 onClick={() => {
-                                  const input = document.getElementById('imageUrlInput');
-                                  if (input.value && input.value.trim() && (input.value.trim().startsWith('http://') || input.value.trim().startsWith('https://'))) {
-                                    setFormData(prev => ({...prev, images: [...prev.images, input.value.trim()]}));
-                                    input.value = '';
+                                  if (imageUrlInput && imageUrlInput.trim() && (imageUrlInput.trim().startsWith('http://') || imageUrlInput.trim().startsWith('https://'))) {
+                                    setFormData(prev => ({...prev, images: [...prev.images, imageUrlInput.trim()]}));
+                                    setImageUrlInput('');
                                   } else {
                                     alert('Please enter a valid image URL starting with http:// or https://');
                                   }
