@@ -135,7 +135,7 @@ const productSchema = new mongoose.Schema(
 );
 
 // Pre-save middleware to calculate discount percentage and stock status
-productSchema.pre('save', async function(next) {
+productSchema.pre('save', function(next) {
   // Auto-generate SKU if not provided or empty
   if (!this.sku || this.sku === '') {
     const timestamp = Date.now().toString(36);
