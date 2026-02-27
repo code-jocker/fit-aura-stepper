@@ -1105,7 +1105,7 @@ export default function Admin() {
   }, [activeTab, products.length, fetchProductsData]);
 
   useEffect(() => {
-    if (activeTab === 'categories' && categories.length === 0) {
+    if ((activeTab === 'categories' || activeTab === 'products') && categories.length === 0) {
       fetchCategoriesData();
     }
   }, [activeTab, categories.length, fetchCategoriesData]);
@@ -1786,7 +1786,7 @@ export default function Admin() {
                     setFormData({
                       name: '', 
                       brand: '', 
-                      category: 'shoes', 
+                      category: categories.length > 0 ? '' : 'shoes', 
                       subcategory: '',
                       audience: 'unisex',
                       price: '', 
@@ -3476,10 +3476,27 @@ export default function Admin() {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Category *</label>
-                              <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold">
-                                <option value="shoes">Shoes</option>
-                                <option value="clothes">Clothes</option>
-                                <option value="accessories">Accessories</option>
+                              <select 
+                                value={formData.category} 
+                                onChange={(e) => setFormData({...formData, category: e.target.value})} 
+                                className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm focus:ring-2 ring-amber-500 transition-all outline-none font-bold"
+                              >
+                                {categories.length > 0 ? (
+                                  <>
+                                    <option value="">Select a category</option>
+                                    {categories.map((cat) => (
+                                      <option key={cat._id} value={cat.name}>
+                                        {cat.name}
+                                      </option>
+                                    ))}
+                                  </>
+                                ) : (
+                                  <>
+                                    <option value="shoes">Shoes</option>
+                                    <option value="clothes">Clothes</option>
+                                    <option value="accessories">Accessories</option>
+                                  </>
+                                )}
                               </select>
                             </div>
                             <div>
