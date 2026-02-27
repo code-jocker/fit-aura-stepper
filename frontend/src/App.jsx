@@ -18,6 +18,7 @@ import Admin from './pages/Admin';
 import Profile from './pages/Profile';
 import DeliveryDashboard from './pages/DeliveryDashboard';
 import Support from './pages/Support';
+import SupportTeam from './pages/SupportTeam';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Portfolio from './pages/Portfolio';
@@ -104,6 +105,7 @@ function App() {
               <Route path="/terms" element={<Terms />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/support-chat" element={<Support />} />
               <Route 
                 path="/checkout" 
                 element={
@@ -144,11 +146,21 @@ function App() {
                 } 
               />
 
-              {/* Support Only Routes */}
+              {/* Support Only Routes - For support staff */}
               <Route 
                 path="/support" 
                 element={
-                  <ProtectedRoute requiredRole="support">
+                  <ProtectedRoute requiredRole={['support', 'admin', 'staff']}>
+                    <SupportTeam />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Customer Support Chat - For customers */}
+              <Route 
+                path="/customer-support" 
+                element={
+                  <ProtectedRoute requiredRole="customer">
                     <Support />
                   </ProtectedRoute>
                 } 
