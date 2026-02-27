@@ -53,6 +53,7 @@ export default function Header() {
     if (searchQuery.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
       setSearchQuery('');
+      setMobileMenuOpen(false);
     }
   };
 
@@ -73,6 +74,9 @@ export default function Header() {
             ? 'bg-white/80 backdrop-blur-md shadow-lg py-2' 
             : 'bg-white py-4'
         }`}
+        style={{
+          paddingTop: 'max(16px, env(safe-area-inset-top))'
+        }}
       >
         <nav className="container flex items-center justify-between">
           {/* Logo */}
@@ -199,6 +203,23 @@ export default function Header() {
         {/* Mobile Menu - Enhanced */}
         <div className={`md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-100 transition-all duration-300 overflow-hidden ${mobileMenuOpen ? 'max-h-[80vh] py-8' : 'max-h-0'}`}>
           <div className="container space-y-6">
+            {/* Mobile Search */}
+            <form onSubmit={handleSearch} className="flex items-center bg-gray-100 rounded-full px-4 py-3 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20">
+              <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search styles..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-transparent outline-none w-full text-sm font-medium"
+              />
+              <button type="submit" className="text-amber-500 font-bold text-sm uppercase">
+                Go
+              </button>
+            </form>
+
             <div className="grid grid-cols-2 gap-4">
               {[
                 { label: 'Men', path: '/products?category=men' },

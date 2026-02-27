@@ -2,6 +2,114 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Safe area for mobile devices */
+@supports (padding: max(0px)) {
+  :root {
+    --safe-area-inset-top: max(0px, env(safe-area-inset-top));
+    --safe-area-inset-bottom: max(0px, env(safe-area-inset-bottom));
+    --safe-area-inset-left: max(0px, env(safe-area-inset-left));
+    --safe-area-inset-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* Safe area padding classes */
+.safe-area-top {
+  padding-top: max(16px, env(safe-area-inset-top));
+}
+
+.safe-area-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.safe-area-left {
+  padding-left: max(16px, env(safe-area-inset-left));
+}
+
+.safe-area-right {
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+
+/* Mobile app-like scroll behavior */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent pull-to-refresh on mobile */
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* Hide scrollbar but allow scrolling on mobile */
+@supports (-webkit-touch-callout: none) {
+  ::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+    display: none;
+  }
+}
+
+/* Touch-friendly tap highlight */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile-optimized focus states */
+@media (pointer: coarse) {
+  button:focus,
+  a:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+  }
+  
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Landscape mode adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+  .landscape\:hidden {
+    display: none;
+  }
+}
+
+/* PWA install banner styles */
+.pwa-install-banner {
+  position: fixed;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
+  background: linear-gradient(135deg, #000 0%, #333 100%);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  animation: slideUp 0.5s ease-out;
+}
+
+.pwa-install-banner button {
+  background: #f59e0b;
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 12px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
 @layer components {
   * {
     margin: 0;

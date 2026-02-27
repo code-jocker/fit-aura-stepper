@@ -5,8 +5,11 @@ import { Helmet } from 'react-helmet-async';
 import SplashScreen from './components/SplashScreen';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import MobileNav from './components/MobileNav';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import ProtectedRoute from './components/ProtectedRoute';
 import SupportChat from './components/SupportChat';
+import useDevice from './hooks/useDevice';
 import Home from './pages/Home';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
@@ -37,6 +40,7 @@ import './index.css';
 function App() {
   const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "your-google-client-id-here.apps.googleusercontent.com";
   const [loading, setLoading] = useState(true);
+  const device = useDevice();
 
   useEffect(() => {
     // Simulate loading time
@@ -49,6 +53,17 @@ function App() {
     link.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap';
     link.rel = 'stylesheet';
     document.head.appendChild(link);
+
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('SW registered:', registration);
+        })
+        .catch((error) => {
+          console.log('SW registration failed:', error);
+        });
+    }
 
     return () => clearTimeout(timer);
   }, []);
@@ -239,6 +254,8 @@ function App() {
             </Routes>
           </main>
           <Footer />
+          <MobileNav device={device} />
+          <PWAInstallPrompt device={device} />
           <SupportChat />
         </div>
       </Router>
