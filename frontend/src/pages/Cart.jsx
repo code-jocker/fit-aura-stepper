@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '../store';
-import AdBanner from '../components/AdBanner';
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -135,12 +134,6 @@ export default function Cart() {
                 </div>
               ))}
             </div>
-
-            {/* Ad Banner */}
-            <div className="mt-12 flex justify-center">
-              <AdBanner width={300} height={250} />
-            </div>
-          </div>
 
           {/* Order Summary */}
           <div className="lg:col-span-4">

@@ -6,7 +6,6 @@ import { productService } from '../api';
 import ProductCard from '../components/ProductCard';
 import QuickAddModal from '../components/QuickAddModal';
 import { useStore } from '../store';
-import AdBanner from '../components/AdBanner';
 
 // Get the base API URL - check multiple sources for flexibility
 const getApiUrl = () => {
@@ -481,11 +480,6 @@ export default function ProductDetail() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Ad Banner */}
-        <div className="flex justify-center mt-16 mb-16">
-          <AdBanner width={300} height={250} />
         </div>
 
         {/* Related Products Section */}

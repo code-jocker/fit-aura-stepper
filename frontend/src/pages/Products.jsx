@@ -5,7 +5,6 @@ import axios from 'axios';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../components/FilterSidebar';
 import QuickAddModal from '../components/QuickAddModal';
-import AdBanner from '../components/AdBanner';
 
 // Get the base API URL - check multiple sources for flexibility
 const getApiUrl = () => {
@@ -346,10 +345,6 @@ export default function Products() {
 
           {/* Products Grid */}
           <main className="flex-grow">
-            {/* Top Ad Banner */}
-            <div className="mb-8 flex justify-center w-full">
-              <AdBanner width={300} height={250} />
-            </div>
 
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">

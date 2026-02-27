@@ -4,8 +4,6 @@ import { Helmet } from 'react-helmet-async';
 import { productService, testimonialService, subscriptionService } from '../api';
 import ProductCard from '../components/ProductCard';
 import QuickAddModal from '../components/QuickAddModal';
-import AnimatedAdBanner from '../components/AnimatedAdBanner';
-import AdBanner from '../components/AdBanner';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -81,9 +79,6 @@ export default function Home() {
         <meta property="twitter:image" content="https://mbabazi-closet.onrender.com/MBABAZI.JPG" />
       </Helmet>
       
-      {/* Animated Ad Banner */}
-      <AnimatedAdBanner />
-
       {/* Hero Section */}
       <section className="relative h-[80vh] overflow-hidden flex items-center">
         <div className="absolute inset-0 w-full h-full">
@@ -272,11 +267,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Ad Banner */}
-      <div className="container py-8 flex justify-center">
-        <AdBanner width={300} height={250} />
-      </div>
 
       {/* New Arrivals Section */}
       <section className="container py-16">
