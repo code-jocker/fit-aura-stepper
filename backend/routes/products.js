@@ -269,6 +269,14 @@ router.post('/', adminAuth, validateProduct, async (req, res) => {
       return res.status(400).json({ message: 'At least one product image is required' });
     }
 
+    // Auto-generate SKU if not provided or empty
+    let productSku = sku;
+    if (!productSku || productSku === '') {
+      const timestamp = Date.now().toString(36);
+      const random = Math.random().toString(36).substring(2, 8);
+      productSku = `SKU-${timestamp}-${random}`.toUpperCase();
+    }
+
     const product = new Product({
       name,
       brand,
@@ -279,7 +287,7 @@ router.post('/', adminAuth, validateProduct, async (req, res) => {
       salePrice,
       description,
       shortDescription,
-      sku,
+      sku: productSku,
       tags: tags || [],
       images: productImages,
       sizes: sizes || [],
@@ -332,7 +340,16 @@ router.put('/:id', adminAuth, validateProduct, async (req, res) => {
     if (salePrice !== undefined) product.salePrice = salePrice;
     if (description) product.description = description;
     if (shortDescription !== undefined) product.shortDescription = shortDescription;
-    if (sku !== undefined) product.sku = sku;
+    // Handle SKU update - auto-generate if empty
+    if (sku !== undefined) {
+      if (sku === '') {
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substring(2, 8);
+        product.sku = `SKU-${timestamp}-${random}`.toUpperCase();
+      } else {
+        product.sku = sku;
+      }
+    }
     if (tags) product.tags = tags;
     if (images) product.images = images;
     if (sizes) product.sizes = sizes;
