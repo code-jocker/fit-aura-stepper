@@ -57,7 +57,26 @@ export default function Products() {
 
   useEffect(() => {
     fetchData();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/categories`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setCategories(res.data.map(cat => cat.name));
+      }
+      // If no categories from API, keep the default categories
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      // Keep default categories on error
+    }
+  }, [API_URL]);
+
+  const fetchData = useCallback(async () => {
 
   const fetchData = useCallback(async () => {
     try {
