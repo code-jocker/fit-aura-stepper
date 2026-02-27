@@ -77,8 +77,6 @@ export default function Products() {
   }, [API_URL]);
 
   const fetchData = useCallback(async () => {
-
-  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
