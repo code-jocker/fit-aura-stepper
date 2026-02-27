@@ -70,6 +70,14 @@ function App() {
         <meta property="og:title" content="MBABAZI CLOSET | Premium Fashion & Authentic Sneakers Rwanda 🇷🇼" />
         <meta property="og:description" content="Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali." />
         <meta property="og:image" content="https://mbabazi-closet.onrender.com/MBABAZI.JPG" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="MBABAZI CLOSET - Premium Sneakers and Fashion in Rwanda" />
+        <meta property="og:locale" content="en_RW" />
+
+        {/* Additional Open Graph images for different sections */}
+        <meta property="og:image" content="https://mbabazi-closet.onrender.com/MBABAZI.JPG" />
+        <meta property="og:image:secure_url" content="https://mbabazi-closet.onrender.com/MBABAZI.JPG" />
 
         {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />
@@ -77,9 +85,72 @@ function App() {
         <meta property="twitter:title" content="MBABAZI CLOSET | Premium Fashion & Authentic Sneakers Rwanda 🇷🇼" />
         <meta property="twitter:description" content="Rwanda's premier destination for 100% authentic sneakers and premium fashion. Shop Nike, Jordan, Adidas, and luxury athleisure in Kigali." />
         <meta property="twitter:image" content="https://mbabazi-closet.onrender.com/MBABAZI.JPG" />
+        <meta property="twitter:image:alt" content="MBABAZI CLOSET - Premium Sneakers and Fashion in Rwanda" />
         
-        <meta name="keywords" content="sneakers rwanda, authentic sneakers kigali, nike rwanda, jordan rwanda, fashion kigali, mbabazi closet" />
+        <meta name="keywords" content="sneakers rwanda, authentic sneakers kigali, nike rwanda, jordan rwanda, fashion kigali, mbabazi closet, adidas rwanda, luxury fashion rwanda, sportswear kigali, premium sneakers africa, jordan 1, jordan 4, nike air max, nike dunks, yeezy rwanda, authentic shoes rwanda, designer sneakers africa" />
         <meta name="robots" content="index, follow" />
+        <meta name="author" content="MBABAZI CLOSET" />
+        <meta name="geo.region" content="RW" />
+        <meta name="geo.placename" content="Kigali, Rwanda" />
+        <link rel="canonical" href="https://mbabazi-closet.onrender.com/" />
+        
+        {/* JSON-LD Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "MBABAZI CLOSET",
+            "url": "https://mbabazi-closet.onrender.com/",
+            "description": "Rwanda's premier destination for 100% authentic sneakers and premium fashion",
+            "publisher": {
+              "@type": "Organization",
+              "name": "MBABAZI CLOSET",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://mbabazi-closet.onrender.com/MBABAZI.JPG"
+              }
+            },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://mbabazi-closet.onrender.com/products?search={search_term_string}",
+              "query-input": "required name=search_term_string"
+            },
+            "sameAs": [
+              "https://www.instagram.com/mbabazicloset",
+              "https://www.facebook.com/mbabazicloset"
+            ]
+          })}
+        </script>
+        
+        {/* Store Organization Schema */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Store",
+            "name": "MBABAZI CLOSET",
+            "image": "https://mbabazi-closet.onrender.com/MBABAZI.JPG",
+            "description": "Premier destination for 100% authentic sneakers and premium fashion in Rwanda",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Kigali, Rwanda",
+              "addressLocality": "Kigali",
+              "addressRegion": "Kigali",
+              "addressCountry": "RW"
+            },
+            "priceRange": "$",
+            "telephone": "+250788123456",
+            "email": "info@mbabazicloset.com",
+            "url": "https://mbabazi-closet.onrender.com/",
+            "openingHoursSpecification": [
+              {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+                "opens": "09:00",
+                "closes": "20:00"
+              }
+            ]
+          })}
+        </script>
       </Helmet>
       <Router>
         <div className="flex flex-col min-h-screen">
