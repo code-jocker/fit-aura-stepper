@@ -54,6 +54,7 @@ export default function Admin() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]); // Added categories state
+  const [reviews, setReviews] = useState([]); // Added reviews state
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [staff, setStaff] = useState([]); // Added staff state
@@ -1045,6 +1046,30 @@ export default function Admin() {
     }
   }, []);
 
+  const fetchReviewsData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const reviewRes = await axios.get(`${API_URL}/reviews/all`, { headers: { Authorization: `Bearer ${token}` } });
+      setReviews(reviewRes.data || []);
+    } catch (err) {
+      console.error('Fetch reviews error:', err);
+      setReviews([]);
+    }
+  }, [API_URL]);
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/reviews/${reviewId}`, { headers: { Authorization: `Bearer ${token}` } });
+      setReviews(prev => prev.filter(r => r._id !== reviewId));
+      alert('Review deleted successfully');
+    } catch (err) {
+      console.error('Delete review error:', err);
+      alert(err.response?.data?.message || 'Failed to delete review');
+    }
+  };
+
   const fetchUsersData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -1109,6 +1134,12 @@ export default function Admin() {
       fetchCategoriesData();
     }
   }, [activeTab, categories.length, fetchCategoriesData]);
+
+  useEffect(() => {
+    if (activeTab === 'reviews' && reviews.length === 0) {
+      fetchReviewsData();
+    }
+  }, [activeTab, reviews.length, fetchReviewsData]);
 
   useEffect(() => {
     if (activeTab === 'orders' && orders.length === 0) {
@@ -2285,13 +2316,13 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {products.some(p => p.reviews?.length > 0) ? products.flatMap(p => 
-                      (p.reviews || []).map((rev, i) => (
-                        <tr key={`${p._id}-${i}`} className="hover:bg-gray-50 transition-all group">
+                    {reviews.length > 0 ? (
+                      reviews.map((rev, i) => (
+                        <tr key={rev._id || i} className="hover:bg-gray-50 transition-all group">
                           <td className="px-8 py-6">
-                            <p className="text-xs font-black uppercase tracking-tight">{p.name}</p>
+                            <p className="text-xs font-black uppercase tracking-tight">{rev.product?.name || 'Product'}</p>
                           </td>
-                          <td className="px-8 py-6 text-xs font-bold">{rev.user?.name || 'Customer'}</td>
+                          <td className="px-8 py-6 text-xs font-bold">{rev.user?.name || rev.userName || 'Customer'}</td>
                           <td className="px-8 py-6">
                             <div className="flex gap-0.5">
                               {[1, 2, 3, 4, 5].map(star => (
@@ -2306,8 +2337,12 @@ export default function Admin() {
                           <td className="px-8 py-6 text-[10px] text-gray-500 max-w-xs line-clamp-2">{rev.comment}</td>
                           <td className="px-8 py-6 text-right">
                             <div className="flex justify-end gap-2">
-                              <button className="bg-black text-white px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-amber-500 transition-all">Approve</button>
-                              <button className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-red-100 transition-all">Delete</button>
+                              <button 
+                                onClick={() => handleDeleteReview(rev._id)}
+                                className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-red-100 transition-all"
+                              >
+                                Delete
+                              </button>
                             </div>
                           </td>
                         </tr>
