@@ -69,7 +69,7 @@ export default function Cart() {
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="text-xl font-black uppercase tracking-tight">{item.name}</h3>
                       <button
-                        onClick={() => removeFromCart(item.productId)}
+                        onClick={() => removeFromCart(item.productId, item.size, item.color)}
                         className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all"
                       >
                         ✕
@@ -98,14 +98,14 @@ export default function Cart() {
                   <div className="flex items-center justify-between mt-6 md:mt-0">
                     <div className="flex items-center border-2 border-gray-100 rounded-2xl p-1 bg-gray-50">
                       <button
-                        onClick={() => updateCartItem(item.productId, Math.max(1, item.quantity - 1))}
+                        onClick={() => updateCartItem(item.productId, Math.max(1, item.quantity - 1), item.size, item.color)}
                         className="w-10 h-10 flex items-center justify-center font-bold hover:bg-white rounded-xl transition-all"
                       >
                         −
                       </button>
                       <span className="w-10 text-center font-black">{item.quantity}</span>
                       <button
-                        onClick={() => updateCartItem(item.productId, item.quantity + 1)}
+                        onClick={() => updateCartItem(item.productId, item.quantity + 1, item.size, item.color)}
                         className="w-10 h-10 flex items-center justify-center font-bold hover:bg-white rounded-xl transition-all"
                       >
                         +
@@ -134,6 +134,7 @@ export default function Cart() {
                 </div>
               ))}
             </div>
+          </div>
 
           {/* Order Summary */}
           <div className="lg:col-span-4">
@@ -202,4 +203,3 @@ export default function Cart() {
     </div>
   );
 }
-

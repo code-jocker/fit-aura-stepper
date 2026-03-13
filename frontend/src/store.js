@@ -39,15 +39,19 @@ export const useStore = create((set) => ({
     return { cart: newCart };
   }),
   
-  removeFromCart: (productId) => set((state) => {
-    const newCart = state.cart.filter(item => item.productId !== productId);
+  removeFromCart: (productId, size, color) => set((state) => {
+    const newCart = state.cart.filter(item => 
+      !(item.productId === productId && item.size === size && item.color === color)
+    );
     localStorage.setItem('cart', JSON.stringify(newCart));
     return { cart: newCart };
   }),
   
-  updateCartItem: (productId, quantity) => set((state) => {
+  updateCartItem: (productId, quantity, size, color) => set((state) => {
     const newCart = state.cart.map(item =>
-      item.productId === productId ? { ...item, quantity } : item
+      (item.productId === productId && item.size === size && item.color === color) 
+        ? { ...item, quantity } 
+        : item
     );
     localStorage.setItem('cart', JSON.stringify(newCart));
     return { cart: newCart };

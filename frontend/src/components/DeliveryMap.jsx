@@ -21,15 +21,18 @@ const STORE_LOCATION = {
 const libraries = ["places"];
 
 export default function DeliveryMap({ orders, onMarkerClick, onStatusUpdate }) {
+  const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '';
+  const hasValidApiKey = apiKey.length > 10; // Basic validation
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "",
+    googleMapsApiKey: hasValidApiKey ? apiKey : '',
     libraries: libraries
   });
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [directions, setDirections] = useState(null);
   const [map, setMap] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [searchBox, setSearchBox] = useState(null);
   const autocompleteRef = useRef(null);
 
@@ -67,9 +70,8 @@ export default function DeliveryMap({ orders, onMarkerClick, onStatusUpdate }) {
         (result, status) => {
           if (status === window.google.maps.DirectionsStatus.OK) {
             setDirections(result);
-          } else {
-            console.error(`error fetching directions ${result}`);
           }
+          // Silent fail - directions optional
         }
       );
     } else {
@@ -77,7 +79,7 @@ export default function DeliveryMap({ orders, onMarkerClick, onStatusUpdate }) {
     }
   }, [isLoaded, selectedOrder]);
 
-  return isLoaded ? (
+  return hasValidApiKey && isLoaded ? (
     <div className="relative">
       {/* Search Box Overlay */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-md">
@@ -128,7 +130,7 @@ export default function DeliveryMap({ orders, onMarkerClick, onStatusUpdate }) {
           title="Fit Aura Steppers HQ"
         />
 
-        {orders.filter(order => order.location && order.location.lat).map(order => (
+        {orders.filter(order => order?.location?.lat && order?.location?.lng).map(order => (
           <Marker
             key={order._id}
             position={{ lat: order.location.lat, lng: order.location.lng }}
@@ -157,7 +159,7 @@ export default function DeliveryMap({ orders, onMarkerClick, onStatusUpdate }) {
           />
         )}
 
-        {selectedOrder && (
+        {selectedOrder?.location && (
           <InfoWindow
             position={{ lat: selectedOrder.location.lat, lng: selectedOrder.location.lng }}
             onCloseClick={() => setSelectedOrder(null)}
