@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { Helmet } from 'react-helmet-async';
-import { MessageSquare, Send, User, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { MessageSquare, Send, User, CheckCircle, X } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const SOCKET_URL = API_URL.replace('/api', '');
@@ -12,7 +12,7 @@ export default function SupportTeam() {
   const [activeConversation, setActiveConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // eslint-disable-line no-unused-vars
   const [socket, setSocket] = useState(null);
   const [user, setUser] = useState(null);
   const [problemTypes] = useState([

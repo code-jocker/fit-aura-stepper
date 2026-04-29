@@ -30,7 +30,7 @@ export default function DeliveryMap({ orders, onMarkerClick, onStatusUpdate }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [directions, setDirections] = useState(null);
   const [map, setMap] = useState(null);
-  const [searchBox, setSearchBox] = useState(null);
+  const [searchBox, setSearchBox] = useState(null); // eslint-disable-line no-unused-vars
   const autocompleteRef = useRef(null);
 
   const onLoad = React.useCallback(function callback(map) {

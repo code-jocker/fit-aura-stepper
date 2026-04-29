@@ -120,11 +120,12 @@ export default function Login() {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleSwitchTab = (type) => {
     setLoginType(type);
     setFormData({ email: '', password: '', username: '' });
     setError('');
-  }; // eslint-disable-line no-unused-vars
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center py-12 px-4">

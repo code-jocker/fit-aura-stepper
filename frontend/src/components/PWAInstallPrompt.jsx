@@ -42,7 +42,7 @@ const PWAInstallPrompt = ({ device }) => {
     deferredPrompt.prompt();
 
     // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
+    const { outcome } = await deferredPrompt.userChoice; // eslint-disable-line no-unused-vars
     
     // We've used the prompt, and can't use it again, clear it
     setDeferredPrompt(null);

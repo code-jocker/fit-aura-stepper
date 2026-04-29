@@ -92,7 +92,7 @@ export default function Signup() {
     }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = () => { // eslint-disable-line no-unused-vars
     // Placeholder for Google OAuth
     alert('Google Login is coming soon! 🚀');
   };

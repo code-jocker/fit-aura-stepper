@@ -18,9 +18,9 @@ export default function Footer() {
             </p>
             <div className="flex gap-4">
               {['𝕏', '📷', '👍', '▶️'].map((icon, i) => (
-                <a key={i} href="#" className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:text-black transition-all">
+                <button key={i} className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:text-black transition-all">
                   {icon}
-                </a>
+                </button>
               ))}
             </div>
           </div>
@@ -94,10 +94,10 @@ export default function Footer() {
               © 2026 MBABAZI CLOSET. Crafted for Rwanda 🇷🇼
             </p>
             <p className="text-gray-600 font-bold text-[10px] mt-1 uppercase tracking-widest">
-              <a href="#" onClick={(e) => { e.preventDefault(); alert('Developer studying at KAGEYO TSS'); }} className="hover:text-amber-500 transition-colors">
-                Prepared by Dalphine
-              </a>
-            </p>
+                <button onClick={() => alert('Developer studying at KAGEYO TSS')} className="hover:text-amber-500 transition-colors">
+                  Prepared by Dalphine
+                </button>
+              </p>
           </div>
           
           <div className="flex flex-wrap justify-center gap-6 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all">

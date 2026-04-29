@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import DeliveryMap from '../components/DeliveryMap';
@@ -7,7 +6,6 @@ import DeliveryMap from '../components/DeliveryMap';
 const API_URL = process.env.NODE_ENV === 'production' ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
 
 export default function TrackOrder() {
-  const navigate = useNavigate();
   const [orderId, setOrderId] = useState('');
   const [orderStatus, setOrderStatus] = useState(null);
   const [loading, setLoading] = useState(false);

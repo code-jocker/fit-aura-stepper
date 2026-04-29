@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 
-const SIZES = {
-  shoes: ['5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12', '13'],
-  clothing: ['XS', 'S', 'M', 'L', 'XL', 'XXL']
-};
+// SIZES kept for reference
+// const SIZES = {
+//   shoes: ['5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12', '13'],
+//   clothing: ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+// };
 
 export default function SizeGuide() {
   const [selectedCategory, setSelectedCategory] = useState('shoes');

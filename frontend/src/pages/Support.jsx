@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { Helmet } from 'react-helmet-async';
-import { MessageSquare, Send, Users, UserCheck, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { MessageSquare, Send, AlertCircle, CheckCircle, X } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const SOCKET_URL = API_URL.replace('/api', '');
@@ -12,11 +12,11 @@ export default function Support() {
   const [activeConversation, setActiveConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // eslint-disable-line no-unused-vars
   const [socket, setSocket] = useState(null);
   const [user, setUser] = useState(null);
   const messagesEndRef = useRef(null);
-  const [problemTypes, setProblemTypes] = useState([
+  const [problemTypes] = useState([
     'Order Issue', 'Payment Problem', 'Delivery Delay', 'Product Quality', 'Return Request', 'Other'
   ]);
   const [selectedProblem, setSelectedProblem] = useState('');
@@ -47,7 +47,7 @@ export default function Support() {
         setTimeout(scrollToBottom, 100);
       });
 
-      newSocket.on('update_conversations', (data) => {
+      newSocket.on('update_conversations', () => {
         fetchConversations(token);
       });
 
@@ -60,10 +60,10 @@ export default function Support() {
     }
   }, []);
 
-  const fetchConversations = async (token) => {
+  const fetchConversations = async (authToken) => {
     try {
       const res = await axios.get(`${API_URL}/messages/conversations`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${authToken}` }
       });
       setConversations(res.data || []);
     } catch (err) {
@@ -74,9 +74,9 @@ export default function Support() {
   const fetchMessages = async (conversationId) => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const authToken = localStorage.getItem('token');
       const res = await axios.get(`${API_URL}/messages?conversation=${conversationId}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${authToken}` }
       });
       const sortedMessages = res.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
       setMessages(sortedMessages);
@@ -90,7 +90,6 @@ export default function Support() {
   const sendMessage = async () => {
     if (!inputMessage.trim() || !activeConversation || !socket) return;
 
-    const token = localStorage.getItem('token');
     const tempId = Date.now().toString();
 
     const optimisticMessage = {
