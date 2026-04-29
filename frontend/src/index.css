@@ -1,0 +1,255 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Safe area for mobile devices */
+@supports (padding: max(0px)) {
+  :root {
+    --safe-area-inset-top: max(0px, env(safe-area-inset-top));
+    --safe-area-inset-bottom: max(0px, env(safe-area-inset-bottom));
+    --safe-area-inset-left: max(0px, env(safe-area-inset-left));
+    --safe-area-inset-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* Safe area padding classes */
+.safe-area-top {
+  padding-top: max(16px, env(safe-area-inset-top));
+}
+
+.safe-area-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.safe-area-left {
+  padding-left: max(16px, env(safe-area-inset-left));
+}
+
+.safe-area-right {
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+
+/* Mobile app-like scroll behavior */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent pull-to-refresh on mobile */
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* Hide scrollbar but allow scrolling on mobile */
+@supports (-webkit-touch-callout: none) {
+  ::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+    display: none;
+  }
+}
+
+/* Touch-friendly tap highlight */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile-optimized focus states */
+@media (pointer: coarse) {
+  button:focus,
+  a:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+  }
+  
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Landscape mode adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+  .landscape\:hidden {
+    display: none;
+  }
+}
+
+/* PWA install banner styles */
+.pwa-install-banner {
+  position: fixed;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
+  background: linear-gradient(135deg, #000 0%, #333 100%);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  animation: slideUp 0.5s ease-out;
+}
+
+.pwa-install-banner button {
+  background: #f59e0b;
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 12px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+@layer components {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', 'Montserrat', sans-serif;
+    color: #000000;
+    @apply bg-white;
+  }
+
+  .container {
+    @apply max-w-[1400px] mx-auto px-6 md:px-10;
+  }
+
+  .btn {
+    @apply px-8 py-3 rounded-full font-black uppercase tracking-wider transition-all duration-500 transform active:scale-95;
+  }
+
+  .btn-primary {
+    @apply btn bg-black text-white hover:bg-amber-500 hover:text-black shadow-lg hover:shadow-amber-500/20;
+  }
+
+  .btn-secondary {
+    @apply btn bg-amber-500 text-black hover:bg-black hover:text-white shadow-lg hover:shadow-amber-500/30;
+  }
+
+  .btn-outline {
+    @apply btn border-2 border-black text-black hover:bg-black hover:text-white;
+  }
+
+  .card {
+    @apply bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 border border-gray-50;
+  }
+
+  /* Premium Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-black/20 hover:bg-amber-500/50 rounded-full transition-colors;
+  }
+}
+
+@layer utilities {
+  .premium-gradient {
+    background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  }
+
+  .premium-blur {
+    @apply backdrop-blur-3xl bg-white/70 border border-white/20;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  .hero-overlay {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 100%);
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(50%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-marquee {
+    animation: marquee 25s linear infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 1s ease-out forwards;
+  }
+
+  .glass-morphism {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-600;
+  }
+}

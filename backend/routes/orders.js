@@ -1,0 +1,383 @@
+const express = require('express');
+const router = express.Router();
+const { auth, optionalAuth, adminAuth } = require('../middleware/auth');
+const { validateOrderUpdate } = require('../middleware/validation');
+const Order = require('../models/Order');
+const User = require('../models/User');
+
+    // Create order
+router.post('/', optionalAuth, async (req, res) => {
+  try {
+    console.log('📦 Creating new order:', req.body);
+    const { items, deliveryAddress, phone, paymentMethod, notes, customerName, email, paymentStatus, transactionId, location, discount, couponCode } = req.body;
+    
+    if (!items || !items.length) {
+      return res.status(400).json({ message: 'Cart is empty' });
+    }
+
+    // Calculate totals and format items
+    let subtotal = 0;
+    const formattedItems = items.map(item => {
+      const price = Number(item.price);
+      const quantity = Number(item.quantity);
+      subtotal += price * quantity;
+      
+      return {
+        productId: item.productId,
+        name: item.name,
+        image: item.image || (item.images && item.images[0]),
+        quantity: quantity,
+        price: price,
+        size: item.size || 'N/A',
+        color: item.color || 'N/A'
+      };
+    });
+    
+    // Check if Kigali for free delivery
+    const isFreeDelivery = deliveryAddress?.toLowerCase().includes('kigali');
+    const deliveryFee = isFreeDelivery ? 0 : 5000;
+    
+    // Apply discount if any
+    const finalDiscount = Number(discount) || 0;
+    const total = Math.max(0, subtotal + deliveryFee - finalDiscount);
+    
+    const orderData = {
+      customerName,
+      email,
+      items: formattedItems,
+      subtotal,
+      deliveryFee,
+      discount: finalDiscount,
+      couponCode,
+      total,
+      deliveryAddress,
+      phone,
+      paymentMethod,
+      paymentStatus: paymentStatus || 'pending',
+      transactionId,
+      location,
+      notes,
+      status: 'pending'
+    };
+
+    if (req.user) {
+      orderData.userId = req.user.id;
+    }
+    
+    const order = new Order(orderData);
+    await order.save();
+    console.log('✅ Order saved:', order._id);
+    
+    // Increment coupon usage count if applied
+    if (couponCode) {
+      try {
+        const Promotion = require('../models/Promotion');
+        await Promotion.findOneAndUpdate(
+          { code: couponCode.toUpperCase() },
+          { $inc: { usageCount: 1 } }
+        );
+      } catch (promoErr) {
+        console.error('Error incrementing coupon usage:', promoErr);
+      }
+    }
+    
+    // Clear cart if user is logged in
+    if (req.user) {
+      try {
+        const user = await User.findById(req.user.id);
+        if (user) {
+          user.cart = [];
+          await user.save();
+        }
+      } catch (userErr) {
+        console.error('Error clearing user cart:', userErr);
+        // Don't fail the order if cart clearing fails
+      }
+    }
+    
+    res.status(201).json(order);
+  } catch (error) {
+    console.error('❌ Order creation error:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get orders (User's own orders or ALL for Admin)
+router.get('/', auth, async (req, res) => {
+  try {
+    let query = { userId: req.user.id };
+    
+    // If admin, get all orders
+    if (req.user.role === 'admin') {
+      query = {};
+    }
+    
+    const orders = await Order.find(query).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get orders assigned to worker (DELIVERY)
+router.get('/assigned', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'delivery') {
+      return res.status(401).json({ message: 'Not authorized - Delivery only' });
+    }
+    
+    const orders = await Order.find({ 
+      deliveryPerson: req.user.id,
+      status: { $in: ['shipped', 'delivered'] } 
+    }).sort({ updatedAt: -1 });
+    
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get single order
+router.get('/:orderId', optionalAuth, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    
+    // If order has a userId, only that user can see it
+    if (order.userId && (!req.user || order.userId.toString() !== req.user.id)) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+    
+    // If it's a guest order, anyone with the link can see it (or we could add a phone number check)
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update order (ADMIN)
+router.put('/:orderId', adminAuth, validateOrderUpdate, async (req, res) => {
+  try {
+    const { status, paymentStatus, deliveryAddress, phone, notes, deliveryPerson, assignedAt, adminNote } = req.body;
+    
+    const order = await Order.findById(req.params.orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (status) order.status = status;
+    if (paymentStatus) order.paymentStatus = paymentStatus;
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (phone) order.phone = phone;
+    if (notes) order.notes = notes;
+    if (deliveryPerson) order.deliveryPerson = deliveryPerson;
+    if (assignedAt) order.assignedAt = assignedAt;
+    if (adminNote) order.adminNote = adminNote;
+    
+    order.updatedAt = Date.now();
+    await order.save();
+    
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Mark order as delivered (DELIVERY PERSON)
+router.put('/:orderId/delivered', auth, async (req, res) => {
+  try {
+    const { deliveryNote } = req.body;
+    if (req.user.role !== 'delivery' && req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const order = await Order.findById(req.params.orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // If it's a delivery person, check if it's assigned to them
+    if (req.user.role === 'delivery' && order.deliveryPerson?.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'Order not assigned to you' });
+    }
+
+    order.status = 'delivered';
+    order.paymentStatus = 'completed'; // Assume paid if delivered
+    order.deliveredAt = Date.now();
+    order.updatedAt = Date.now();
+    if (deliveryNote) order.deliveryNote = deliveryNote;
+    
+    await order.save();
+
+    // Send automated motivation message to delivery person
+    if (order.status === 'delivered' && order.deliveryPerson) {
+      try {
+        const Message = require('../models/Message');
+        const motivations = [
+          "Amazing job! Order delivered successfully! 🚀",
+          "You're on fire! Another delivery completed! ✨",
+          "Excellent work! Keep making our customers happy! 💪",
+          "Great speed! You're a vital part of the team! 🏁",
+          "Thank you for your dedication and hard work! 🌟"
+        ];
+        const randomMotivation = motivations[Math.floor(Math.random() * motivations.length)];
+        
+        const autoMsg = new Message({
+          senderId: req.user.id, // Admin or whoever marked it delivered
+          receiverId: order.deliveryPerson,
+          content: randomMotivation,
+          type: 'motivation'
+        });
+        await autoMsg.save();
+        console.log('✅ Auto-motivation sent to:', order.deliveryPerson);
+      } catch (msgErr) {
+        console.error('Failed to send auto-motivation:', msgErr);
+      }
+    }
+
+    // Trigger notifications using email service
+    try {
+      const { sendOrderConfirmation } = require('../config/email');
+      if (order.email) {
+        await sendOrderConfirmation(order.email, order._id, {
+          total: order.total,
+          deliveryFee: order.deliveryFee
+        });
+      }
+    } catch (emailErr) {
+      console.error('Email notification failed:', emailErr);
+    }
+
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get admin statistics (ADMIN)
+router.get('/stats/summary', adminAuth, async (req, res) => {
+  try {
+    // Get total revenue (only from completed/delivered orders)
+    const revenueStats = await Order.aggregate([
+      { $match: { status: 'delivered' } },
+      { $group: { _id: null, total: { $sum: '$total' } } }
+    ]);
+
+    const totalRevenue = revenueStats.length > 0 ? revenueStats[0].total : 0;
+
+    // Get order counts by status
+    const statusStats = await Order.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    // Get sales by category
+    const salesByCategory = await Order.aggregate([
+      { $match: { status: 'delivered' } },
+      { $unwind: '$items' },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'items.productId',
+          foreignField: '_id',
+          as: 'product'
+        }
+      },
+      { $unwind: '$product' },
+      {
+        $group: {
+          _id: '$product.category',
+          revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+          count: { $sum: '$items.quantity' }
+        }
+      }
+    ]);
+
+    // Get daily revenue for last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const dailyRevenue = await Order.aggregate([
+      {
+        $match: {
+          status: 'delivered',
+          createdAt: { $gte: sevenDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          revenue: { $sum: '$total' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    res.json({
+      totalRevenue,
+      statusStats,
+      salesByCategory,
+      dailyRevenue
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update delivery note (DELIVERY PERSON)
+router.put('/:orderId/note', auth, async (req, res) => {
+  try {
+    const { deliveryNote } = req.body;
+    
+    if (req.user.role !== 'delivery' && req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const order = await Order.findById(req.params.orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // If it's a delivery person, check if it's assigned to them
+    if (req.user.role === 'delivery' && order.deliveryPerson?.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'Order not assigned to you' });
+    }
+
+    order.deliveryNote = deliveryNote;
+    order.updatedAt = Date.now();
+    await order.save();
+
+    res.json({ message: 'Delivery note updated successfully', order });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Start delivery (DELIVERY PERSON)
+router.put('/:orderId/start', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'delivery' && req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const order = await Order.findById(req.params.orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (req.user.role === 'delivery' && order.deliveryPerson?.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'Order not assigned to you' });
+    }
+
+    order.status = 'shipped';
+    order.updatedAt = Date.now();
+    await order.save();
+
+    res.json({ message: 'Delivery started', order });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+module.exports = router;

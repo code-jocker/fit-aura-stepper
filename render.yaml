@@ -1,0 +1,23 @@
+services:
+  # Unified Full-Stack Service
+  - type: web
+    name: mbabazi-closet
+    env: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REACT_APP_API_URL
+        value: /api
+      - key: MONGODB_URI
+        value: mongodb+srv://princeshyakaclever_db_user:rfa3CabGkUIzn92X@cluster0.akflul6.mongodb.net/mbabazi_closet_db?retryWrites=true&w=majority
+      - key: JWT_SECRET
+        value: rfa3CabGkUIzn92X_secret_key_fit_aura
+      - key: FRONTEND_URL
+        value: https://mbabazi-closet.onrender.com
+      - key: API_BASE_URL
+        value: https://mbabazi-closet.onrender.com/api
+      - key: GROQ_API_KEY
+        sync: false # Set this in Render Dashboard for security
