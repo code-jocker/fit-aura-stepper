@@ -95,7 +95,7 @@ export default function Footer() {
             </p>
             <p className="text-gray-600 font-bold text-[10px] mt-1 uppercase tracking-widest">
               <a href="#" onClick={(e) => { e.preventDefault(); alert('Developer studying at KAGEYO TSS'); }} className="hover:text-amber-500 transition-colors">
-                Prepared by Dalphine
+                Prepared by Daphine
               </a>
             </p>
           </div>

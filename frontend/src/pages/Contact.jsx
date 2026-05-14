@@ -180,7 +180,7 @@ export default function Contact() {
               {/* Phone */}
               <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-xl font-bold mb-3">📞 Phone</h3>
-                <p className="text-gray-700">Airtel:0739990834 </p>
+              
                 <p className="text-gray-700">MTN:0798643148 </p>
                 <p className="text-sm text-gray-600 mt-2">Available Monday - Friday, 9am - 5pm EAT</p>
               </div>
@@ -188,7 +188,7 @@ export default function Contact() {
               {/* Email */}
               <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-xl font-bold mb-3">✉️ Email</h3>
-                <p className="text-gray-700">mbabaziannet28@gmail.com</p>
+                <p className="text-gray-700">mbabaziannet281@gmail.com</p>
                 <p className="text-sm text-gray-600 mt-2">Typically respond within 24 hours</p>
               </div>
 
