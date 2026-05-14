@@ -134,6 +134,7 @@ export default function Cart() {
                 </div>
               ))}
             </div>
+          </div>
 
           {/* Order Summary */}
           <div className="lg:col-span-4">

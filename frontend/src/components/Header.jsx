@@ -1,4 +1,4 @@
-yimport React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
 
@@ -88,7 +88,8 @@ export default function Header() {
                 className={`h-12 md:h-16 w-auto object-contain transition-transform duration-700 group-hover:scale-110 group-hover:rotate-2 ${scrolled ? 'scale-90 h-10 md:h-12' : ''}`} 
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = 'https://via.placeholder.com/150x50?text=MBABAZI';
+                  // Fallback to SVG instead of external service
+                  e.target.outerHTML = '<svg class="h-12 md:h-16 w-auto fill-black" viewBox="0 0 150 50" xmlns="http://www.w3.org/2000/svg"><text x="75" y="35" font-size="28" font-weight="bold" text-anchor="middle">MB</text></svg>';
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-white/40 to-amber-500/0 -translate-x-full group-hover:animate-shimmer" />
