@@ -180,7 +180,6 @@ export default function Contact() {
               {/* Phone */}
               <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-xl font-bold mb-3">📞 Phone</h3>
-              
                 <p className="text-gray-700">MTN:0798643148 </p>
                 <p className="text-sm text-gray-600 mt-2">Available Monday - Friday, 9am - 5pm EAT</p>
               </div>
